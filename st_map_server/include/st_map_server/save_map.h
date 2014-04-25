@@ -3,10 +3,15 @@
 
 // General includes
 #include "string"
+#include <cstdio>
+#include "boost/foreach.hpp"
+#include <boost/filesystem.hpp> //KL: for creating the save dirs if necessary
 //#include <algorithm> //std::find
 
 // ROS includes
 #include "ros/ros.h"
+#include "ros/console.h"
+#include "rosbag/bag.h"
 
 // Semi-local includes (other metapackage packages)
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
@@ -17,7 +22,7 @@ class StMapSaver
 {
 public:
 
-  StMapSaver();
+  StMapSaver(const std::string& mapname);
 
   /**
    * Variables
@@ -26,11 +31,12 @@ public:
   std::string toponav_map_topic_;
   ros::Subscriber toponavmap_sub_;
   bool saved_map_;
+  bool callback_started_;
 
   /**
    * Public Methods
    */
-  void toponavmapCallback(const st_topological_mapping::TopologicalNavigationMapPtr& toponav_map_ptr);
+  void toponavmapCallback(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map_ptr);
 };
 
 #endif

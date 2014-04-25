@@ -274,7 +274,6 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
-        marker_test_arrow_by_points: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -594,5 +593,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1311
-  X: 55
+  X: 48
   Y: 336

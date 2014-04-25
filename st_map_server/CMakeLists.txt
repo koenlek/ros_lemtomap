@@ -5,7 +5,7 @@ add_definitions(-DDEBUG=1 ) #This allows usage of #IF DEBUG in all code
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
+  rosbag
   st_topological_mapping
 )
 
