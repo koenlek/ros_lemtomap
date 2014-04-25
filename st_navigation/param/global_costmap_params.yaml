@@ -5,8 +5,4 @@ global_costmap:
    publish_frequency: 0.5
    static_map: true
    transform_tolerance: 0.5
-   plugins:
-    - {name: footprint_layer, type: "costmap_2d::FootprintLayer"}
-    - {name: static_map_layer, type: "costmap_2d::StaticLayer"}
-    - {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
-    - {name: inflation_layer,   type: "costmap_2d::InflationLayer"}
+   #resolution: 0.05 #default seems to be 0.05

@@ -1,21 +1,14 @@
 TrajectoryPlannerROS:
 
 # Robot Configuration Parameters
-# Differential-drive robot configuration
-# Turtlebot is not holonomic -> it cannot drive sidewards... Hence y directions speeds/accs are 0
-  holonomic_robot: false
+  max_vel_x: 0.3
+  min_vel_x: 0.1
 
-  max_vel_x: 0.4
-  min_vel_x: 0.0
+  max_vel_theta:  1.0
+  min_vel_theta: -1.0
+  min_in_place_vel_theta: 0.6
+  
   acc_lim_x: 0.5
-
-  max_vel_y: 0.0
-  min_vel_y: 0.0
-  acc_lim_y: 0.0
-
-  max_vel_theta:  2
-  min_vel_theta: -2
-  min_in_place_vel_theta: 0
   acc_lim_theta: 1.0
 
 # Goal Tolerance Parameters
@@ -25,7 +18,6 @@ TrajectoryPlannerROS:
 # Forward Simulation Parameters
   sim_time: 3.0
   vx_samples: 6
-  vy_samples: 0
   vtheta_samples: 20
 
 # Trajectory Scoring Parameters
@@ -39,4 +31,9 @@ TrajectoryPlannerROS:
 # Oscillation Prevention Parameters
   oscillation_reset_dist: 0.05
 
-
+# Differential-drive robot configuration
+  holonomic_robot: false
+  max_vel_y: 0.0
+  min_vel_y: 0.0
+  acc_lim_y: 0.0
+  vy_samples: 0
