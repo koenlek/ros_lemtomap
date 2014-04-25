@@ -1,0 +1,14 @@
+<!-- KL: 
+Based on tutorial: http://wiki.ros.org/urdf/Tutorials/Using%20urdf%20with%20robot_state_publisher
+Run using: 
+roslaunch testbot_description r2d2_demo.launch
+rosrun rviz rviz -d `rospack find testbot_description'/rviz/r2d2.rviz`
+
+-->
+
+<launch>
+        <param name="robot_description" command="cat $(find testbot_description)/urdf/r2d2.xml" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+        <node name="state_publisher" pkg="testbot_description" type="state_publisher" />
+</launch>
+

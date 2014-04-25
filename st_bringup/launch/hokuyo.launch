@@ -1,0 +1,30 @@
+<!-- 
+
+This launch file shows how to start the urg node. 
+
+You may have to change the port parameter if your laser is not at
+/dev/ttyACM0.
+
+More info, see:
+http://wiki.ros.org/urg_node
+-->
+
+<launch>
+
+  <!-- Laserscan topic -->
+  <arg name="scan_topic" default="scan_hokuyo"/>
+
+  <node name="hokuyo_laser_node" pkg="urg_node" type="urg_node" respawn="false" output="screen">
+  
+    <!-- False means: Starts up faster, but timestamps will be inaccurate. --> 
+    <param name="calibrate_time" type="bool" value="true"/> 
+    
+    <!-- Set the port to connect to here -->
+    <param name="serial_port" type="string" value="/dev/ttyACM0"/> 
+  
+    <param name="publish_intensity" type="bool" value="false"/>
+
+    <param name="frame_id" value="hokuyo_laser_sensor_link"/>
+    <remap from="scan" to="$(arg scan_topic)"/>
+  </node>  
+</launch>

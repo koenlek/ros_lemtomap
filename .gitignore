@@ -1,0 +1,9 @@
+.rosinstall*
+.svn
+*~
+
+# ignore any folders called "old"
+old
+
+# ignore the top level CMakeLists.txt
+/CMakeLists.txt

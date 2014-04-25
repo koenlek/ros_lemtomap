@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>semantic_turtle</name>
+  <version>0.0.0</version>
+  <description>The semantic_turtle package</description>
+  <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>st_bringup</run_depend>
+  <run_depend>st_description</run_depend>
+  <run_depend>st_gazebo</run_depend>
+  <run_depend>st_map_server</run_depend>
+  <run_depend>st_navigation</run_depend>
+  <run_depend>st_simulation</run_depend>
+  <run_depend>st_tests</run_depend>
+  <run_depend>st_topological_mapping</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>	
+	<include file="$(find st_tests)/launch/includes/basic_topological_mapping_nav_sim1.launch"/>
+	
+	<!-- Run timed shell script -->
+	<node pkg="st_tests" 
+              type="timed_roslaunch.sh" args="3 st_tests basic_topological_mapping_nav_sim2.launch" 
+              name="timed_roslaunch" output="screen">
+	</node>
+</launch>
+

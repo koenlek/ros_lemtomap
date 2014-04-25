@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<arg name="map_file"
+		default="$(find turtlebot_normal_tests)/maps/willow-2010-02-18-0.10.yaml" />
+
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz"
+		args="-d $(find turtlebot_normal_tests)/rviz/navigation.rviz" />
+
+
+	<!-- Gazebo -->
+	<include
+		file="$(find turtlebot_normal_tests)/launch/turtlebot_willow.launch" />
+
+	<!-- AMCL -->
+	<include file="$(find turtlebot_normal_tests)/launch/amcl_demo.launch">
+		<arg name="map_file" value="$(arg map_file)" />
+	</include>
+	
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
+</launch>

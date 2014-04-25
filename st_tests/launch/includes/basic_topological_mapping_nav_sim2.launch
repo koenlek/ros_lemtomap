@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!-- Gmapping -->
+	<include file="$(find st_navigation)/launch/gmapping.launch">
+		<arg name="scan_topic" value="scan_hokuyo" />
+	</include>
+	
+	<!-- Navigation components -->
+	<include file="$(find st_navigation)/launch/move_base_gmapping.launch"/>
+</launch>
+
