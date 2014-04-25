@@ -7,3 +7,10 @@ old
 
 # ignore the top level CMakeLists.txt
 /CMakeLists.txt
+
+
+# at top level, only allow the semantic_turlte map and any st_ folders
+*
+!*/
+!semantic_turtle
+!st_*
