@@ -17,7 +17,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   // Parameters initialization
   private_nh.param("scan_topic", scan_topic_, std::string("scan_hokuyo"));
 
-  scan_sub_ = n_.subscribe(scan_topic_, 1000, &TopoNavMap::laserCallback, this);
+  scan_sub_ = n_.subscribe(scan_topic_, 10, &TopoNavMap::laserCallback, this);
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1);
 
   updateMap(); //update the map one time, at construction. This will create the first map node.
