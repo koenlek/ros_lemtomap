@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan Hokuyo
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -274,6 +274,7 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
+        marker_test_arrow_by_points: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -569,11 +570,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 41.583
+      Scale: 26.7403
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: -3.92395
-      Y: 0.0632971
+      X: 3.81278
+      Y: -0.253114
     Saved: ~
 Window Geometry:
   Displays:

@@ -27,8 +27,9 @@
 
 	<!--Topological map builder -->
 	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
-		name="topological_navigation_mapper" output="screen">
+		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
+		<!--<param name="load_map_directory" value="/home/koenlek/hydro_catkin/src/st_map_server/maps/toponav_map" /> -->
 	</node>
 
 	<!-- Teleop -->

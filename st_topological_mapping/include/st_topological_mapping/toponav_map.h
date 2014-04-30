@@ -17,8 +17,8 @@
 #include "toponav_edge.h"
 #include "utils.h"
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
-#include "st_topological_mapping/TopoNavEdge.h"  //Message
-#include "st_topological_mapping/TopoNavNode.h"  //Message
+#include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
+#include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
 
 /*
  * @file toponav_map
@@ -30,14 +30,17 @@ class TopoNavMap
 {
 
 public:
-  TopoNavMap(ros::NodeHandle &n); //Constructor
-  ~TopoNavMap(); //Destructor
+  //Constructor: as the second argument has a null ptr as default, the constructor serves for both TopoNavMap(n,toponavmap_msg) and TopoNavMap(n).
+  TopoNavMap(ros::NodeHandle &n);
+  //Destructor
+  ~TopoNavMap();
 
   /**
    * Public Methods
    */
   // updateMap is the method that generates and maintains the topological navigation map and should be called in a (main) loop
   void updateMap();
+  void loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
 
   // these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
   void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
@@ -63,6 +66,12 @@ public:
   const int getNumberOfEdges() const { return edges_.size(); } // return the number of edges
 
   std::vector<TopoNavEdge*> connectedEdges(const TopoNavNode &node) const; //returns a vector with pointers to the edges connected to node.
+
+  // conversions from/to ROS msgs
+  void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, std::vector<TopoNavEdge*> &edges);
+  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::vector<TopoNavNode*> &nodes);
+  st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(const TopoNavEdge* edge);
+  st_topological_mapping::TopoNavNodeMsg nodeToRosMsg(const TopoNavNode* node);
 
 private:
   /**
@@ -105,5 +114,6 @@ private:
   double distanceToClosestNode(); //Checks the distance from the robot to the closest node.
 
 };
+
 
 #endif

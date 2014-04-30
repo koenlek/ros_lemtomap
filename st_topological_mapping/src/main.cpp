@@ -6,6 +6,7 @@
 
 #include <st_topological_mapping/toponav_map.h>
 #include <st_topological_mapping/show_toponav_map.h>
+#include <st_topological_mapping/load_map.h>
 
 /*!
  * Main
@@ -14,8 +15,22 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "topological_navigation_mapper");
   ros::NodeHandle n;
+  ros::NodeHandle private_nh("~");
+
+  std::string load_map_path;
+
+  private_nh.param("load_map_directory", load_map_path, std::string("")); //requires a full path to the top level directory, ~ and other env. vars are not accepted
 
   TopoNavMap topo_nav_map(n);
+  if (load_map_path!="")
+  {
+	  StMapLoader map_loader(load_map_path);
+	  while (!map_loader.finished_loading_){
+		  ros::spinOnce();
+	  }
+	  topo_nav_map.loadMapFromMsg(map_loader.getTopologicalNavigationMapMsg());
+  }
+
   ShowTopoNavMap show_topo_nav_map(n, topo_nav_map.getNodes(), topo_nav_map.getEdges());
 
   ros::Rate r(4);

@@ -14,10 +14,6 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(load_map src/load_map.cpp)
-add_dependencies(load_map ${catkin_EXPORTED_TARGETS}) #to make sure depended message headers are generated first!
-target_link_libraries(load_map ${catkin_LIBRARIES})
-
 add_executable(save_map src/save_map.cpp)
 add_dependencies(save_map ${catkin_EXPORTED_TARGETS}) #to make sure  message headers are generated first!
 target_link_libraries(save_map ${catkin_LIBRARIES})

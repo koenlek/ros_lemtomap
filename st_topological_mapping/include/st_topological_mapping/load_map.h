@@ -5,7 +5,7 @@
 #include "string"
 #include <cstdio>
 #include "boost/foreach.hpp"
-//#include <algorithm> //std::find
+#include <boost/filesystem.hpp>
 
 // ROS includes
 #include "ros/ros.h"
@@ -16,21 +16,29 @@
 
 // Semi-local includes (other metapackage packages)
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
-#include "st_topological_mapping/TopoNavEdge.h"  //Message
-#include "st_topological_mapping/TopoNavNode.h"  //Message
+#include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
+#include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
 
 class StMapLoader
 {
 public:
 
-  StMapLoader(const std::string& mapname);
+  StMapLoader(const std::string& map_fullpath);
 
   /**
    * Variables
    */
-  std::string mapname_;
+  std::string map_fullpath_;
   std::string toponav_map_topic_;
   bool finished_loading_;
+
+  /**
+   * Public Methods
+   */
+  st_topological_mapping::TopologicalNavigationMap getTopologicalNavigationMapMsg() const { return toponav_map_readmsg_; }
+
+private:
+  st_topological_mapping::TopologicalNavigationMap toponav_map_readmsg_;
 };
 
 #endif

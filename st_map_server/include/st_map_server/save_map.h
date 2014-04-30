@@ -15,8 +15,8 @@
 
 // Semi-local includes (other metapackage packages)
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
-#include "st_topological_mapping/TopoNavEdge.h"  //Message
-#include "st_topological_mapping/TopoNavNode.h"  //Message
+#include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
+#include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
 
 class StMapSaver
 {

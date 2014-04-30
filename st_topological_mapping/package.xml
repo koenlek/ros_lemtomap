@@ -10,8 +10,10 @@
 
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>rosbag</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>rosbag</run_depend>
 
   <!-- KL: added to suppor the messages -->
   <build_depend>message_generation</build_depend>

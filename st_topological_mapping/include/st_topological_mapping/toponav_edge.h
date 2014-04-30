@@ -16,12 +16,12 @@
 
 typedef int edge_id_int; //This can be used to help function signatures see the difference between a edge_id form any int
 
-
 class TopoNavEdge
 {
 
 public:
   TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::vector<TopoNavEdge*> &edges);
+  TopoNavEdge(edge_id_int edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::vector<TopoNavEdge*> &edges); // only to be used when loading map from message!
   ~TopoNavEdge();
 
   /**
@@ -60,6 +60,8 @@ private:
    * Private Methods
    */
 
+protected:
+    static int UIDGenerator_; //generates a unique ID for every new edge.
 };
 
 #endif //TOPONAV_EDGE_H

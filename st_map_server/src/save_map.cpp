@@ -32,7 +32,7 @@ void StMapSaver::toponavmapCallback(const st_topological_mapping::TopologicalNav
 	boost::filesystem::create_directories(mapname_);
 
 	/* write metadata to .yaml file */
-	std::string topnavmapmetadata_file = mapname_ + "_metadata.yaml";
+	std::string topnavmapmetadata_file = "toponav_map_metadata.yaml";
 	FILE* topnavmap_metadata_yaml = fopen(std::string(mapname_ + "/" + topnavmapmetadata_file).c_str(), "w");
 	if (!topnavmap_metadata_yaml) {
 		ROS_ERROR("Couldn't save map file to %s",
@@ -45,7 +45,7 @@ void StMapSaver::toponavmapCallback(const st_topological_mapping::TopologicalNav
 
 	/* write TopologicalNavigationMap message to .bag file */
 	rosbag::Bag bag;
-	bag.open(mapname_ + "/" + mapname_ + ".bag", rosbag::bagmode::Write);
+	bag.open(mapname_ + "/toponav_map.bag", rosbag::bagmode::Write);
 	bag.write(toponav_map_topic_, ros::Time::now(), toponav_map_ptr);
 	bag.close();
 

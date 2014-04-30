@@ -6,11 +6,17 @@
 
 #include <st_topological_mapping/toponav_node.h>
 
+TopoNavNode::TopoNavNode(node_id_int node_id, ros::Time last_updated, tf::Pose pose, bool is_door, int area_id, std::vector<TopoNavNode*> &nodes):
+node_id_(node_id), last_updated_(last_updated), pose_(pose),is_door_(is_door),area_id_(area_id), nodes_(nodes){
+	if (node_id_>=UIDGenerator_)
+		UIDGenerator_=node_id_+1;
+	nodes_.push_back(this);
+}
+
 TopoNavNode::TopoNavNode(tf::Pose pose, bool is_door, int area_id, std::vector<TopoNavNode*> &nodes):
 pose_(pose),is_door_(is_door),area_id_(area_id),nodes_(nodes)
 {
-  static int UID = 1; //generates a unique ID for every new nodes. Will always be +1 compared to last created node
-  node_id_=UID++;
+  node_id_=UIDGenerator_++;
   last_updated_=ros::Time::now();
   ROS_DEBUG("TopoNavNode created. id= %d, pose x=%f, y=%f, theta=%f, updated at %f",
             node_id_,
@@ -37,3 +43,6 @@ TopoNavNode::~TopoNavNode()
   std::cerr << "~TopoNavNode: Deleting node wit ID: " << node_id_ << std::endl;
   #endif
 }
+
+int TopoNavNode::UIDGenerator_=1; //needs to be declared here: otherwise a "Undefined reference" error will occur at compile time
+

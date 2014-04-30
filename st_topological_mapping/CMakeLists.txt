@@ -9,13 +9,14 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   tf
+  rosbag #for loading previous maps
 )
 
 add_message_files(
   FILES
   TopologicalNavigationMap.msg
-  TopoNavEdge.msg
-  TopoNavNode.msg
+  TopoNavEdgeMsg.msg
+  TopoNavNodeMsg.msg
 )
 
 generate_messages(   
@@ -30,7 +31,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(topological_navigation_mapper src/utils.cpp src/toponav_node.cpp src/toponav_edge.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp)
+add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp)
 target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
 add_dependencies(topological_navigation_mapper ${catkin_EXPORTED_TARGETS}) # KL: to make sure that message headers in devel/include/${PROJECT_NAME} are recognized
 
