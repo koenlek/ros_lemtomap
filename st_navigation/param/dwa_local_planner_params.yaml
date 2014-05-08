@@ -1,18 +1,18 @@
 #see http://ros.org/wiki/dwa_local_planner for param description
 DWAPlannerROS:
-  max_vel_x: 0.55
+  max_vel_x: 0.3
   min_vel_x: 0.0
   min_vel_y: 0.0
   max_vel_y: 0.0
   max_rot_vel: 1.0
   min_rot_vel: 0.4
   
-  acc_lim_x: 1.0
+  acc_lim_x: 0.5
   acc_lim_y: 0.0
-  acc_lim_th: 2.0
+  acc_lim_th: 1.0
 
   yaw_goal_tolerance: 0.3
-  xy_goal_tolerance: 0.2
+  xy_goal_tolerance: 0.15
   
   latch_xy_goal_tolerance: true #If goal tolerance is latched, if the robot ever reaches the goal xy location it will simply rotate in place, even if it ends up outside the goal tolerance while it is doing so. 
  
