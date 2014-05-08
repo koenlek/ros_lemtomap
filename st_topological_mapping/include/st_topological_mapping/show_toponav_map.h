@@ -4,6 +4,7 @@
 #include <string>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include "show_toponav_map.h"
 #include "toponav_node.h"
@@ -36,8 +37,9 @@ private:
   visualization_msgs::Marker nodes_marker_;
   visualization_msgs::Marker edges_marker_;
   visualization_msgs::Marker doors_marker_;
+  visualization_msgs::MarkerArray toponavmap_ma_;
 
-  ros::Publisher marker_pub_;
+  ros::Publisher markers_pub_;
 
   /**
    * Private Methods

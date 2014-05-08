@@ -5,8 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Marker1/Namespaces1
         - /Nav1
+        - /TopoNavMap MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 333
   - Class: rviz/Selection
@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan Hokuyo
 Visualization Manager:
   Class: ""
   Displays:
@@ -269,15 +269,6 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /turtlebot_marker_server/update
       Value: false
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: visualization_marker
-      Name: Marker
-      Namespaces:
-        marker_test_arrow_by_points: true
-        nodes: true
-      Queue Size: 100
-      Value: true
     - Class: rviz/Group
       Displays:
         - Alpha: 1
@@ -543,6 +534,15 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Nav
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /toponavmap_markerarray
+      Name: TopoNavMap MarkerArray
+      Namespaces:
+        edges: true
+        nodes: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -594,5 +594,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1311
-  X: 48
+  X: 42
   Y: 336

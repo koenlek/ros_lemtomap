@@ -9,7 +9,7 @@
 		<param name="map_update_interval" value="5.0" />
 		<param name="maxUrange" value="5.5" /> <!-- (5.5 for Hokuyo, 6 for Kinect) Default is 80, this should not be necessary -->
 		<!-- <param name="maxRange" value="5.6" /> -->
-                <!-- KL: It is best to block this, or else it will erreanously detect free space behind walls...-->
+                <!-- KL: It is best to comment the maxRange param, or else it will erreanously detect free space behind walls...-->
                 <!-- (5.6 for Hokuyo, 8 for Kinect) Official documentation: The maximum range 
 			of the sensor. If regions with no obstacles within the range of the sensor 
 			should appear as free space in the map, set maxUrange < maximum range of 
@@ -34,10 +34,10 @@
 		<!-- <param name="xmin" value="-50.0"/> <param name="ymin" value="-50.0"/> 
 			<param name="xmax" value="50.0"/> <param name="ymax" value="50.0"/> make 
 			the starting size small for the benefit of the Android client's memory... -->
-		<param name="xmin" value="-50.0" />
-		<param name="ymin" value="-50.0" />
-		<param name="xmax" value="50.0" />
-		<param name="ymax" value="50.0" />
+		<param name="xmin" value="-30.0" />
+		<param name="ymin" value="-30.0" />
+		<param name="xmax" value="30.0" />
+		<param name="ymax" value="30.0" />
 
 		<param name="delta" value="0.05" />
 		<param name="llsamplerange" value="0.01" />

@@ -4,6 +4,7 @@
 
 	<arg name="use_sim_time" default="true" />
 	<arg name="world_name_short" default="willowgarage.world" /> <!-- playground,empty,ball,willowgarage -->
+	<arg name="load_map_directory" default=""/>
 
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz"
@@ -29,7 +30,7 @@
 	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
-		<!--<param name="load_map_directory" value="/home/koenlek/hydro_catkin/src/st_map_server/maps/toponav_map" /> -->
+		<param name="load_map_directory" value="$(arg load_map_directory)" />
 	</node>
 
 	<!-- Teleop -->

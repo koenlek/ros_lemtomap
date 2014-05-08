@@ -55,8 +55,7 @@ void StMapSaver::toponavmapCallback(const st_topological_mapping::TopologicalNav
 
 #define USAGE "Usage: \n" \
 " save_map -h\n"\
-" save_map -l to save locally, i.e. to current folder (otherwise saves to st_map_server/map)\n"\
-" save_map -f <map_name> (stores all files in folder called 'map name')"
+" save_map -f <map_name> (stores all files in folder called 'map name', full path needs to be specified, ~ is not accepted for home folder...)"
 
 /*!
  * Main

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(st_topological_mapping)
 
 add_definitions(-DDEBUG=1 ) #This allows usage of #IF DEBUG in all code
+add_definitions(-DCMAKE_BUILD_TYPE_DEF=${CMAKE_BUILD_TYPE}) #Load the used catkin_make build type here, make available in c++ code for preprocessor
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

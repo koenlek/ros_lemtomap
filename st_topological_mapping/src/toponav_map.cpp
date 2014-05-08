@@ -21,7 +21,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 	scan_sub_ = n_.subscribe(scan_topic_, 10, &TopoNavMap::laserCallback, this);
 	toponav_map_pub_ = private_nh.advertise<
 			st_topological_mapping::TopologicalNavigationMap>(
-			"topological_navigation_map", 1);
+			"topological_navigation_map", 1,true);
 
 	updateMap(); //update the map one time, at construction. This will create the first map node.
 
@@ -128,6 +128,7 @@ void TopoNavMap::updateMap() {
 	publishTopoNavMap();
 
 #if DEBUG
+
 	/*
 	 if (ros::Time().now()>ros::Time(15) && test_executed_==0)
 	 { //this code is to test stuff timed...
@@ -149,7 +150,8 @@ void TopoNavMap::updateMap() {
 	 tmp_pose.getOrigin().setY(tmp_pose.getOrigin().getY()+0.3);
 	 getNodeByID(4).setPose(tmp_pose);
 	 test_executed_++;
-	 }*/
+	 }
+	 */
 #endif
 }
 
