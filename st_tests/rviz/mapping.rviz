@@ -484,7 +484,7 @@ Visualization Manager:
           Color: 25; 255; 0
           Enabled: true
           Name: Global Path
-          Topic: /move_base/TrajectoryPlannerROS/global_plan
+          Topic: /move_base/DWAPlannerROS/global_plan
           Value: true
         - Alpha: 1
           Buffer Length: 1
@@ -492,7 +492,7 @@ Visualization Manager:
           Color: 255; 0; 0
           Enabled: true
           Name: Local Path
-          Topic: /move_base/TrajectoryPlannerROS/local_plan
+          Topic: /move_base/DWAPlannerROS/local_plan
           Value: true
         - Alpha: 1
           Buffer Length: 1
@@ -539,7 +539,6 @@ Visualization Manager:
       Marker Topic: /toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        edges: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -570,7 +569,7 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 26.7403
+      Scale: 47.1255
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 3.81278

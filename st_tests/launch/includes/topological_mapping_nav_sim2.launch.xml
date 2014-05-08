@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!-- Gmapping --> <!-- Using the script to block anoying stderr messages -->
+	<node pkg="st_navigation" 
+              type="gmapping_nostderr.sh" args="scan_hokuyo" 
+              name="gmapping_nostderr">
+	</node>
+
+	<!-- Navigation components -->
+	<include file="$(find st_navigation)/launch/move_base_gmapping_dwa_local.launch"/>
+</launch>
+

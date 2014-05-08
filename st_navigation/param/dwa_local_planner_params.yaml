@@ -1,0 +1,31 @@
+#see http://ros.org/wiki/dwa_local_planner for param description
+DWAPlannerROS:
+  max_vel_x: 0.55
+  min_vel_x: 0.0
+  min_vel_y: 0.0
+  max_vel_y: 0.0
+  max_rot_vel: 1.0
+  min_rot_vel: 0.4
+  
+  acc_lim_x: 1.0
+  acc_lim_y: 0.0
+  acc_lim_th: 2.0
+
+  yaw_goal_tolerance: 0.3
+  xy_goal_tolerance: 0.2
+  
+  latch_xy_goal_tolerance: true #If goal tolerance is latched, if the robot ever reaches the goal xy location it will simply rotate in place, even if it ends up outside the goal tolerance while it is doing so. 
+ 
+  sim_time: 1.7
+  
+  #The cost function used to score each trajectory is in the following form: 
+  #cost =  path_distance_bias * (distance to path from the endpoint of the trajectory in meters)  + goal_distance_bias * (distance to local goal from the endpoint of the trajectory in meters)  + occdist_scale * (maximum obstacle cost along the trajectory in obstacle cost (0-254))
+
+  path_distance_bias: 5.0 #default:32
+  goal_distance_bias: 9.0 #default:24
+  occdist_scale: 0.01 #default:0.01
+  oscillation_reset_dist: 0.05
+  prune_plan: true
+
+  holonomic_robot: false
+
