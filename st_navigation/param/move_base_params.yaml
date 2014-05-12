@@ -2,7 +2,7 @@
 #
 #  http://www.ros.org/wiki/move_base
 #
-shutdown_costmaps: false #false is default...
+shutdown_costmaps: false #default:false
 
 controller_frequency: 10.0
 controller_patience: 8.0

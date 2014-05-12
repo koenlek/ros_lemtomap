@@ -1,11 +1,11 @@
 #see http://ros.org/wiki/dwa_local_planner for param description
 DWAPlannerROS:
   max_vel_x: 0.3
-  min_vel_x: 0.0
+  min_vel_x: 0.1
   min_vel_y: 0.0
   max_vel_y: 0.0
   max_rot_vel: 1.0
-  min_rot_vel: 0.4
+  min_rot_vel: 0.2
   
   acc_lim_x: 0.5
   acc_lim_y: 0.0
@@ -21,8 +21,13 @@ DWAPlannerROS:
   #The cost function used to score each trajectory is in the following form: 
   #cost =  path_distance_bias * (distance to path from the endpoint of the trajectory in meters)  + goal_distance_bias * (distance to local goal from the endpoint of the trajectory in meters)  + occdist_scale * (maximum obstacle cost along the trajectory in obstacle cost (0-254))
 
-  path_distance_bias: 5.0 #default:32
-  goal_distance_bias: 9.0 #default:24
+  # Some notes on path_distance_bias and goal_distance_bias. 
+  #  - Setting them too low: higher seems to ake sure that robot does not get stuck and gives up (e.g. in a doorway stuck because too close too obstacles or so). 
+  #  - Setting them too high: it can sometimes get 'stuck' in a translational motion: it cannot succeed to make a turn or so. This can happen in a corridor or along a wall it seems... E.g.: if you send it somewhere north of the corridor it can sometimes keep on going south as if it cannot make the turn in the corridor... Running into an obstacles will usually automatically 'reset' the robot from this erratic behavior.
+  # Please note that the above notes are presumptions: I am not sure yet...
+  path_distance_bias: 20.0 #default:32, strands: 5.0
+  goal_distance_bias: 15.0 #default:24, strands: 9.0
+
   occdist_scale: 0.01 #default:0.01
   oscillation_reset_dist: 0.05
   prune_plan: true
