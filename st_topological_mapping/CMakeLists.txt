@@ -30,7 +30,10 @@ catkin_package(
   CATKIN_DEPENDS message_runtime
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(
+  include 
+  ${catkin_INCLUDE_DIRS}
+)
 
 add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp)
 target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
