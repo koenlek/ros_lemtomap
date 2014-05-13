@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 		} else if (!strcmp(argv[i], "-f")) {
 			if (++i < argc) {
 				mapname = argv[i];
-				ROS_INFO("-f received, with '%s'", argv[i]);
+				ROS_INFO("-f received, with '%s'", argv[i]); //TODO Implement local files (-l) as well!
 			} else {
 				puts(USAGE);
 				return 1;

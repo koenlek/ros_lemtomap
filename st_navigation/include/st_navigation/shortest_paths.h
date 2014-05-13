@@ -30,6 +30,17 @@
 namespace st_shortest_paths
 {
 std::vector<int> shortestPath (const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg , int start_node, int end_node);
+
+typedef float Weight;
+typedef boost::property<boost::edge_weight_t, Weight> WeightProperty;
+typedef boost::property<boost::vertex_name_t, std::string> NameProperty;
+typedef boost::adjacency_list < boost::listS, boost::vecS, boost::directedS, NameProperty, WeightProperty > Graph;
+typedef std::vector<Graph::edge_descriptor> PathType;
+typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
+typedef boost::property_map < Graph, boost::vertex_index_t >::type IndexMap;
+typedef boost::property_map < Graph, boost::vertex_name_t >::type NameMap;
+typedef boost::iterator_property_map < Vertex*, IndexMap, Vertex, Vertex& > PredecessorMap;
+typedef boost::iterator_property_map < Weight*, IndexMap, Weight, Weight& > DistanceMap;
 } // namespace
 
 #endif // include guard

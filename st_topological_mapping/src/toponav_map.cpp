@@ -12,11 +12,10 @@
 TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 		n_(n) // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
 {
-
 	ros::NodeHandle private_nh("~");
 
 	// Parameters initialization
-	private_nh.param("scan_topic", scan_topic_, std::string("scan_hokuyo"));
+	private_nh.param("scan_topic", scan_topic_, std::string("scan"));
 
 	scan_sub_ = n_.subscribe(scan_topic_, 10, &TopoNavMap::laserCallback, this);
 	toponav_map_pub_ = private_nh.advertise<

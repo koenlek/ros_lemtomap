@@ -28,6 +28,45 @@
 
 class TopoNavMap
 {
+private:
+  /**
+   * Variables
+   */
+  ros::NodeHandle &n_;
+  std::string scan_topic_;
+
+  std::vector<TopoNavNode*> nodes_; // ptrs are needed, as vector ALWAYS makes a COPY (passing by ref is impossible) when adding elements using e.g. nodes_.push_back().
+  std::vector<TopoNavEdge*> edges_; // These are reference to these vectors of object pointers within the TopoNavMap class. Problems can arise if pointed objects are destroyed without proper updating of these vectors!
+
+  tf::Pose robot_pose_tf_; //stores robots current pose
+  tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
+
+  sensor_msgs::LaserScan laser_scan_; //stores robots current laser scans
+
+  ros::Publisher toponav_map_pub_;
+  ros::Subscriber scan_sub_;
+
+  tf::TransformListener tf_listener_;
+
+  #if DEBUG
+    int test_executed_;
+  #endif
+
+  /**
+   * Private Methods
+   */
+  void laserCallback(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
+  void getCurrentPose(); // get current pose
+  void publishTopoNavMap(); //publish the full map to a msg
+
+  bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
+  bool checkCreateEdges(const TopoNavNode &node); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
+  bool checkIsNewDoor(); //Checks if a there is a new door
+  const bool directNavigable(const TopoNavNode &node1, const TopoNavNode &node2) const; //This method checks whether there is nothing (objects/walls) blocking the direct route between node1 and node2
+
+  const bool edgeExists(const TopoNavNode &node1, const TopoNavNode &node2) const;
+
+  double distanceToClosestNode(); //Checks the distance from the robot to the closest node.
 
 public:
   //Constructor: as the second argument has a null ptr as default, the constructor serves for both TopoNavMap(n,toponavmap_msg) and TopoNavMap(n).
@@ -72,48 +111,6 @@ public:
   void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::vector<TopoNavNode*> &nodes);
   st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(const TopoNavEdge* edge);
   st_topological_mapping::TopoNavNodeMsg nodeToRosMsg(const TopoNavNode* node);
-
-private:
-  /**
-   * Variables
-   */
-  ros::NodeHandle &n_;
-  std::string scan_topic_;
-
-  std::vector<TopoNavNode*> nodes_; // ptrs are needed, as vector ALWAYS makes a COPY (passing by ref is impossible) when adding elements using e.g. nodes_.push_back().
-  std::vector<TopoNavEdge*> edges_; // These are reference to these vectors of object pointers within the TopoNavMap class. Problems can arise if pointed objects are destroyed without proper updating of these vectors!
-
-  tf::Pose robot_pose_tf_; //stores robots current pose
-  tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
-
-  sensor_msgs::LaserScan laser_scan_; //stores robots current laser scans
-
-  ros::Publisher toponav_map_pub_;
-  ros::Subscriber scan_sub_;
-
-  tf::TransformListener tf_listener_;
-
-  #if DEBUG
-    int test_executed_;
-  #endif
-
-  /**
-   * Private Methods
-   */
-  void laserCallback(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
-  void getCurrentPose(); // get current pose
-  void publishTopoNavMap(); //publish the full map to a msg
-
-  bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
-  bool checkCreateEdges(const TopoNavNode &node); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
-  bool checkIsNewDoor(); //Checks if a there is a new door
-  const bool directNavigable(const TopoNavNode &node1, const TopoNavNode &node2) const; //This method checks whether there is nothing (objects/walls) blocking the direct route between node1 and node2
-
-  const bool edgeExists(const TopoNavNode &node1, const TopoNavNode &node2) const;
-
-  double distanceToClosestNode(); //Checks the distance from the robot to the closest node.
-
 };
-
 
 #endif
