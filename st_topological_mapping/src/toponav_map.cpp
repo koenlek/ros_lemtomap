@@ -31,7 +31,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 
 TopoNavMap::~TopoNavMap() {
 	while (nodes_.size() > 0) {
-		delete nodes_.back();
+		delete nodes_.rbegin()->second;
 	}
 
 	while (edges_.size() > 0) {
@@ -59,8 +59,8 @@ void TopoNavMap::publishTopoNavMap() {
 	ROS_DEBUG("publishTopoNavMap");
 	st_topological_mapping::TopologicalNavigationMap msg_map;
 
-	for (int i = 0; i < nodes_.size(); i++) {
-		msg_map.nodes.push_back(nodeToRosMsg(nodes_.at(i)));
+	for (std::map<node_id_int, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+		msg_map.nodes.push_back(nodeToRosMsg(it->second));
 	}
 	for (int i = 0; i < edges_.size(); i++) {
 		msg_map.edges.push_back(edgeToRosMsg(edges_.at(i)));
@@ -100,18 +100,18 @@ void TopoNavMap::loadMapFromMsg(
 
 	for (int i = 0; i < toponavmap_msg.nodes.size(); i++) {
 		nodeFromRosMsg(toponavmap_msg.nodes.at(i), nodes_);
-		ROS_DEBUG("Loaded node with ID=%d to vector.at place %d", nodes_.at(i)->getNodeID(),i);
+		ROS_DEBUG("Loaded node with ID=%lu to std::map nodes_", toponavmap_msg.nodes.at(i).node_id);
 	}
 	for (int i = 0; i < toponavmap_msg.edges.size(); i++) {
 		new TopoNavEdge(
 				toponavmap_msg.edges.at(i).edge_id, //edge_id
 				toponavmap_msg.edges.at(i).last_updated, //last_updated
 				toponavmap_msg.edges.at(i).cost, //cost
-				getNodeByID(toponavmap_msg.edges.at(i).start_node_id), //start_node
-				getNodeByID(toponavmap_msg.edges.at(i).end_node_id), //end_node
+				*nodes_[toponavmap_msg.edges.at(i).start_node_id],
+				*nodes_[toponavmap_msg.edges.at(i).end_node_id],
 				edges_ //edges vector
 				);
-		ROS_DEBUG("Loaded edge with ID=%d to vector.at place %d", edges_.at(i)->getEdgeID(),i);
+		ROS_DEBUG("Loaded edge with ID=%d to edges.at place %d", edges_.at(i)->getEdgeID(),i);
 	}
 	ROS_INFO("Finished loading the TopoNavMap");
 }
@@ -120,6 +120,15 @@ void TopoNavMap::loadMapFromMsg(
  * updateMap
  */
 void TopoNavMap::updateMap() {
+	/*addNode(robot_pose_tf_, false, 0);
+	addNode(robot_pose_tf_, false, 0);
+	ROS_INFO("Number of nodes:%lu",nodes_.size());
+	ROS_INFO("Current nodes:");
+	for (std::map<node_id_int, TopoNavNode*>::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++){
+		ROS_INFO("Node ID %d",it->second->getNodeID());
+	}
+	ROS_INFO("Last node has id:%d",nodes_.rbegin()->second->getNodeID());*/
+
 	getCurrentPose();
 
 	checkCreateNode();
@@ -144,63 +153,13 @@ void TopoNavMap::updateMap() {
 	 if (ros::Time().now()>ros::Time(39) && test_executed_==2)
 	 { //this code is to test stuff timed...
 	 ROS_INFO("Moving node 4");
-	 tf::Pose tmp_pose=getNodeByID(4).getPose();
+	 tf::Pose tmp_pose=nodes_[4]->getPose();
 	 tmp_pose.getOrigin().setY(tmp_pose.getOrigin().getY()+0.3);
-	 getNodeByID(4).setPose(tmp_pose);
+	 nodes_[4]->setPose(tmp_pose);
 	 test_executed_++;
 	 }
 
 #endif
-}
-
-/*!
- * getNodeByID
- */
-TopoNavNode& TopoNavMap::getNodeByID(int node_id) {
-	return *(nodes_.at(getNodeVectorPositionByID(node_id)));
-}
-
-/*!
- * getNodeVectorPosition
- */
-const int TopoNavMap::getNodeVectorPosition(const TopoNavNode &node) const {
-	return getNodeVectorPositionByID(node.getNodeID());
-}
-
-/*!
- * getNodeVectorPositionByID
- */
-const int TopoNavMap::getNodeVectorPositionByID(node_id_int node_id) const {
-	// @TODO: This method uses simple heuristics to make sure not too many nodes are searched. Maybe this can be done more clever?
-	int node_vector_position = 0;
-	int number_of_nodes = getNumberOfNodes();
-
-	if (number_of_nodes == 0) {
-		ROS_FATAL(
-				"There are zero nodes in the nodes_ vector. Therefore, this ROS Node will now shutdown.");
-		n_.shutdown();
-		return 0;
-	}
-	while (node_id != nodes_.at(node_vector_position)->getNodeID()) {
-		ROS_DEBUG(
-				"Checked position [%d] in nodes_ for node_id [%d], which mismatched as it actually has node_id [%d]",
-				node_vector_position, node_id,
-				nodes_.at(node_vector_position)->getNodeID());
-		if (node_vector_position + 1 == number_of_nodes)
-			break; //break out of this while loop as soon as all vector positions are checked
-		node_vector_position++;
-	}
-	if (node_id == nodes_.at(node_vector_position)->getNodeID()) {
-		ROS_DEBUG(
-				"Node found! Node_ID [%d] has position [%d] in the nodes_ vector",
-				node_id, node_vector_position);
-	} else {
-		ROS_FATAL(
-				"There is no node with Node ID %d in the nodes_ vector. Therefore, this ROS Node will now shutdown.",
-				node_id);
-		n_.shutdown();
-	}
-	return node_vector_position;
 }
 
 /*!
@@ -260,25 +219,21 @@ const int TopoNavMap::getEdgeVectorPositionByID(edge_id_int edge_id) const {
  */
 bool TopoNavMap::checkCreateNode() {
 	int number_of_nodes = getNumberOfNodes();
-	int area_id = 1; //@TODO FIXME: room_id is always 1!
+	int area_id = 1; //FIXME: room_id is always 1!
 	bool create_node = false;
 	bool is_door = false;
 
-	if (checkIsNewDoor()) { //I
-//@TODO: later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
+	if (checkIsNewDoor()) {
+		//TODO: later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
 		create_node = true;
 		is_door = true;
 	} else if (distanceToClosestNode() > 1) {
-//@TODO FIXME: Remove magic number "1", which is the min distance here...
+		//TODO FIXME: Remove magic number "1", which is the min distance here...
 		create_node = true;
 	}
 	if (create_node) {
 		addNode(robot_pose_tf_, is_door, area_id);
-		checkCreateEdges(*nodes_.back());
-
-		/*ROS_INFO("nodes_.at(0) Area ID = %d",getNodes().at(0)->getAreaID()); // This code can be used to check r/w access to nodes_ and edges_ member through their get Methods (read only is desired!)
-		 getNodes().at(0)->setAreaID(3);
-		 ROS_INFO("After setAreaID(3), nodes_.at(0) Area ID = %d",nodes_.at(0)->getAreaID());*/
+		checkCreateEdges((*nodes_.rbegin()->second)); //(*nodes_.rbegin()->second) should pass it the node that was just created...
 
 		return true;
 	} else {
@@ -292,15 +247,14 @@ bool TopoNavMap::checkCreateNode() {
  */
 bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 	//@TODO This method compares with all nodes: does not scale very well.
-	int node_vecpos = getNodeVectorPosition(node);
 	bool edge_created = false;
 	if (getNumberOfNodes() >= 2) {
-		for (int i = 0; i < getNumberOfNodes(); i++) {
-			if (i == node_vecpos)
+		for (std::map<node_id_int, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+			if (it->second->getNodeID() == node.getNodeID())
 				continue; //Not compare with itself
-			if (!edgeExists(node, *nodes_.at(i))
-					&& directNavigable(node, *nodes_.at(i))) {
-				addEdge(node, *nodes_.at(i));
+			if (!edgeExists(node, *(it->second))
+					&& directNavigable(node, *(it->second))) {
+				addEdge(node, *(it->second));
 				edge_created = true;
 			}
 		}
@@ -335,6 +289,7 @@ const bool TopoNavMap::directNavigable(const TopoNavNode &node1,
  */
 const bool TopoNavMap::edgeExists(const TopoNavNode &node1,
 		const TopoNavNode &node2) const {
+	//TODO: if giving the edges and ID like the string "2to1", you will have unique IDs that are descriptive enough to facilitate edgeExists etc.
 	ROS_WARN_ONCE(
 			"edgeExists is not yet implemented. It should help block recreation of edges in checkCreateEdge. This goes well for new edges (there is no risk of duplicates), but triggering checkCreateEdge when updating a node for example will likely lead to duplicate edges. This message will only print once.");
 	return false;
@@ -362,15 +317,15 @@ double TopoNavMap::distanceToClosestNode() {
 	if (number_of_nodes == 0)
 		minimum_dist = INFINITY; //No nodes means -> dist in inf.
 	else {
-		for (int i = 0; i < number_of_nodes; i++) {
-			dist = calcDistance(*nodes_.at(i), robot_pose_tf_);
+		for (std::map<node_id_int, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+			dist = calcDistance(*(it->second), robot_pose_tf_);
 
 			ROS_DEBUG("Distance between Robot and Node_ID %d = %f",
-					nodes_.at(i)->getNodeID(), dist);
+					it->second->getNodeID(), dist);
 
-			if (i == 0 || dist < minimum_dist) {
+			if (it == nodes_.begin() || dist < minimum_dist) {
 				minimum_dist = dist;
-				closest_node_id = nodes_.at(i)->getNodeID();
+				closest_node_id = it->second->getNodeID();
 			}
 		}
 	}
@@ -410,7 +365,7 @@ void TopoNavMap::deleteEdge(TopoNavEdge &edge) {
  * deleteNode
  */
 void TopoNavMap::deleteNode(node_id_int node_id) {
-	deleteNode(getNodeByID(node_id));
+	deleteNode(*nodes_[node_id]);
 }
 void TopoNavMap::deleteNode(TopoNavNode &node) {
 	std::vector<TopoNavEdge*> connected_edges = connectedEdges(node);
@@ -433,7 +388,7 @@ std::vector<TopoNavEdge*> TopoNavMap::connectedEdges(
 }
 
 
-void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::vector<TopoNavNode*> &nodes) {
+void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::map<node_id_int, TopoNavNode*> &nodes) {
 	tf::Pose tfpose;
 	poseMsgToTF(node_msg.pose,tfpose);
 
@@ -443,7 +398,7 @@ void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg nod
 			tfpose,//pose
 			node_msg.is_door,//is_door
 			node_msg.area_id,//area_id
-			nodes//nodes vector
+			nodes//nodes map
 	);
 }
 
@@ -453,8 +408,8 @@ void TopoNavMap::edgeFromRosMsg(
 	new TopoNavEdge(edge_msg.edge_id, //edge_id
 			edge_msg.last_updated, //last_updated
 			edge_msg.cost, //cost
-			getNodeByID(edge_msg.start_node_id), //start_node
-			getNodeByID(edge_msg.end_node_id), //end_node
+			*nodes_[edge_msg.start_node_id], //start_node
+			*nodes_[edge_msg.end_node_id], //end_node
 			edges //nodes vector
 			);
 }

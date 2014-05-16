@@ -1,7 +1,7 @@
 #!/bin/bash          
 #
 # Script to supress gmapping output
-# 
+#
 # Koen Lekkerkerker
 # 7 May 2014 
 #

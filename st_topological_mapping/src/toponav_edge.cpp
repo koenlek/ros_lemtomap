@@ -38,7 +38,7 @@ TopoNavEdge::~TopoNavEdge()
     ROS_FATAL("Edge with ID %d could not be erased from the edges_ vector! This means there is a problem in the c++ code of this ROS node!",edge_id_);
     return;
   }
-  ROS_INFO("Edge with ID %d is destructed",edge_id_);
+  ROS_INFO("Edge with ID %d is destructed",edge_id_); //does not print on node shutdown! therefor: std::cerr is added...
   #if DEBUG
   std::cerr << "~TopoNavEdge: Deleting edge wit ID: " << edge_id_ << std::endl;
   #endif

@@ -3,7 +3,7 @@
 
 #include "ros/ros.h"
 #include "tf/transform_datatypes.h"
-#include <vector>
+#include <map>
 #include <algorithm> //std::find
 
 /*
@@ -20,9 +20,9 @@ class TopoNavNode {
 public:
 
 	TopoNavNode(tf::Pose pose, bool is_door, int area_id,
-			std::vector<TopoNavNode*> &nodes);
+			std::map<node_id_int, TopoNavNode*> &nodes);
 	TopoNavNode(node_id_int node_id, ros::Time last_updated, tf::Pose pose,
-			bool is_door, int area_id, std::vector<TopoNavNode*> &nodes); // only to be used when loading map from message!
+			bool is_door, int area_id, std::map<node_id_int, TopoNavNode*> &nodes); // only to be used when loading map from message!
 
 	~TopoNavNode();
 
@@ -71,7 +71,7 @@ private:
 	tf::Pose pose_;
 	bool is_door_;
 	int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
-	std::vector<TopoNavNode*> &nodes_;
+	std::map<node_id_int, TopoNavNode*> &nodes_;
 
 	// @TODO add some "Properties of space" msg type that I still need to implement. This should get objects, local room size (by local I mean: as measured at this node), local room shape. All defined using semantic/symbolic labels with a prob. distribution of the relevant collection of such labels (e.g. room size 0.9 large, 0.07 medium, 0.04 small).
 	// @TODO add room_type, also as a semantic/symbolic probability distribution of all possible room types.

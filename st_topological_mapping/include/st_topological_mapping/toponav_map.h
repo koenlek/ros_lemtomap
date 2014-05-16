@@ -3,7 +3,8 @@
 
 // General includes
 #include "string"
-#include <algorithm> //std::find
+//#include <algorithm> //std::find
+#include <map>
 
 // ROS includes
 #include "ros/ros.h"
@@ -35,8 +36,8 @@ private:
   ros::NodeHandle &n_;
   std::string scan_topic_;
 
-  std::vector<TopoNavNode*> nodes_; // ptrs are needed, as vector ALWAYS makes a COPY (passing by ref is impossible) when adding elements using e.g. nodes_.push_back().
-  std::vector<TopoNavEdge*> edges_; // These are reference to these vectors of object pointers within the TopoNavMap class. Problems can arise if pointed objects are destroyed without proper updating of these vectors!
+  std::map<node_id_int, TopoNavNode*> nodes_; // ptrs are needed, as std::map makes a COPY  when adding elements.
+  std::vector<TopoNavEdge*> edges_; //TODO: these std::maps now form the original maps, the TopoNavNode and TopoNavEdge work with references to these. Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
 
   tf::Pose robot_pose_tf_; //stores robots current pose
   tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
@@ -91,12 +92,9 @@ public:
   void deleteNode(TopoNavNode &node);
 
   //Get methods
-  const std::vector<TopoNavNode*>& getNodes() const { return nodes_; } //TODO: The type const std::vector<TopoNavNode*>& gives r/w access to the objects where the pointers are pointing to. Const only applies to the vector itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
+  const std::map<node_id_int, TopoNavNode*>& getNodes() const { return nodes_; } //TODO: The type const std::map<node_id_int, TopoNavNode*>& gives r/w access to the objects where the pointers are pointing to. Const only applies to the map itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
   const std::vector<TopoNavEdge*>& getEdges() const { return edges_; }
 
-  TopoNavNode& getNodeByID(node_id_int node_id); //return the Node that matches the supplied ID. Throw ROS_FATAL and shutdown ROS node if the node is not found!
-  const int getNodeVectorPosition(const TopoNavNode &node) const; //return the position of TopoNavNode node in the nodes_ vector.
-  const int getNodeVectorPositionByID(node_id_int node_id) const; //return the node vector position of the Node that matches the supplied ID. Throw ROS_FATAL and shutdown ROS node if the node is not found!
   const int getNumberOfNodes() const { return nodes_.size(); } // return the number of nodes
 
   TopoNavEdge& getEdgeByID(edge_id_int edge_id); //return the Edge that matches the supplied ID. Throw ROS_FATAL and shutdown ROS node if the edge is not found!
@@ -108,7 +106,7 @@ public:
 
   // conversions from/to ROS msgs
   void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, std::vector<TopoNavEdge*> &edges);
-  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::vector<TopoNavNode*> &nodes);
+  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::map<node_id_int, TopoNavNode*> &nodes);
   st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(const TopoNavEdge* edge);
   st_topological_mapping::TopoNavNodeMsg nodeToRosMsg(const TopoNavNode* node);
 };

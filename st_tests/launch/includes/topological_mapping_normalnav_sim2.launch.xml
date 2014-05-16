@@ -3,7 +3,7 @@
 <launch>
 	<!-- Gmapping --> <!-- Using the script to block anoying stderr messages -->
 	<node pkg="st_navigation" 
-              type="gmapping_nostderr.sh" args="scan_hokuyo" 
+              type="gmapping_nostderr.sh" args="scan_hokuyo"
               name="gmapping_nostderr">
 	</node>
 

@@ -6,7 +6,7 @@
 
 #include <st_topological_mapping/show_toponav_map.h>
 
-ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const std::vector<TopoNavNode*> &nodes,
+ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const std::map<node_id_int, TopoNavNode*> &nodes,
                                const std::vector<TopoNavEdge*> &edges) :
     n_(n), // this way, ShowTopoNavMapis aware of the NodeHandle of this ROS node, just as TopoNavMap...
     nodes_(nodes), edges_(edges)
@@ -63,31 +63,24 @@ void ShowTopoNavMap::updateVisualization()
   visualizeEdges();
   markers_pub_.publish(toponavmap_ma_);
 
-  /*if (ros::Time().now()>ros::Time(5)){ //this code is to show that there is r/w access to the nodes (and edges). Which is undesired.
-    ROS_INFO("nodes_.at(0) Area ID = %d",nodes_.at(0)->getAreaID());
-    nodes_.at(0)->setAreaID(2);
-    ROS_INFO("After setAreaID(2), nodes_.at(0) Area ID = %d",nodes_.at(0)->getAreaID());
-  }*/
-
 }
 
 void ShowTopoNavMap::visualizeNodes()
 {
-
-  for(int i=0;i<nodes_.size();i++) //TODO: This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
+  //if having gcc4.7 or higher, you could use: auto it=nodes_.begin(); it!=nodes_.end(); it++
+  for(std::map<node_id_int, TopoNavNode*>::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++) //TODO: This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
   {
-
     //Check if it is a door node
-    if(nodes_.at(i)->getIsDoor()==true)
+    if(it->second->getIsDoor()==true)
     {
-      doors_marker_.id = nodes_.at(i)->getNodeID();
-      poseTFToMsg(nodes_.at(i)->getPose(),doors_marker_.pose);
+      doors_marker_.id = it->second->getNodeID(); //it->second->getNodeID() should equal it->first
+      poseTFToMsg(it->second->getPose(),doors_marker_.pose);
       toponavmap_ma_.markers.push_back(doors_marker_);
     }
     else
     {
-      nodes_marker_.id = nodes_.at(i)->getNodeID(); // as there can only be one per ID: updated nodes are automatically moved if pose is updated, without the need to remove the old one...
-      poseTFToMsg(nodes_.at(i)->getPose(),nodes_marker_.pose);
+      nodes_marker_.id = it->second->getNodeID(); // as there can only be one per ID: updated nodes are automatically moved if pose is updated, without the need to remove the old one...
+      poseTFToMsg(it->second->getPose(),nodes_marker_.pose);
       toponavmap_ma_.markers.push_back(nodes_marker_);
     }
   }
