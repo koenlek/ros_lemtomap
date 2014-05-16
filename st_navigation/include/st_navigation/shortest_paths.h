@@ -4,6 +4,7 @@
 //General includes
 #include <utility>
 #include <vector>
+#include <map>
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -29,16 +30,16 @@
 
 namespace st_shortest_paths
 {
-std::vector<int> shortestPath (const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg , int start_node, int end_node);
+std::vector<int> shortestPath (st_topological_mapping::TopologicalNavigationMap toponavmap_msg , int start_node_id, int end_node_id); //returns a list of the node IDs that form the path that should be followed. A copy of toponav_msg is used: to make sure it cannot crash on deleted nodes/edges while calculating route
 
 typedef float Weight;
 typedef boost::property<boost::edge_weight_t, Weight> WeightProperty;
-typedef boost::property<boost::vertex_name_t, std::string> NameProperty;
-typedef boost::adjacency_list < boost::listS, boost::vecS, boost::directedS, NameProperty, WeightProperty > Graph;
-typedef std::vector<Graph::edge_descriptor> PathType;
-typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
-typedef boost::property_map < Graph, boost::vertex_index_t >::type IndexMap;
-typedef boost::property_map < Graph, boost::vertex_name_t >::type NameMap;
+typedef boost::property<boost::vertex_index_t, int> IndexProperty;
+
+typedef boost::adjacency_list < boost::listS, boost::vecS, boost::undirectedS, IndexProperty, WeightProperty > UndirectedGraph;
+typedef boost::graph_traits < UndirectedGraph >::vertex_descriptor Vertex;
+
+typedef boost::property_map < UndirectedGraph, boost::vertex_index_t >::type IndexMap;
 typedef boost::iterator_property_map < Vertex*, IndexMap, Vertex, Vertex& > PredecessorMap;
 typedef boost::iterator_property_map < Weight*, IndexMap, Weight, Weight& > DistanceMap;
 } // namespace

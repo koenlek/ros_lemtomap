@@ -128,21 +128,20 @@ void TopoNavMap::updateMap() {
 
 #if DEBUG
 
-	/*
-	 if (ros::Time().now()>ros::Time(15) && test_executed_==0)
+	 if (ros::Time().now()>ros::Time(35) && test_executed_==0)
+	 { //this code is to test stuff timed...
+	 ROS_INFO("Deleting node 6");
+	 deleteNode(6);
+	 test_executed_++;
+	 }
+	 if (ros::Time().now()>ros::Time(37) && test_executed_==1)
 	 { //this code is to test stuff timed...
 	 ROS_INFO("Deleting node 2");
 	 deleteNode(2);
 	 test_executed_++;
 	 }
-	 if (ros::Time().now()>ros::Time(25) && test_executed_==1)
-	 { //this code is to test stuff timed...
-	 ROS_INFO("Deleting node 1");
-	 deleteNode(1);
-	 test_executed_++;
-	 }
 
-	 if (ros::Time().now()>ros::Time(35) && test_executed_==2)
+	 if (ros::Time().now()>ros::Time(39) && test_executed_==2)
 	 { //this code is to test stuff timed...
 	 ROS_INFO("Moving node 4");
 	 tf::Pose tmp_pose=getNodeByID(4).getPose();
@@ -150,7 +149,7 @@ void TopoNavMap::updateMap() {
 	 getNodeByID(4).setPose(tmp_pose);
 	 test_executed_++;
 	 }
-	 */
+
 #endif
 }
 
@@ -323,7 +322,7 @@ const bool TopoNavMap::directNavigable(const TopoNavNode &node1,
 
 	//For now, it only check whether a node is within a certain distance...
 
-	if (calcDistance(node1, node2) <= 1 * 1.2)
+	if (calcDistance(node1, node2) <= 5) //if (calcDistance(node1, node2) <= 1 * 1.2)
 		return true;
 	else
 		return false;

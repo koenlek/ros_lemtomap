@@ -8,32 +8,73 @@
 
 namespace st_shortest_paths {
 
-std::vector<int> shortestPath(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg, int start_node, int end_node)
+std::vector<int> shortestPath(st_topological_mapping::TopologicalNavigationMap toponavmap_msg, int start_node_id, int end_node_id)
 {
-	ROS_WARN_ONCE(
-			"Calculating shortest path is not yet fully implemented. This message will only show once\n"
-					"BTW: the requested route was from node_id:%d to node_id:%d.",
-			start_node, end_node);
+	ROS_INFO(
+			"Calculating shortest route from node id:%d to node id:%d.",
+			start_node_id, end_node_id);
+
+	/*
+	 * The code below is to turn the map into a format that Boost Graph can solve using Dijkstra's algorithm.
+	 * And to eventually turn the result into a form that can be returned to ROS again...
+	 * It was largely based on this example: http://programmingexamples.net/wiki/Boost/BGL/DijkstraComputePath
+	 */
 
 	// Create a graph
-	Graph graph;
+	UndirectedGraph graph;
 
-	// Add named vertices
-	Vertex vertex0 = boost::add_vertex(std::string("vertex0"), graph);
-	Vertex vertex1 = boost::add_vertex(std::string("vertex1"), graph);
-	Vertex vertex2 = boost::add_vertex(std::string("vertex2"), graph);
-	Vertex vertex3 = boost::add_vertex(std::string("vertex3"), graph);
+	int num_of_vertices = toponavmap_msg.nodes.size();
+	int num_of_edges = toponavmap_msg.edges.size();
+	bool start_node_exists = false;
+	bool end_node_exists = false;
+	std::vector<Vertex> vertices_boost;
 
-	// Add weighted edges
-	Weight weight0 = 5;
-	Weight weight1 = 3;
-	Weight weight2 = 2;
-	Weight weight3 = 4;
 
-	boost::add_edge(vertex0, vertex1, weight0, graph);
-	boost::add_edge(vertex1, vertex3, weight1, graph);
-	boost::add_edge(vertex0, vertex2, weight2, graph);
-	boost::add_edge(vertex2, vertex3, weight3, graph);
+	//typedef std::map<int, st_topological_mapping::TopoNavNodeMsg> NodesIdmap; // specify a node ID and receive a TopoNavNode Msg
+	//typedef std::map<int, st_topological_mapping::TopoNavEdgeMsg> EdgesIdmap; // specify an edge ID and receive a TopoNavEdge Msg
+	//NodesIdmap nodes_idmap; //TODO: remove these lines
+	//EdgesIdmap edges_idmap;
+	std::map<int, int> nodes_id2vecpos_map;
+	std::map<int, int> edges_id2vecpos_map;
+
+	// Add vertices to boost graph, and create a map that maps node ids to nodes
+	for (int i = 0; i < num_of_vertices; i++)
+	{
+		//nodes_idmap[toponavmap_msg.nodes.at(i).node_id]=toponavmap_msg.nodes.at(i); //TODO: remove this line
+		nodes_id2vecpos_map[toponavmap_msg.nodes.at(i).node_id]=i;
+
+		vertices_boost.push_back(boost::add_vertex(graph));
+		if (toponavmap_msg.nodes.at(i).node_id == start_node_id)
+		{
+			start_node_exists = true;
+			ROS_DEBUG("start_node_id %d has vecpos %d", start_node_id,i);
+		}
+		if (toponavmap_msg.nodes.at(i).node_id == end_node_id)
+		{
+			end_node_exists = true;
+			ROS_DEBUG("end_node_id %d has vecpos %d", end_node_id,i);
+		}
+	}
+	if (!start_node_exists || !end_node_exists)
+	{
+	  ROS_FATAL_COND(!start_node_exists,"The provided start_node_id %d does not exist in the current toponavmap msg",start_node_id);
+	  ROS_FATAL_COND(!end_node_exists,"The provided end_node_id %d does not exist in the current toponavmap msg",end_node_id);
+	  ROS_FATAL("The '%s' node will now exit",ros::this_node::getName().c_str());
+	  ros::shutdown();
+	}
+
+	// Add edges to boost graph, and create a map that maps edges ids to edges
+	for (int i = 0; i < num_of_edges; i++)
+	{
+		//edges_idmap[toponavmap_msg.edges.at(i).edge_id]=toponavmap_msg.edges.at(i); //TODO: remove this line
+		edges_id2vecpos_map[toponavmap_msg.edges.at(i).edge_id]=i;
+
+		boost::add_edge(nodes_id2vecpos_map[toponavmap_msg.edges.at(i).start_node_id],nodes_id2vecpos_map[toponavmap_msg.edges.at(i).end_node_id], toponavmap_msg.edges.at(i).cost , graph);
+	}
+
+	Vertex vertext_boost_src = vertices_boost.at(nodes_id2vecpos_map[start_node_id]);
+	Vertex vertext_boost_dest = vertices_boost.at(nodes_id2vecpos_map[end_node_id]);
+
 
 	// Create things for Dijkstra
 	std::vector<Vertex> predecessors(boost::num_vertices(graph)); // To store parents
@@ -44,59 +85,45 @@ std::vector<int> shortestPath(const st_topological_mapping::TopologicalNavigatio
 	DistanceMap distanceMap(&distances[0], indexMap);
 
 	// Compute shortest paths from starting vertex to all other vertices, and store the output in predecessors and distances
-	// boost::dijkstra_shortest_paths(g, vertex0, boost::predecessor_map(predecessorMap).distance_map(distanceMap));
+	// boost::dijkstra_shortest_paths(g, vertext_boost_src, boost::predecessor_map(predecessorMap).distance_map(distanceMap));
 	// This is exactly the same as the above line - it is the idea of "named parameters" - you can pass the
 	// predecessor map and the distance map in any order.
-	boost::dijkstra_shortest_paths(graph, vertex0,
-			boost::distance_map(distanceMap).predecessor_map(predecessorMap));
+
+	boost::dijkstra_shortest_paths(graph, vertext_boost_src,
+			boost::distance_map(distanceMap).predecessor_map(predecessorMap)); //TODO: Currently: it searches source to all, instead of source to target. Comp. time will be limited by switching to the latter.
 
 	// Output results
-	ROS_INFO_STREAM("distances and parents:");
-	NameMap nameMap = boost::get(boost::vertex_name, graph);
+	ROS_INFO("distances and parents:");
 
-	BGL_FORALL_VERTICES(v, graph, Graph){
-		ROS_INFO_STREAM("distance(" << nameMap[vertex0] << ", " << nameMap[v] << ") = " << distanceMap[v] << ", " <<
-		  "predecessor(" << nameMap[v] << ") = " << nameMap[predecessorMap[v]]);
+	BGL_FORALL_VERTICES(v, graph, UndirectedGraph){
+		ROS_INFO("distance(NodeID %lu, NodeID %lu) = %.4f, predecessor NodeID %lu = NodeID %lu",
+		  toponavmap_msg.nodes.at(indexMap[vertext_boost_src]).node_id,
+		  toponavmap_msg.nodes.at(indexMap[v]).node_id,
+		  distanceMap[v],
+		  toponavmap_msg.nodes.at(indexMap[v]).node_id,
+		  toponavmap_msg.nodes.at(indexMap[predecessorMap[v]]).node_id
+		  );
 	}
 
-	PathType path;
-	std::vector<std::string> path_vertex_namevector; //KL
+	std::vector<int> path_node_id_vector;
 
-	Vertex v = vertex3; // We want to start at the destination and work our way back to the source
-	path_vertex_namevector.push_back(nameMap[v]);
-	for (Vertex u = predecessorMap[v]; // Start by setting 'u' to the destination node's predecessor
-	u != v; // Keep tracking the path until we get to the source
-			v = u, u = predecessorMap[v]) // Set the current vertex to the current predecessor, and the predecessor to one level up
-			{
-		std::pair<Graph::edge_descriptor, bool> edgePair = boost::edge(u, v,
-				graph);
-		Graph::edge_descriptor edge = edgePair.first;
+	path_node_id_vector.push_back(toponavmap_msg.nodes.at(indexMap[vertext_boost_dest]).node_id);
 
-		path.push_back(edge);
-		path_vertex_namevector.insert(path_vertex_namevector.begin(),
-				nameMap[u]);
+	Vertex vertext_boost_dest_tmp=vertext_boost_dest; // We want to start at the destination and work our way back to the source
+	for (Vertex vertex_boost_prev = predecessorMap[vertext_boost_dest_tmp]; // Start by setting 'u' to the destination node's predecessor
+		   vertex_boost_prev != vertext_boost_dest_tmp; // Keep tracking the path until we get to the source
+		   vertext_boost_dest_tmp = vertex_boost_prev, vertex_boost_prev = predecessorMap[vertext_boost_dest_tmp]) // Set the current vertex to the current predecessor, and the predecessor to one level up
+	{
+		path_node_id_vector.insert(path_node_id_vector.begin(),toponavmap_msg.nodes.at(indexMap[vertex_boost_prev]).node_id);
 	}
 
-	// Write shortest path
-	ROS_INFO_STREAM("Shortest path from vertex0 to vertex3:");
-	//float totalDistance = 0;
-	for (PathType::reverse_iterator pathIterator = path.rbegin();
-			pathIterator != path.rend(); ++pathIterator) {
-		ROS_INFO_STREAM(nameMap[boost::source(*pathIterator, graph)] << " -> "
-				<< nameMap[boost::target(*pathIterator, graph)] << " = "
-				<< boost::get(boost::edge_weight, graph, *pathIterator));
+	ROS_INFO("Content of the vector path_vertex_vector is:");
+
+	for (unsigned int i = 0; i < path_node_id_vector.size(); i++) {
+		ROS_INFO("path_vertex_vector.at(%d)=%d", i, path_node_id_vector.at(i));
 	}
+	ROS_INFO("Distance: %.4f", distanceMap[vertext_boost_dest]);
 
-	ROS_INFO("Content of the vector path_vertex_namevector is:");
-
-	for (unsigned int i = 0; i < path_vertex_namevector.size(); i++) {
-		ROS_INFO("path_vertex_namevector.at(%d)='%s'", i,
-				path_vertex_namevector.at(i).c_str());
-	}
-
-	ROS_INFO_STREAM("Distance: " << distanceMap[vertex3]);
-
-	std::vector<int> vec { 1, 2 };
-	return vec;
+	return path_node_id_vector;
 }
 }

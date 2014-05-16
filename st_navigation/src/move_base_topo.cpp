@@ -30,18 +30,18 @@ void MoveBaseTopo::toponavmapCB(const st_topological_mapping::TopologicalNavigat
 void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //CB stands for CallBack...
   {
     // helper variables
-    ros::Rate r(1);
     bool success = true;
+    std::vector<int> nodes_route;
     ros::Time start_time = ros::Time::now();
 
     // publish info to the console for the user
     ROS_INFO("%s: Executing, navigating to the stars and back, to finish at node_id %d", action_name_.c_str(), goal->target_node_id);
 
     // Calculate the topological path
-	st_shortest_paths::shortestPath(toponavmap_,1,goal->target_node_id);
+    nodes_route = st_shortest_paths::shortestPath(toponavmap_,4,goal->target_node_id);
 
     // start executing the action
-    while (ros::Time::now()<start_time+ros::Duration(10))
+    while (ros::Time::now()<start_time+ros::Duration(10)) //TODO: this time limit is just for testing: should be removed eventually
     {
       // check that preempt has not been requested by the client -> a preempt (cancelation) will automatically be triggered if a new goal is send!
       if (action_server_.isPreemptRequested() || !ros::ok())
@@ -53,8 +53,8 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
         success = false;
         break;
       }
-      feedback_.route_node_ids.push_back(1);
-      feedback_.route_edge_ids.push_back(2);
+      feedback_.route_edge_ids.clear();
+      feedback_.route_node_ids=nodes_route;
       // publish the feedback
       action_server_.publishFeedback(feedback_);
     }
@@ -85,6 +85,11 @@ int main(int argc, char** argv) {
 	ros::Rate r(4);
 
 	MoveBaseTopo move_base_topo(ros::this_node::getName());
+
+	//Set default logger level for this ROS Node...
+	/*if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+		ros::console::notifyLoggerLevelsChanged();
+	}*/
 
 	while (n.ok()) {
 
