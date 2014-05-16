@@ -27,11 +27,11 @@
 	</include>
 
 	<!--Topological map builder -->
-	<!--<node pkg="st_topological_mapping" type="topological_navigation_mapper"
+	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
-	</node>-->
+	</node>
 
 	<!-- Teleop -->
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" />

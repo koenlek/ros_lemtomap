@@ -7,7 +7,7 @@
 #include <st_topological_mapping/show_toponav_map.h>
 
 ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const std::map<node_id_int, TopoNavNode*> &nodes,
-                               const std::vector<TopoNavEdge*> &edges) :
+                               const std::map<edge_id_int, TopoNavEdge*> &edges) :
     n_(n), // this way, ShowTopoNavMapis aware of the NodeHandle of this ROS node, just as TopoNavMap...
     nodes_(nodes), edges_(edges)
 {
@@ -88,19 +88,19 @@ void ShowTopoNavMap::visualizeNodes()
 
 void ShowTopoNavMap::visualizeEdges ()
 {
-  for(int i=0;i<edges_.size();i++) //TODO: This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
+  for(std::map<edge_id_int, TopoNavEdge*>::const_iterator it=edges_.begin(); it!=edges_.end(); it++) //TODO: This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
   {
-      edges_marker_.id = edges_.at(i)->getEdgeID();
+      edges_marker_.id =it->second->getEdgeID();
       edges_marker_.points.resize(2); // each line_list exits of one line
 
       //Source
-      edges_marker_.points[0].x = edges_.at(i)->getStartNode().getPose().getOrigin().getX();
-      edges_marker_.points[0].y = edges_.at(i)->getStartNode().getPose().getOrigin().getY();
+      edges_marker_.points[0].x = it->second->getStartNode().getPose().getOrigin().getX();
+      edges_marker_.points[0].y = it->second->getStartNode().getPose().getOrigin().getY();
       edges_marker_.points[0].z = 0.0f;
 
       //Destination
-      edges_marker_.points[1].x = edges_.at(i)->getEndNode().getPose().getOrigin().getX();
-      edges_marker_.points[1].y = edges_.at(i)->getEndNode().getPose().getOrigin().getY();
+      edges_marker_.points[1].x = it->second->getEndNode().getPose().getOrigin().getX();
+      edges_marker_.points[1].y = it->second->getEndNode().getPose().getOrigin().getY();
       edges_marker_.points[1].z = 0.0f;
 
       toponavmap_ma_.markers.push_back(edges_marker_);

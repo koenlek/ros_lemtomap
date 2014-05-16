@@ -96,7 +96,7 @@ std::vector<int> shortestPath(st_topological_mapping::TopologicalNavigationMap t
 	ROS_INFO("distances and parents:");
 
 	BGL_FORALL_VERTICES(v, graph, UndirectedGraph){
-		ROS_INFO("distance(NodeID %lu, NodeID %lu) = %.4f, predecessor NodeID %lu = NodeID %lu",
+		ROS_DEBUG("distance(NodeID %lu, NodeID %lu) = %.4f, predecessor NodeID %lu = NodeID %lu",
 		  toponavmap_msg.nodes.at(indexMap[vertext_boost_src]).node_id,
 		  toponavmap_msg.nodes.at(indexMap[v]).node_id,
 		  distanceMap[v],

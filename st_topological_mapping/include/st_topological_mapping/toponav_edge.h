@@ -4,7 +4,7 @@
 #include "ros/ros.h"
 #include "toponav_node.h"
 #include "utils.h"
-#include <vector>
+#include <map>
 #include <algorithm> //std::find
 
 /*
@@ -20,8 +20,8 @@ class TopoNavEdge
 {
 
 public:
-  TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::vector<TopoNavEdge*> &edges);
-  TopoNavEdge(edge_id_int edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::vector<TopoNavEdge*> &edges); // only to be used when loading map from message!
+  TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges);
+  TopoNavEdge(edge_id_int edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges); // only to be used when loading map from message!
   ~TopoNavEdge();
 
   /**
@@ -55,7 +55,7 @@ private:
   const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
   const TopoNavNode &end_node_;
 
-  std::vector<TopoNavEdge*> &edges_;
+  std::map<edge_id_int, TopoNavEdge*> &edges_;
   /**
    * Private Methods
    */

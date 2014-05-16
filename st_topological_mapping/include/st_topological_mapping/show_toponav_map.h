@@ -2,6 +2,7 @@
 #define SHOW_TOPONAV_MAP_H
 
 #include <string>
+#include <map>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -20,7 +21,7 @@ class ShowTopoNavMap
 {
 
 public:
-  ShowTopoNavMap(ros::NodeHandle &n, const std::map<node_id_int, TopoNavNode*> &nodes, const std::vector<TopoNavEdge*> &edges); //Constructor
+  ShowTopoNavMap(ros::NodeHandle &n, const std::map<node_id_int, TopoNavNode*> &nodes, const std::map<edge_id_int, TopoNavEdge*> &edges); //Constructor
   /**
    * Public Methods
    */
@@ -32,7 +33,7 @@ private:
    */
   ros::NodeHandle &n_;
   const std::map<node_id_int, TopoNavNode*> &nodes_;
-  const std::vector<TopoNavEdge*> &edges_;
+  const std::map<edge_id_int, TopoNavEdge*> &edges_;
 
   visualization_msgs::Marker nodes_marker_;
   visualization_msgs::Marker edges_marker_;

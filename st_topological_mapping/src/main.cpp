@@ -35,8 +35,8 @@ int main(int argc, char** argv) {
 
 	ros::Rate r(4);
 
-#include <boost/preprocessor/stringize.hpp>
 #ifdef CMAKE_BUILD_TYPE_DEF
+#include <boost/preprocessor/stringize.hpp>
 	ROS_INFO("This node had CMAKE_BUILD_TYPE=%s",BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
 #endif
 
