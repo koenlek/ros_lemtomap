@@ -36,8 +36,8 @@ private:
   ros::NodeHandle &n_;
   std::string scan_topic_;
 
-  std::map<node_id_int, TopoNavNode*> nodes_; // ptrs are needed, as std::map makes a COPY  when adding elements.
-  std::map<edge_id_int, TopoNavEdge*> edges_; //TODO: these std::maps now form the original maps, the TopoNavNode and TopoNavEdge work with references to these. Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
+  std::map<NodeID, TopoNavNode*> nodes_; // ptrs are needed, as std::map makes a COPY  when adding elements.
+  std::map<EdgeID, TopoNavEdge*> edges_; //TODO: these std::maps now form the original maps, the TopoNavNode and TopoNavEdge work with references to these. Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
 
   tf::Pose robot_pose_tf_; //stores robots current pose
   tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
@@ -86,23 +86,23 @@ public:
   void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
   void addNode(const tf::Pose &pose, bool is_door,int area_id);
   //void addNode(tf::Pose pose); //TODO: implement a default add node with door is false and area_id is current area_id
-  void deleteEdge(edge_id_int edge_id);
+  void deleteEdge(EdgeID edge_id);
   void deleteEdge(TopoNavEdge &edge);
-  void deleteNode(node_id_int node_id);
+  void deleteNode(NodeID node_id);
   void deleteNode(TopoNavNode &node);
 
   //Get methods
-  const std::map<node_id_int, TopoNavNode*>& getNodes() const { return nodes_; } //TODO: The type const std::map<node_id_int, TopoNavNode*>& gives r/w access to the objects where the pointers are pointing to. Const only applies to the map itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
-  const std::map<edge_id_int, TopoNavEdge*>& getEdges() const { return edges_; }
+  const std::map<NodeID, TopoNavNode*>& getNodes() const { return nodes_; } //TODO: The type const std::map<NodeID, TopoNavNode*>& gives r/w access to the objects where the pointers are pointing to. Const only applies to the map itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
+  const std::map<EdgeID, TopoNavEdge*>& getEdges() const { return edges_; }
 
   const int getNumberOfNodes() const { return nodes_.size(); } // return the number of nodes
   const int getNumberOfEdges() const { return edges_.size(); } // return the number of edges
 
-  std::map<edge_id_int, TopoNavEdge*> connectedEdges(const TopoNavNode &node) const; //returns a std::map with pointers to the edges connected to node.
+  std::map<EdgeID, TopoNavEdge*> connectedEdges(const TopoNavNode &node) const; //returns a std::map with pointers to the edges connected to node.
 
   // conversions from/to ROS msgs
-  void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, std::map<edge_id_int, TopoNavEdge*> &edges);
-  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::map<node_id_int, TopoNavNode*> &nodes);
+  void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, std::map<EdgeID, TopoNavEdge*> &edges);
+  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::map<NodeID, TopoNavNode*> &nodes);
   st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(const TopoNavEdge* edge);
   st_topological_mapping::TopoNavNodeMsg nodeToRosMsg(const TopoNavNode* node);
 };

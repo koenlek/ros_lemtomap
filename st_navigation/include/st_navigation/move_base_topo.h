@@ -37,7 +37,7 @@ public:
   ~MoveBaseTopo();
   void executeCB(const st_navigation::GotoNodeGoalConstPtr& goal);
   void toponavmapCB(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map);
-
+  std::vector<int> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
 };
 
 #endif

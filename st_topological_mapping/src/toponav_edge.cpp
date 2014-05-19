@@ -6,14 +6,14 @@
 
 #include <st_topological_mapping/toponav_edge.h>
 
-TopoNavEdge::TopoNavEdge(edge_id_int edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges):
+TopoNavEdge::TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges):
 edge_id_(edge_id), last_updated_(last_updated), edges_(edges), cost_(cost), start_node_(start_node), end_node_(end_node){
 	if (edge_id_>=UIDGenerator_)
 		UIDGenerator_=edge_id_+1;
 	edges_[edge_id_]=this;
 }
 
-TopoNavEdge::TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges) :
+TopoNavEdge::TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges) :
     start_node_(start_node), end_node_(end_node), edges_(edges)
 {
   edge_id_=UIDGenerator_++;

@@ -6,14 +6,14 @@
 
 #include <st_topological_mapping/toponav_node.h>
 
-TopoNavNode::TopoNavNode(node_id_int node_id, ros::Time last_updated, tf::Pose pose, bool is_door, int area_id, std::map<node_id_int, TopoNavNode*> &nodes):
+TopoNavNode::TopoNavNode(NodeID node_id, ros::Time last_updated, tf::Pose pose, bool is_door, int area_id, std::map<NodeID, TopoNavNode*> &nodes):
 node_id_(node_id), last_updated_(last_updated), pose_(pose),is_door_(is_door),area_id_(area_id), nodes_(nodes){
 	if (node_id_>=UIDGenerator_)
 		UIDGenerator_=node_id_+1;
 	nodes_[node_id_]=this;
 }
 
-TopoNavNode::TopoNavNode(tf::Pose pose, bool is_door, int area_id, std::map<node_id_int, TopoNavNode*> &nodes):
+TopoNavNode::TopoNavNode(tf::Pose pose, bool is_door, int area_id, std::map<NodeID, TopoNavNode*> &nodes):
 pose_(pose),is_door_(is_door),area_id_(area_id),nodes_(nodes)
 {
   node_id_=UIDGenerator_++;

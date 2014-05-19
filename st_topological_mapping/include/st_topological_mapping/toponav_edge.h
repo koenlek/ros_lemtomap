@@ -14,14 +14,14 @@
  * TODO p3 - Possibly, using a struct or so and integrate it  in TopoNavMap class instead of separate TopoNavEdge class makes more sense...
  */
 
-typedef int edge_id_int; //This can be used to help function signatures see the difference between a edge_id form any int
+typedef int EdgeID; //This can be used to help function signatures see the difference between a edge_id form any int
 
 class TopoNavEdge
 {
 
 public:
-  TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges);
-  TopoNavEdge(edge_id_int edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<edge_id_int, TopoNavEdge*> &edges); // only to be used when loading map from message!
+  TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges);
+  TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges); // only to be used when loading map from message!
   ~TopoNavEdge();
 
   /**
@@ -30,7 +30,7 @@ public:
   const double updateCost(); //updateCosts recalcs cost when is called, to cover the case that node poses can be updated over time.
 
   // get Methods
-  const edge_id_int getEdgeID() const { return edge_id_; } // const after the method means that the method is not allowed to change the variables of the object.
+  const EdgeID getEdgeID() const { return edge_id_; } // const after the method means that the method is not allowed to change the variables of the object.
   const ros::Time getLastUpdatedTime() const { return last_updated_; }
   const double getCost() const { return cost_; }
   const TopoNavNode& getStartNode() const { return start_node_; }
@@ -49,13 +49,13 @@ private:
   /**
    * Variables
    */
-  edge_id_int edge_id_; //edge ids are automatically generated (starting from 1) and should never be changed!
+  EdgeID edge_id_; //edge ids are automatically generated (starting from 1) and should never be changed!
   ros::Time last_updated_;
   double cost_;
   const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
   const TopoNavNode &end_node_;
 
-  std::map<edge_id_int, TopoNavEdge*> &edges_;
+  std::map<EdgeID, TopoNavEdge*> &edges_;
   /**
    * Private Methods
    */
