@@ -507,7 +507,7 @@ Visualization Manager:
           Axes Radius: 0.1
           Class: rviz/Pose
           Color: 255; 25; 0
-          Enabled: true
+          Enabled: false
           Head Length: 0.3
           Head Radius: 0.1
           Name: 2D Nav Goal
@@ -515,7 +515,7 @@ Visualization Manager:
           Shaft Radius: 0.05
           Shape: Arrow
           Topic: move_base_simple/goal
-          Value: true
+          Value: false
         - Alpha: 0.7
           Class: rviz/Map
           Color Scheme: costmap
@@ -539,6 +539,7 @@ Visualization Manager:
       Marker Topic: /toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
+        edges: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -569,11 +570,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 34.8456
+      Scale: 57.1139
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 3.85583
-      Y: -0.525935
+      X: 4.53847
+      Y: 0.524737
     Saved: ~
 Window Geometry:
   Displays:
@@ -593,5 +594,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1871
-  X: 49
+  X: 1408
   Y: 24

@@ -8,8 +8,8 @@
  */
 
 #include <math.h>
-#include "toponav_edge.h"
-#include "toponav_node.h"
+#include "st_topological_mapping/toponav_edge.h"
+#include "st_topological_mapping/toponav_node.h"
 #include "tf/transform_datatypes.h"
 
 #include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
@@ -36,6 +36,16 @@ static inline double calcDistance(const TopoNavNode &n1, const tf::Pose &p1)
 static inline double calcDistance(const tf::Pose &p1, const TopoNavNode &n1)
 {
   return calcDistance(p1,n1.getPose());
+}
+
+static inline double calcDistance(const geometry_msgs::Pose &p1, const geometry_msgs::Pose &p2)
+{
+  return calcDistance(p1.position.x, p1.position.y, p2.position.x, p2.position.y);
+}
+
+static inline double calcDistance(const geometry_msgs::Pose &p1, const tf::Pose &p2)
+{
+  return calcDistance(p1.position.x, p1.position.y, p2.getOrigin().getX(), p2.getOrigin().getY());
 }
 
 static inline double calcDistance(const TopoNavNode &n1, const TopoNavNode &n2)

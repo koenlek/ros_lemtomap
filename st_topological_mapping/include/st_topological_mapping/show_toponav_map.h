@@ -23,7 +23,7 @@ class ShowTopoNavMap
 {
 
 public:
-  ShowTopoNavMap(ros::NodeHandle &n, const std::map<NodeID, TopoNavNode*> &nodes, const std::map<EdgeID, TopoNavEdge*> &edges); //Constructor
+  ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes, const TopoNavEdge::EdgeMap &edges); //Constructor
   /**
    * Public Methods
    */
@@ -34,11 +34,11 @@ private:
    * Variables
    */
   ros::NodeHandle &n_;
-  const std::map<NodeID, TopoNavNode*> &nodes_;
-  const std::map<EdgeID, TopoNavEdge*> &edges_;
+  const TopoNavNode::NodeMap &nodes_;
+  const TopoNavEdge::EdgeMap &edges_;
 
-  std::vector<NodeID> topo_path_nodes_;
-  std::vector<EdgeID> topo_path_edges_;
+  std::vector<TopoNavNode::NodeID> topo_path_nodes_;
+  std::vector<TopoNavEdge::EdgeID> topo_path_edges_;
 
   visualization_msgs::Marker nodes_marker_template_;
   visualization_msgs::Marker edges_marker_template_;

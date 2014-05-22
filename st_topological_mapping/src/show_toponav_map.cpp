@@ -6,8 +6,8 @@
 
 #include <st_topological_mapping/show_toponav_map.h>
 
-ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const std::map<NodeID, TopoNavNode*> &nodes,
-                               const std::map<EdgeID, TopoNavEdge*> &edges) :
+ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes,
+                               const TopoNavEdge::EdgeMap &edges) :
     n_(n), // this way, ShowTopoNavMapis aware of the NodeHandle of this ROS node, just as TopoNavMap...
     nodes_(nodes), edges_(edges)
 {
@@ -65,7 +65,6 @@ void ShowTopoNavMap::updateVisualization()
   visualizeNodes();
   visualizeEdges();
   markers_pub_.publish(toponavmap_ma_);
-
 }
 
 void ShowTopoNavMap::visualizeNodes()
@@ -73,8 +72,8 @@ void ShowTopoNavMap::visualizeNodes()
   visualization_msgs::Marker node_marker;
   visualization_msgs::Marker door_marker;
 
-	//if having gcc4.7 or higher and enable c++11, you could use: auto it=nodes_.begin(); it!=nodes_.end(); it++
-  for(std::map<NodeID, TopoNavNode*>::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++) //TODO: This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
+  //if having gcc4.7 or higher and enable c++11, you could use: auto it=nodes_.begin(); it!=nodes_.end(); it++
+  for(TopoNavNode::NodeMap::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++) //TODO: This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
   {
 	node_marker = nodes_marker_template_;
 	door_marker = doors_marker_template_;
@@ -107,7 +106,7 @@ void ShowTopoNavMap::visualizeNodes()
 
 void ShowTopoNavMap::visualizeEdges ()
 {
-  for(std::map<EdgeID, TopoNavEdge*>::const_iterator it=edges_.begin(); it!=edges_.end(); it++) //TODO: This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
+  for(TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) //TODO: This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
   {
 	  visualization_msgs::Marker edge_marker = edges_marker_template_;
 	  edge_marker.id =it->second->getEdgeID();
@@ -137,19 +136,4 @@ void ShowTopoNavMap::moveBaseTopoFeedbackCB (const st_navigation::GotoNodeAction
 {
  topo_path_nodes_=feedback.feedback.route_node_ids;
  topo_path_edges_=feedback.feedback.route_edge_ids;
-
- //turn it into a string and print it
- std::stringstream path_stringstream;
- std::string path_string;
- std::copy(topo_path_nodes_.begin(), topo_path_nodes_.end(), std::ostream_iterator<int>(path_stringstream, ", "));
- path_string=path_stringstream.str();
- path_string=path_string.substr(0, path_string.size()-2);
- ROS_INFO("Received Topological Path for visualization (node ids): [%s]",path_string.c_str());
-
- path_stringstream.str(std::string());
- path_string.clear();
- std::copy(topo_path_edges_.begin(), topo_path_edges_.end(), std::ostream_iterator<int>(path_stringstream, ", "));
- path_string=path_stringstream.str();
- path_string=path_string.substr(0, path_string.size()-2);
- ROS_INFO("Received Topological Path for visualization (edge ids): [%s]",path_string.c_str());
 }

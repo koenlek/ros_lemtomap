@@ -28,6 +28,7 @@ generate_messages(
 
 catkin_package(
   CATKIN_DEPENDS message_runtime
+  INCLUDE_DIRS include
 )
 
 include_directories(

@@ -57,10 +57,10 @@ void TopoNavMap::publishTopoNavMap() {
 	ROS_DEBUG("publishTopoNavMap");
 	st_topological_mapping::TopologicalNavigationMap msg_map;
 
-	for (std::map<NodeID, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+	for (TopoNavNode::NodeMap::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
 		msg_map.nodes.push_back(nodeToRosMsg(it->second));
 	}
-	for (std::map<EdgeID, TopoNavEdge*>::iterator it=edges_.begin(); it!=edges_.end(); it++) {
+	for (TopoNavEdge::EdgeMap::iterator it=edges_.begin(); it!=edges_.end(); it++) {
 		msg_map.edges.push_back(edgeToRosMsg(it->second));
 	}
 
@@ -187,7 +187,7 @@ bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 	//@TODO This method compares with all nodes: does not scale very well.
 	bool edge_created = false;
 	if (getNumberOfNodes() >= 2) {
-		for (std::map<NodeID, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+		for (TopoNavNode::NodeMap::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
 			if (it->second->getNodeID() == node.getNodeID())
 				continue; //Not compare with itself
 			if (!edgeExists(node, *(it->second))
@@ -255,7 +255,7 @@ double TopoNavMap::distanceToClosestNode() {
 	if (number_of_nodes == 0)
 		minimum_dist = INFINITY; //No nodes means -> dist in inf.
 	else {
-		for (std::map<NodeID, TopoNavNode*>::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+		for (TopoNavNode::NodeMap::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
 			dist = calcDistance(*(it->second), robot_pose_tf_);
 
 			ROS_DEBUG("Distance between Robot and Node_ID %d = %f",
@@ -292,7 +292,7 @@ void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
 /*!
  * deleteEdge
  */
-void TopoNavMap::deleteEdge(EdgeID edge_id) {
+void TopoNavMap::deleteEdge(TopoNavEdge::EdgeID edge_id) {
 	deleteEdge(*edges_[edge_id]);
 }
 void TopoNavMap::deleteEdge(TopoNavEdge &edge) {
@@ -302,21 +302,21 @@ void TopoNavMap::deleteEdge(TopoNavEdge &edge) {
 /*!
  * deleteNode
  */
-void TopoNavMap::deleteNode(NodeID node_id) {
+void TopoNavMap::deleteNode(TopoNavNode::NodeID node_id) {
 	deleteNode(*nodes_[node_id]);
 }
 void TopoNavMap::deleteNode(TopoNavNode &node) {
-	std::map<EdgeID, TopoNavEdge*> connected_edges = connectedEdges(node);
-	for (std::map<EdgeID, TopoNavEdge*>::iterator it=connected_edges.begin(); it!=connected_edges.end(); it++) {
+	TopoNavEdge::EdgeMap connected_edges = connectedEdges(node);
+	for (TopoNavEdge::EdgeMap::iterator it=connected_edges.begin(); it!=connected_edges.end(); it++) {
 		deleteEdge((*it->second));
 	}
 	delete &node;
 }
 
-std::map<EdgeID, TopoNavEdge*> TopoNavMap::connectedEdges(
+TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(
 		const TopoNavNode &node) const { //TODO scales poorly: all edges are checked!
-	std::map<EdgeID, TopoNavEdge*> connected_edges;
-	for (std::map<EdgeID, TopoNavEdge*>::const_iterator it=edges_.begin(); it!=edges_.end(); it++) {
+	TopoNavEdge::EdgeMap connected_edges;
+	for (TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) {
 		if (it->second->getStartNode().getNodeID() == node.getNodeID()
 				|| it->second->getEndNode().getNodeID() == node.getNodeID()) {
 			connected_edges[it->second->getEdgeID()]=(it->second);
@@ -326,7 +326,7 @@ std::map<EdgeID, TopoNavEdge*> TopoNavMap::connectedEdges(
 }
 
 
-void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, std::map<NodeID, TopoNavNode*> &nodes) {
+void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg, TopoNavNode::NodeMap &nodes) {
 	tf::Pose tfpose;
 	poseMsgToTF(node_msg.pose,tfpose);
 
@@ -340,7 +340,7 @@ void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg nod
 	);
 }
 
-void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, std::map<EdgeID, TopoNavEdge*> &edges) {
+void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, TopoNavEdge::EdgeMap &edges) {
 	new TopoNavEdge(edge_msg.edge_id, //edge_id
 			edge_msg.last_updated, //last_updated
 			edge_msg.cost, //cost

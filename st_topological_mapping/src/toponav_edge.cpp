@@ -6,14 +6,14 @@
 
 #include <st_topological_mapping/toponav_edge.h>
 
-TopoNavEdge::TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges):
+TopoNavEdge::TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges):
 edge_id_(edge_id), last_updated_(last_updated), edges_(edges), cost_(cost), start_node_(start_node), end_node_(end_node){
 	if (edge_id_>=UIDGenerator_)
 		UIDGenerator_=edge_id_+1;
 	edges_[edge_id_]=this;
 }
 
-TopoNavEdge::TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, std::map<EdgeID, TopoNavEdge*> &edges) :
+TopoNavEdge::TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges) :
     start_node_(start_node), end_node_(end_node), edges_(edges)
 {
   edge_id_=UIDGenerator_++;
@@ -31,8 +31,9 @@ TopoNavEdge::~TopoNavEdge()
 {
   edges_.erase(edge_id_);
   ROS_INFO("Edge with ID %d is destructed",edge_id_); //does not print on node shutdown! therefor: std::cerr is added...
+  #define DEBUG 0
   #if DEBUG
-  std::cerr << "~TopoNavEdge: Deleting edge wit ID: " << edge_id_ << std::endl;
+  std::cerr << "~TopoNavEdge: Deleting edge with ID: " << edge_id_ << std::endl;
   #endif
 }
 
