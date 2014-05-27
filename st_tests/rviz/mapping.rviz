@@ -54,10 +54,10 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: Map
       Topic: map
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -520,7 +520,7 @@ Visualization Manager:
           Value: true
         - Alpha: 0.7
           Class: rviz/Map
-          Color Scheme: map
+          Color Scheme: costmap
           Draw Behind: false
           Enabled: true
           Name: Local Costmap
@@ -530,10 +530,10 @@ Visualization Manager:
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: false
+          Enabled: true
           Name: Global Costmap
           Topic: /move_base/global_costmap/costmap
-          Value: false
+          Value: true
       Enabled: true
       Name: Nav
     - Class: rviz/MarkerArray
@@ -541,6 +541,7 @@ Visualization Manager:
       Marker Topic: /toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
+        edges: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -571,11 +572,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 68.0377
+      Scale: 64.9644
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 3.85279
-      Y: 1.84787
+      X: 3.97791
+      Y: 5.58231
     Saved: ~
 Window Geometry:
   Displays:

@@ -10,7 +10,7 @@
  * Constructor.
  */
 TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
-		n_(n), costmap_lastupdate_seq_(0), max_dist_between_nodes_(3.0) // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
+		n_(n), costmap_lastupdate_seq_(0), max_dist_between_nodes_(2.5), move_base_client_("move_base", true) // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
 {
 	ros::NodeHandle private_nh("~");
 	std::string scan_topic;
@@ -20,6 +20,17 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 	private_nh.param("scan_topic", scan_topic, std::string("scan"));
 	private_nh.param("local_costmap_topic", local_costmap_topic, std::string("/move_base/local_costmap/costmap"));
 
+	// Check for local costmap dimensions
+	ROS_INFO("Waiting for move_base action server");
+	move_base_client_.waitForServer();
+	ROS_INFO("Waiting for move_base action server -- Finished");
+	int cm_height, cm_width, cm_min;
+	n_.param("/move_base/local_costmap/height",cm_height,int(0));
+	n_.param("/move_base/local_costmap/width",cm_width,int(0));
+	cm_min = std::min(cm_height,cm_width);
+	if (max_dist_between_nodes_> cm_min/2 - 0.3) // when new edges are created, begin and end need to be in local costmap. The robot is *approx.* in the middle of the local costmap. - 0.3 is to give it some play for safety as it is only approx. in the middle.
+		ROS_ERROR("The maximum distances between nodes was specified to be %.3fm, while the local costmap is %d x %dm. This is too small: cost lookups for edge creating have a high risk to become out of bounds",max_dist_between_nodes_,cm_height,cm_width);
+
 	local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
 	scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
 	toponav_map_pub_ = private_nh.advertise<
@@ -27,6 +38,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 			"topological_navigation_map", 1,true);
 
 	updateMap(); //update the map one time, at construction. This will create the first map node.
+	ROS_INFO("TopoNavMap object is initialized");
 
 #if DEBUG
 	test_executed_ = 0;
@@ -74,10 +86,13 @@ void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg){
 
 #if DEBUG
 void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg){
+geometry_msgs::PoseStamped initialpose_previous;
+initialpose_previous = initialpose_;
 initialpose_.header = msg->header;
 initialpose_.pose = msg->pose.pose;
 tf::Point point1, point2;
 pointMsgToTF(initialpose_.pose.position,point1);
+pointMsgToTF(initialpose_previous.pose.position,point2);
 
 directNavigable(point1, point2);
 }
@@ -271,13 +286,19 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1,
 			}
 		}
 	}
-
-	int i_cell,j_cell;
-	mapPoint2costmapCell(point1,i_cell,j_cell);
-	double cost = costmap_matrix_(i_cell,j_cell);
-	ROS_INFO("You clicked at: x_cell=%d, y_cell=%d, cost=%.4f",i_cell,j_cell,cost);
-	//getCMLineCost(i1_cell,i1_cell,j2_cell,j2_cell);
-	//getCMLineCost(point1,point2);
+	int line_cost;
+	line_cost = getCMLineCost(point1,point2);
+	ROS_INFO("Line in /map from (x1,y1)=(%.4f,%.4f) to (x2,y2)=(%.4f,%.4f) has cost: %d",
+			point1.getX(),
+			point1.getY(),
+			point2.getX(),
+			point2.getY(),
+			line_cost);
+	//100 is LETHAL (obstacle), 99 is INSCRIBED (will hit due to robot footprint), -1 is unknown.
+	// See: http://wiki.ros.org/costmap_2d
+	// See the cost_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
+	if (line_cost<90 && line_cost>=0)
+		navigable = true;
 
 	return navigable;
 }
@@ -302,13 +323,46 @@ void TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
 	catch (tf::TransformException &ex) {
 		ROS_ERROR("%s",ex.what());
 	}
-	ROS_INFO("map_coordinate_incostmap_origin x=%.4f , y=%.4f", map_coordinate_incostmap_origin.getX(), map_coordinate_incostmap_origin.getY());
+	ROS_DEBUG("map_coordinate_incostmap_origin x=%.4f , y=%.4f", map_coordinate_incostmap_origin.getX(), map_coordinate_incostmap_origin.getY());
 
 	cell_i = floor(map_coordinate_incostmap_origin.getY()/local_costmap_.info.resolution); // i is row, i.e. y
 	cell_j = floor(map_coordinate_incostmap_origin.getX()/local_costmap_.info.resolution); // j is column, i.e. x
 
 	if (cell_i < 0 || cell_j < 0 || cell_i >= local_costmap_.info.height || cell_j >= local_costmap_.info.width)
 		ROS_ERROR("mapPoint2costmapCell: Index out of bounds!");
+}
+
+/**\brief Find the max. cost between two points
+ * \param point1 start point as a coordinate in /map
+ * \param point2 end point as a coordinate in /map
+ * \return cost - 0 is no obstacles, 100 is blocking obstacle. Anything in between is a degree of blocking...
+ */
+int TopoNavMap::getCMLineCost(const tf::Point &point1,const tf::Point &point2) const{
+	int cell1_i, cell1_j, cell2_i, cell2_j;
+	mapPoint2costmapCell(point1,cell1_i,cell1_j);
+	mapPoint2costmapCell(point2,cell2_i,cell2_j);
+	return getCMLineCost(cell1_i,cell1_j,cell2_i,cell2_j);
+}
+
+/** \brief Find the max. cost between two points */
+int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int &cell2_i, const int &cell2_j) const{
+	// This code was largely based on the CostmapModel::lineCost function
+	// Defined here: http://docs.ros.org/hydro/api/base_local_planner/html/costmap__model_8cpp_source.html
+	int line_cost = 0.0;
+	int point_cost = -1.0;
+
+	for( base_local_planner::LineIterator line( cell1_i, cell1_j, cell2_i, cell2_j); line.isValid(); line.advance() )
+	{
+	  point_cost = costmap_matrix_(line.getX(),line.getY()); //Score the current point
+
+      if(point_cost < 0)
+	    return -1;
+
+	  if(line_cost < point_cost)
+	    line_cost = point_cost;
+	}
+
+	return line_cost;
 }
 
 

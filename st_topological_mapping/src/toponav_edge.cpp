@@ -31,7 +31,7 @@ TopoNavEdge::~TopoNavEdge()
 {
   edges_.erase(edge_id_);
   ROS_INFO("Edge with ID %d is destructed",edge_id_); //does not print on node shutdown! therefor: std::cerr is added...
-  //#define DEBUG 0 //this has only effect for its local scope!
+  #define DEBUG 0 //this has only effect for its local scope!
   #if DEBUG
   std::cerr << "~TopoNavEdge: Deleting edge with ID: " << edge_id_ << std::endl;
   #endif

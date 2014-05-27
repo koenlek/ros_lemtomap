@@ -4,7 +4,7 @@
 // General includes
 #include "string"
 #include <math.h> //floor
-//#include <algorithm> //std::find
+#include <algorithm> //min
 #include <map>
 #include <Eigen/Dense>
 
@@ -17,6 +17,9 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <base_local_planner/line_iterator.h> //Use this to find the cost of a line. Although it is meant to be used in a base_local_planner context, it is also suitable to check if an edge should be created
+#include <actionlib/client/simple_action_client.h>
+#include <move_base_msgs/MoveBaseAction.h>
 
 // Local includes
 #include "toponav_node.h"
@@ -55,13 +58,13 @@ private:
 
 
 	tf::TransformListener tf_listener_;
-
 	unsigned int costmap_lastupdate_seq_;
 	Eigen::MatrixXi costmap_matrix_;
 	double max_dist_between_nodes_;
 	tf::TransformBroadcaster br_;
 	tf::Transform local_costmap_origin_tf_;
 	tf::TransformListener listener_;
+	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
 
 	#if DEBUG
 		int test_executed_;
@@ -84,6 +87,8 @@ private:
 	void publishTopoNavMap(); //publish the full map to a msg
 
 	void mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const;  //convert a point in /map to a cell in the local costmap
+	int getCMLineCost(const int &cell1_i, const int &cell1_j, const int &cell2_i, const int &cell2_j) const;
+	int getCMLineCost(const tf::Point &point1,const tf::Point &point2) const;
 
 	bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
 	bool checkCreateEdges(const TopoNavNode &node); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
