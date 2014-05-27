@@ -53,5 +53,10 @@ static inline double calcDistance(const TopoNavNode &n1, const TopoNavNode &n2)
   return calcDistance(n1.getPose(),n2.getPose());
 }
 
+static inline double calcDistance(const tf::Point &p1, const tf::Point &p2)
+{
+  return calcDistance(p1.getX(),p1.getY(),p2.getX(),p2.getY());
+}
+
 #endif // UTILS_H
 

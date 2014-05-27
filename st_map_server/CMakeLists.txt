@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(st_map_server)
 
-add_definitions(-DDEBUG=1 ) #This allows usage of #IF DEBUG in all code
+#add_definitions(-DDEBUG=1 ) #This allows usage of #IF DEBUG in all code of this package.
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

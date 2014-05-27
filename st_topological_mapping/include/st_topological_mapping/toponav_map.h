@@ -3,15 +3,20 @@
 
 // General includes
 #include "string"
+#include <math.h> //floor
 //#include <algorithm> //std::find
 #include <map>
+#include <Eigen/Dense>
 
 // ROS includes
 #include "ros/ros.h"
 #include "tf/transform_listener.h"
 #include "tf/transform_datatypes.h"
+#include "tf/transform_broadcaster.h"
 #include "sensor_msgs/LaserScan.h"
+#include "nav_msgs/OccupancyGrid.h"
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 // Local includes
 #include "toponav_node.h"
@@ -33,7 +38,6 @@ private:
 	 * Variables
 	 */
 	ros::NodeHandle &n_;
-	std::string scan_topic_;
 
 	//TODO: these Node and Edge std::maps now form the original maps, the TopoNavNode and TopoNavEdge work with references to these. Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
 	TopoNavNode::NodeMap nodes_;
@@ -43,28 +47,49 @@ private:
 	tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
 
 	sensor_msgs::LaserScan laser_scan_; //stores robots current laser scans
+	nav_msgs::OccupancyGrid local_costmap_;
 
 	ros::Publisher toponav_map_pub_;
 	ros::Subscriber scan_sub_;
+	ros::Subscriber local_costmap_sub_;
+
 
 	tf::TransformListener tf_listener_;
 
-#if DEBUG
-	int test_executed_;
-#endif
+	unsigned int costmap_lastupdate_seq_;
+	Eigen::MatrixXi costmap_matrix_;
+	double max_dist_between_nodes_;
+	tf::TransformBroadcaster br_;
+	tf::Transform local_costmap_origin_tf_;
+	tf::TransformListener listener_;
+
+	#if DEBUG
+		int test_executed_;
+
+		ros::Time last_run_lcostmap_;
+		ros::Time last_run_update_;
+		double last_run_update_max_;
+
+		ros::Subscriber initialpose_sub_;
+		geometry_msgs::PoseStamped initialpose_; //I use this to test my getCost implementation to determine if an edge is navigable
+		void initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
+    #endif
 
 	/**
 	 * Private Methods
 	 */
-	void laserCallback(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
+	void laserCB(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
+	void lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 	void getCurrentPose(); // get current pose
 	void publishTopoNavMap(); //publish the full map to a msg
+
+	void mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const;  //convert a point in /map to a cell in the local costmap
 
 	bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
 	bool checkCreateEdges(const TopoNavNode &node); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
 	bool checkIsNewDoor(); //Checks if a there is a new door
-	const bool directNavigable(const TopoNavNode &node1,
-			const TopoNavNode &node2) const; //This method checks whether there is nothing (objects/walls) blocking the direct route between node1 and node2
+	const bool directNavigable(const tf::Point &point1,
+			const tf::Point &point2); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
 
 	const bool edgeExists(const TopoNavNode &node1,
 			const TopoNavNode &node2) const;
@@ -88,11 +113,11 @@ public:
 	// these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
 	void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
 	void addNode(const tf::Pose &pose, bool is_door, int area_id);
-	//void addNode(tf::Pose pose); //TODO: implement a default add node with door is false and area_id is current area_id
 	void deleteEdge(TopoNavEdge::EdgeID edge_id);
 	void deleteEdge(TopoNavEdge &edge);
 	void deleteNode(TopoNavNode::NodeID node_id);
 	void deleteNode(TopoNavNode &node);
+
 
 	//Get methods
 	const TopoNavNode::NodeMap& getNodes() const {

@@ -133,7 +133,6 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 			success = true;
 			ROS_INFO("Hooray: the final topological goal has been reached");
 		}
-		ros::Rate(1).sleep(); //to decrease CPU load...
 	}
 
 	// Handle a successful execution

@@ -31,7 +31,7 @@ TopoNavNode::~TopoNavNode()
 {
   nodes_.erase(node_id_);
   ROS_INFO("Node with ID %d is destructed",node_id_); //does not print on node shutdown! therefor: std::cerr is added...
-  #define DEBUG 0
+  //#define DEBUG 0
   #if DEBUG
   std::cerr << "~TopoNavNode: Deleting node with ID: " << node_id_ << std::endl;
   #endif
