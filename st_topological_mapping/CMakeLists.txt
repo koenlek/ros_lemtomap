@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(st_topological_mapping)
 
-add_definitions(-DDEBUG=1 ) #This allows usage of #IF DEBUG in all code of this package.
-add_definitions(-DCMAKE_BUILD_TYPE_DEF=${CMAKE_BUILD_TYPE}) #Load the used catkin_make build type here, make available in c++ code for preprocessor
+# Load the used catkin_make build type here, make available in c++ code for preprocessor.
+# This allows usage of #IF DEBUG in all code of this package. It retrieves the value from cmakes CMAKE_BUILD_TYPE. 
+# This can be switched using catkin_make -DCMAKE_BUILD_TYPE=Release , or catkin_make -DCMAKE_BUILD_TYPE=Debug
+add_definitions(-DCMAKE_BUILD_TYPE_DEF=${CMAKE_BUILD_TYPE}) 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+add_definitions(-DDEBUG=1) 
+else()
+add_definitions(-DDEBUG=0)
+endif()
 
 find_package(
 catkin REQUIRED COMPONENTS
@@ -12,8 +19,10 @@ catkin REQUIRED COMPONENTS
   message_generation
   tf
   rosbag #for loading previous maps
+  navfn
 )
 find_package(Eigen REQUIRED)
+find_package(PCL REQUIRED) #for navfn
 
 add_message_files(
   FILES
@@ -37,10 +46,11 @@ include_directories(
   include 
   ${Eigen_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS} #for navfn
 )
 
 add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp)
-target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
+target_link_libraries(topological_navigation_mapper ${navfn_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(topological_navigation_mapper ${catkin_EXPORTED_TARGETS}) # KL: to make sure that message headers in devel/include/${PROJECT_NAME} are recognized
 
 install(

@@ -180,7 +180,7 @@ int MoveBaseTopo::getCurrentAssociatedNode() {
 	double closest_dist = DBL_MAX;
 	double tentative_closest_dist;
 
-	//FIXME This loop picks the closest node, not even taking into account blocking obstacles or e.g. the direction in which the robot should travel eventually.
+	//FIXME - p1 - This loop picks the closest node, not even taking into account blocking obstacles or e.g. the direction in which the robot should travel eventually.
 	ROS_WARN_ONCE(
 			"Currently, the starting node is the closest node to robot, which could even go through walls. This method should be improved. This warning will only print once.");
 	for (int i = 0; i < toponavmap_.nodes.size(); i++) {
@@ -230,6 +230,14 @@ int main(int argc, char** argv) {
 	ros::Rate r(1);
 
 	MoveBaseTopo move_base_topo(ros::this_node::getName());
+
+	#ifdef CMAKE_BUILD_TYPE_DEF
+	#include <boost/preprocessor/stringize.hpp>
+		if (BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF)=="Debug")
+			ROS_WARN("This node (%s) had CMAKE_BUILD_TYPE=%s. Please use catkin_make -DCMAKE_BUILD_TYPE=Release for benchmarks!",ros::this_node::getName().c_str(),BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
+		else
+			ROS_INFO("This node (%s) had CMAKE_BUILD_TYPE=%s.",ros::this_node::getName().c_str(), BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
+	#endif
 
 	//Set default logger level for this ROS Node...
 	/*if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {

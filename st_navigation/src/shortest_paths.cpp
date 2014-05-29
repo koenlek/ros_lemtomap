@@ -29,10 +29,6 @@ std::vector<int> shortestPath(
 	bool end_node_exists = false;
 	std::vector<Vertex> vertices_boost;
 
-	//typedef std::map<int, st_topological_mapping::TopoNavNodeMsg> NodesIdmap; // specify a node ID and receive a TopoNavNode Msg
-	//typedef std::map<int, st_topological_mapping::TopoNavEdgeMsg> EdgesIdmap; // specify an edge ID and receive a TopoNavEdge Msg
-	//NodesIdmap nodes_idmap; //TODO: remove these lines
-	//EdgesIdmap edges_idmap;
 	std::map<int, int> nodes_id2vecpos_map;
 	std::map<int, int> edges_id2vecpos_map;
 
@@ -64,7 +60,6 @@ std::vector<int> shortestPath(
 
 	// Add edges to boost graph, and create a map that maps edges ids to edges
 	for (int i = 0; i < num_of_edges; i++) {
-		//edges_idmap[toponavmap_msg.edges.at(i).edge_id]=toponavmap_msg.edges.at(i); //TODO: remove this line
 		edges_id2vecpos_map[toponavmap_msg.edges.at(i).edge_id] = i;
 
 		boost::add_edge(
@@ -92,7 +87,7 @@ std::vector<int> shortestPath(
 	// predecessor map and the distance map in any order.
 
 	boost::dijkstra_shortest_paths(graph, vertext_boost_src,
-			boost::distance_map(distanceMap).predecessor_map(predecessorMap)); //TODO: Currently: it searches source to all, instead of source to target. Comp. time will be limited by switching to the latter.
+			boost::distance_map(distanceMap).predecessor_map(predecessorMap)); //TODO - p3 - Currently: it searches source to all, instead of source to target. Comp. time will be limited by switching to the latter.
 
 	// Output results
 	ROS_DEBUG("distances and parents:");

@@ -214,16 +214,16 @@ void TopoNavMap::updateMap() {
  */
 bool TopoNavMap::checkCreateNode() {
 	int number_of_nodes = getNumberOfNodes();
-	int area_id = 1; //FIXME: room_id is always 1!
+	int area_id = 1; //FIXME - p2 - room_id is always 1!
 	bool create_node = false;
 	bool is_door = false;
 
 	if (checkIsNewDoor()) {
-		//TODO: later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
+		//TODO - p3 - later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
 		create_node = true;
 		is_door = true;
 	} else if (distanceToClosestNode() > 1) {
-		//TODO FIXME: Remove magic number "1", which is the min distance here...
+		//FIXME - p1 - Remove magic number "1", which is the min distance here...
 		create_node = true;
 	}
 	if (create_node) {
@@ -241,9 +241,30 @@ bool TopoNavMap::checkCreateNode() {
  * checkCreateEdges
  */
 bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
-	//@TODO This method compares with all nodes: does not scale very well.
+	//TODO - p3 - This method compares with all nodes: does not scale very well.
 	bool edge_created = false;
 	if (getNumberOfNodes() < 2) return false; //only continue if there are 2 or more nodes
+
+	/** Fake plannner code starts here */
+	costmap_2d::Costmap2DROS* costmap_ros = new costmap_2d::Costmap2DROS("local_costmap_fakeplanner",listener_);
+	costmap_ros->start();
+
+	ROS_INFO("Global Frame ID is: %s",costmap_ros->getGlobalFrameID().c_str());
+
+	geometry_msgs::PoseStamped start;
+	start.header.frame_id="odom";
+	geometry_msgs::PoseStamped goal;
+	goal.header.frame_id="odom";
+	goal.pose.position.x=1;
+
+	std::vector<geometry_msgs::PoseStamped> plan;
+	ROS_INFO("(pre) Planner size is: %lu",plan.size());
+	navfn::NavfnROS planner("fakeplanner",costmap_ros);
+	planner.makePlan(start, goal, plan);
+	ROS_INFO("Planner size is: %lu",plan.size());
+	costmap_ros->stop();
+	delete costmap_ros;
+	/** Fake plannner code ends here */
 
 	for (TopoNavNode::NodeMap::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
 		if (it->second->getNodeID() == node.getNodeID())
@@ -371,7 +392,7 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
  */
 const bool TopoNavMap::edgeExists(const TopoNavNode &node1,
 		const TopoNavNode &node2) const {
-	//TODO: if giving the edges and ID like the string "2to1", you will have unique IDs that are descriptive enough to facilitate edgeExists etc.
+	//TODO - p1 - if giving the edges and ID like the string "2to1", you will have unique IDs that are descriptive enough to facilitate edgeExists etc.
 	ROS_WARN_ONCE(
 			"edgeExists is not yet implemented. It should help block recreation of edges in checkCreateEdge. This goes well for new edges (there is no risk of duplicates), but triggering checkCreateEdge when updating a node for example will likely lead to duplicate edges. This message will only print once.");
 	return false;
@@ -381,7 +402,7 @@ const bool TopoNavMap::edgeExists(const TopoNavNode &node1,
  * checkIsDoor
  */
 bool TopoNavMap::checkIsNewDoor() {
-//@TODO write this method
+// TODO - p3 - write this method
 	ROS_WARN_ONCE(
 			"Detecting/creating Doors is not yet implemented. This message will only print once.");
 	return false;
@@ -391,7 +412,7 @@ bool TopoNavMap::checkIsNewDoor() {
  * distanceToClosestNode
  */
 double TopoNavMap::distanceToClosestNode() {
-// @TODO: This method compares to all nodes -> scales poorly eventually!
+// TODO - p3 - This method compares to all nodes -> scales poorly eventually!
 // One idea to make it scale slightly better:bool anyNodeCloserThen(max_dist), which return false if there isnt any (full search space needs to be searched) or returns true if there is (usually only first part of search space needs to be searched, if you start at end of nodes_ std::map)
 	double dist, minimum_dist;
 	int closest_node_id;
@@ -458,7 +479,7 @@ void TopoNavMap::deleteNode(TopoNavNode &node) {
 }
 
 TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(
-		const TopoNavNode &node) const { //TODO scales poorly: all edges are checked!
+		const TopoNavNode &node) const { //TODO - p3 - scales poorly: all edges are checked!
 	TopoNavEdge::EdgeMap connected_edges;
 	for (TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) {
 		if (it->second->getStartNode().getNodeID() == node.getNodeID()

@@ -27,7 +27,7 @@
 	</include>
 
 	<!-- Gmapping -->
-	<!-- KL TODO: Should start a little later, otherwise the map sometimes shows free space from laser measurements before the world spawns... -->
+	<!-- KL TODO Should start a little later, otherwise the map sometimes shows free space from laser measurements before the world spawns... -->
 	<include file="$(find st_navigation)/launch/gmapping.launch">
 		<arg name="scan_topic" value="scan_hokuyo" />
 	</include>

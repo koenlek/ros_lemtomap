@@ -73,7 +73,7 @@ void ShowTopoNavMap::visualizeNodes()
   visualization_msgs::Marker door_marker;
 
   //if having gcc4.7 or higher and enable c++11, you could use: auto it=nodes_.begin(); it!=nodes_.end(); it++
-  for(TopoNavNode::NodeMap::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++) //TODO: This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
+  for(TopoNavNode::NodeMap::const_iterator it=nodes_.begin(); it!=nodes_.end(); it++) //TODO - p3 - This visualizes every time for all nodes! Maybe only updated nodes should be "revizualized".
   {
 	node_marker = nodes_marker_template_;
 	door_marker = doors_marker_template_;
@@ -106,7 +106,7 @@ void ShowTopoNavMap::visualizeNodes()
 
 void ShowTopoNavMap::visualizeEdges ()
 {
-  for(TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) //TODO: This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
+  for(TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) //TODO - p3 - This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
   {
 	  visualization_msgs::Marker edge_marker = edges_marker_template_;
 	  edge_marker.id =it->second->getEdgeID();

@@ -17,7 +17,9 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+
 #include <base_local_planner/line_iterator.h> //Use this to find the cost of a line. Although it is meant to be used in a base_local_planner context, it is also suitable to check if an edge should be created
+#include <navfn/navfn_ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
 
@@ -42,7 +44,10 @@ private:
 	 */
 	ros::NodeHandle &n_;
 
-	//TODO: these Node and Edge std::maps now form the original maps, the TopoNavNode and TopoNavEdge work with references to these. Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
+	/** TODO - p3 - these Node and Edge std::maps now form the original maps,
+	 *  the TopoNavNode and TopoNavEdge work with references to these.
+	 *  Maybe it makes more sense to let them manage these maps themselves and give TopoNavMap access through a reference?
+	 */
 	TopoNavNode::NodeMap nodes_;
 	TopoNavEdge::EdgeMap edges_;
 
@@ -127,7 +132,7 @@ public:
 	//Get methods
 	const TopoNavNode::NodeMap& getNodes() const {
 		return nodes_;
-	} //TODO: gives r/w access to the objects where the pointers are pointing to. Const only applies to the map itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
+	} //TODO - p3 - gives r/w access to the objects where the pointers are pointing to -> should be read only! Const only applies to the map itself and the pointers (i.e. the pointer addresses are protected from manipulation, but not the data they are pointing at).
 	const TopoNavEdge::EdgeMap& getEdges() const {
 		return edges_;
 	}

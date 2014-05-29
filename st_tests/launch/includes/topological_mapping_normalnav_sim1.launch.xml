@@ -31,6 +31,12 @@
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
+
+		<!-- Set up params for the fake planner -->		
+		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap_fakeplanner" />
+		<rosparam file="$(find st_navigation)/param/local_costmap_fakeplanner_params.yaml" command="load" />
+		<param name="local_costmap_fakeplanner/obstacle_layer/scan/sensor_frame" value="hokuyo_laser_sensor_link" />
+		<param name="local_costmap_fakeplanner/obstacle_layer/scan/topic" value="scan_hokuyo" />
 	</node>
 
 	<!-- Teleop -->

@@ -11,7 +11,7 @@
  * The TopoNavEdge class can be used to create TopoNavEdge objects.
  * These objects form the edges that
  * together with the nodes make the TopoNavMap.
- * TODO p3 - Possibly, using a struct or so and integrate it  in TopoNavMap class instead of separate TopoNavEdge class makes more sense...
+ * TODO - p3 - Possibly, using a struct or so and integrate it  in TopoNavMap class instead of separate TopoNavEdge class makes more sense...
  */
 
 class TopoNavEdge {
@@ -55,7 +55,6 @@ public:
 	 * can be changed, as obstacles between two nodes can influence cost:
 	 * direct distance is thus not the best cost measure in such cases...*/
 	//void setCost(double cost) { cost_=cost; last_updated_=ros::Time::now();}
-	//@TODO eventually, cost should be manually changeable: in cases where euclidian distance between nodes is not the best measure for cost anymore. Please note: currently getNode() updates the cost everytime, so setting it would not work at all currently!
 private:
 	/**
 	 * Variables
