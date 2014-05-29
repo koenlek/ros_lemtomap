@@ -256,12 +256,12 @@ bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 		// but using fakePathLength to make sure that current node is always connected with the node you came from...
 		// Steering a sharp corner around a doorpost could otherwise result in orphan nodes..
 		// new_node_distance_+ 0.4 is because nodes are more or less 1 meter from each other, but often is 1.1, 1.2, or even 1.3 as well, as they are created a bit too late, while movement had already happened.
-		if (calcDistance(node, *it->second) < (new_node_distance_+ 0.4)){
+		/*if (calcDistance(node, *it->second) < (new_node_distance_+ 0.4)){
 			fakePathLength(it->second->getPose(),node.getPose(),fake_path_length);
 			if (fake_path_length < calcDistance(node, *it->second)*1.6) // allow the curved path to be up to 1.6 times longer
 				addEdge(node, *(it->second));
 			continue;
-		}
+		}*/
 		//Only if it is close enough
 		if (calcDistance(node, *it->second) > max_edge_length_)
 			continue;

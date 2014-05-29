@@ -80,10 +80,17 @@ void ShowTopoNavMap::visualizeNodes()
 	//If it is part of the navigation path: give it a nice color
 	if(std::find(topo_path_nodes_.begin(), topo_path_nodes_.end(), it->second->getNodeID()) != topo_path_nodes_.end())
 	{
-	  if (it->second->getIsDoor()==true)
-		door_marker.color.r = 1.0;
-	  else
-	    node_marker.color.r = 1.0;
+	  if (it->second->getIsDoor()==true){
+		door_marker.color.r = 0.3;
+		door_marker.color.g = 0.0;
+	    door_marker.color.b = 1.0;
+	  }
+	  else{
+	    node_marker.color.r = 0.3;
+	    node_marker.color.g = 0.0;
+	    node_marker.color.b = 1.0;
+	    node_marker.color.a = 0.8;
+	  }
 	}
 
 	//Check if it is a door node
@@ -125,7 +132,9 @@ void ShowTopoNavMap::visualizeEdges ()
       //If it is part of the navigation path: give it a nice color
       if(std::find(topo_path_edges_.begin(), topo_path_edges_.end(), edge_marker.id) != topo_path_edges_.end())
       {
-    	  edge_marker.color.r = 1.0;
+    	  edge_marker.color.r = 0.3;
+    	  edge_marker.color.g = 0.0;
+    	  edge_marker.color.b = 1.0;
       }
 
       toponavmap_ma_.markers.push_back(edge_marker);

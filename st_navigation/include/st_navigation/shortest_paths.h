@@ -30,7 +30,7 @@
 
 namespace st_shortest_paths
 {
-std::vector<int> shortestPath (st_topological_mapping::TopologicalNavigationMap toponavmap_msg , int start_node_id, int end_node_id); //returns a list of the node IDs that form the path that should be followed. A copy of toponav_msg is used: to make sure it cannot crash on deleted nodes/edges while calculating route
+bool findShortestPath (st_topological_mapping::TopologicalNavigationMap toponavmap_msg , const int &start_node_id, const int &end_node_id, std::vector<int> &path_node_id_vector); //returns a list of the node IDs that form the path that should be followed. A copy of toponav_msg is used: to make sure it cannot crash on deleted nodes/edges while calculating route
 
 typedef float Weight;
 typedef boost::property<boost::edge_weight_t, Weight> WeightProperty;

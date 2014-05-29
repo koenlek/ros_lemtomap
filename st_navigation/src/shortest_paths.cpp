@@ -8,12 +8,12 @@
 
 namespace st_shortest_paths {
 
-std::vector<int> shortestPath(
+bool findShortestPath(
 		st_topological_mapping::TopologicalNavigationMap toponavmap_msg,
-		int start_node_id, int end_node_id) {
+		const int &start_node_id, const int &end_node_id, std::vector<int> &path_node_id_vector) {
 	ROS_INFO("Calculating shortest route from node id:%d to node id:%d.",
 			start_node_id, end_node_id);
-
+	bool valid_path = true;
 	/*
 	 * The code below is to turn the map into a format that Boost Graph can solve using Dijkstra's algorithm.
 	 * And to eventually turn the result into a form that can be returned to ROS again...
@@ -101,8 +101,6 @@ std::vector<int> shortestPath(
 	);
 }
 
-	std::vector<int> path_node_id_vector;
-
 	path_node_id_vector.push_back(
 			toponavmap_msg.nodes.at(indexMap[vertext_boost_dest]).node_id);
 
@@ -116,6 +114,10 @@ std::vector<int> shortestPath(
 				toponavmap_msg.nodes.at(indexMap[vertex_boost_prev]).node_id);
 	}
 
+	if (start_node_id != end_node_id && path_node_id_vector.size()==1){
+		ROS_WARN("Could not find a valid path from node id:%d to node id:%d",start_node_id, end_node_id);
+		valid_path = false;
+	}
 	//turn path_node_id_vector into a string and print it
 	std::stringstream path_stringstream;
 	std::string path_string;
@@ -126,6 +128,6 @@ std::vector<int> shortestPath(
 	ROS_INFO("\nCalculated topological path.\nNode IDs: [%s]\nTotal length: %.4f[m]",
 			path_string.c_str(), distanceMap[vertext_boost_dest]);
 
-	return path_node_id_vector;
+	return valid_path;
 }
 }

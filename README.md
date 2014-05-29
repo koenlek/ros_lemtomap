@@ -30,7 +30,7 @@ Load and Store topological maps
 -------------------------------
 
 
-save a map (for example from ~/catkin_ws/src/st_map_server/maps):
+save a map (execute for example from ~/catkin_ws/src/st_map_server/maps):
 
 `rosrun st_map_server save_map -f my_toponav_map`
 

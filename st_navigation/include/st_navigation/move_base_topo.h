@@ -40,6 +40,7 @@ protected:
   ros::Subscriber toponavmap_sub_;
   std::string toponav_map_topic_;
   std::string goal_frame_id_;
+  tf::TransformListener tf_listener_;
 
 public:
   MoveBaseTopo(std::string name);

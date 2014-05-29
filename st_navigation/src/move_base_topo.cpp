@@ -52,98 +52,102 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 
 	// Calculate the topological path
 	start_node_id = getCurrentAssociatedNode();
-	path_nodes = st_shortest_paths::shortestPath(toponavmap_, start_node_id,
-			goal->target_node_id);
-	path_edges = nodesPathToEdgesPath(path_nodes);
-
-	// Action server feedback
-	feedback_.route_node_ids = path_nodes;
-	feedback_.route_edge_ids = path_edges;
-	action_server_mbt_.publishFeedback(feedback_);
-
-	// Variables for generating move base goals
-	move_base_msgs::MoveBaseGoal move_base_goal;
-	tf::Pose robot_pose = getCurrentPose();
-	geometry_msgs::PoseStamped node_pose;
-	node_pose.pose.orientation.w = 1.0; //position x,y,z default to 0 for now...
-	node_pose.header.frame_id = goal_frame_id_;
-
-	// Generate mapping to find nodes by node id from toponavmsg
-	std::map<int, int> nodes_id2vecpos_map;
-	for (int i = 0; i < toponavmap_.nodes.size(); i++) {
-		nodes_id2vecpos_map[toponavmap_.nodes.at(i).node_id] = i;
+	if(!st_shortest_paths::findShortestPath(toponavmap_, start_node_id,goal->target_node_id,path_nodes)){
+		// if it has NOT found a valid shortest path
+		ROS_WARN("No valid path could be found from Node %d to %d. This move_base_topo action is aborted",start_node_id,goal->target_node_id);
+		result_.success = false;
+		action_server_mbt_.setAborted(result_);
 	}
+	else{ // if it has found a valid shortest path
+		path_edges = nodesPathToEdgesPath(path_nodes);
 
-	// start executing the action
-	int i = 0;
-	while (!success && ros::ok()) //you need to add ros::ok(), otherwise the loop will never finish
-	{
-		// pass new goal node if within a certain distance of current goal node, or if it is the first goal. Only check for passing new goals if last is not passed already
-		if ((i == 0
-				|| calcDistance(node_pose.pose, getCurrentPose())
-						< dist_tolerance_intermediate)
-				&& i != path_nodes.size()) {
-			ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1,
-					path_nodes.at(i));
-			node_pose.pose.position = toponavmap_.nodes.at(
-					nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
-			move_base_goal.target_pose = node_pose;
-			move_base_client_.sendGoal(move_base_goal);
-			i++; // current i is always +1 compared to the current goal node vector position in path_nodes
-		}
-		ROS_DEBUG("Distance between robot and intermediate Goal NodeID %d = %f",
-				path_nodes.at(i - 1),
-				calcDistance(node_pose.pose, getCurrentPose()));
+		// Action server feedback
+		feedback_.route_node_ids = path_nodes;
+		feedback_.route_edge_ids = path_edges;
+		action_server_mbt_.publishFeedback(feedback_);
 
-		// handle the occasion that move_base is preempted: e.g. if a user passes a simple 2d nav goal using RVIZ.
-		if (move_base_client_.getState()
-				== actionlib::SimpleClientGoalState::PREEMPTED) {
-			ROS_INFO(
-					"/move_base was Preempted. Probably a simple 2D nav goal has been sent manually through RVIZ. The Topo Nav Goal is now cancelled");
-			result_.success = false;
-			ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
-			action_server_mbt_.setAborted(result_);
-			break;
+		// Variables for generating move base goals
+		move_base_msgs::MoveBaseGoal move_base_goal;
+		tf::Pose robot_pose = getCurrentPose();
+		geometry_msgs::PoseStamped node_pose;
+		node_pose.pose.orientation.w = 1.0; //position x,y,z default to 0 for now...
+		node_pose.header.frame_id = goal_frame_id_;
+
+		// Generate mapping to find nodes by node id from toponavmsg
+		std::map<int, int> nodes_id2vecpos_map;
+		for (int i = 0; i < toponavmap_.nodes.size(); i++) {
+			nodes_id2vecpos_map[toponavmap_.nodes.at(i).node_id] = i;
 		}
 
-		// handle the occasion that move_base is aborted: e.g. if the robot is stuck even after /move_base recovery behavior.
-		if (move_base_client_.getState()
-				== actionlib::SimpleClientGoalState::ABORTED) {
-			ROS_WARN(
-					"/move_base was Aborted. The robot is probably stuck, even after executing all /move_base recovery behaviors");
-			result_.success = false;
-			ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
-			action_server_mbt_.setAborted(result_);
-			break;
+		// start executing the action
+		int i = 0;
+		while (!success && ros::ok()) //you need to add ros::ok(), otherwise the loop will never finish
+		{
+			// pass new goal node if within a certain distance of current goal node, or if it is the first goal. Only check for passing new goals if last is not passed already
+			if ((i == 0
+					|| calcDistance(node_pose.pose, getCurrentPose())
+							< dist_tolerance_intermediate)
+					&& i != path_nodes.size()) {
+				ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1,
+						path_nodes.at(i));
+				node_pose.pose.position = toponavmap_.nodes.at(
+						nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
+				move_base_goal.target_pose = node_pose;
+				move_base_client_.sendGoal(move_base_goal);
+				i++; // current i is always +1 compared to the current goal node vector position in path_nodes
+			}
+			ROS_DEBUG("Distance between robot and intermediate Goal NodeID %d = %f",
+					path_nodes.at(i - 1),
+					calcDistance(node_pose.pose, getCurrentPose()));
+
+			// handle the occasion that move_base is preempted: e.g. if a user passes a simple 2d nav goal using RVIZ.
+			if (move_base_client_.getState()
+					== actionlib::SimpleClientGoalState::PREEMPTED) {
+				ROS_INFO(
+						"/move_base was Preempted. Probably a simple 2D nav goal has been sent manually through RVIZ. The Topo Nav Goal is now cancelled");
+				result_.success = false;
+				ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
+				action_server_mbt_.setAborted(result_);
+				break;
+			}
+
+			// handle the occasion that move_base is aborted: e.g. if the robot is stuck even after /move_base recovery behavior.
+			if (move_base_client_.getState()
+					== actionlib::SimpleClientGoalState::ABORTED) {
+				ROS_WARN(
+						"/move_base was Aborted. The robot is probably stuck, even after executing all /move_base recovery behaviors");
+				result_.success = false;
+				ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
+				action_server_mbt_.setAborted(result_);
+				break;
+			}
+
+			// check if a /move_base_topo preempt has been requested -> a preempt (cancellation) will automatically be triggered if a new goal is sent!
+			if (action_server_mbt_.isPreemptRequested() || !ros::ok()) {
+				ROS_INFO("%s: Preempted", action_name_mbt_.c_str());
+				// set the action state to preempted
+				result_.success = false;
+				action_server_mbt_.setPreempted(result_);
+				break;
+			}
+
+			// check if the final goal has been reached
+			if (i == path_nodes.size()
+					&& move_base_client_.getState()
+							== actionlib::SimpleClientGoalState::SUCCEEDED) {
+				success = true;
+				ROS_INFO("Hooray: the final topological goal has been reached");
+			}
 		}
 
-		// check if a /move_base_topo preempt has been requested -> a preempt (cancellation) will automatically be triggered if a new goal is sent!
-		if (action_server_mbt_.isPreemptRequested() || !ros::ok()) {
-			ROS_INFO("%s: Preempted", action_name_mbt_.c_str());
-			// set the action state to preempted
-			result_.success = false;
-			action_server_mbt_.setPreempted(result_);
-			break;
+		// Handle a successful execution
+		if (success) {
+			result_.success = true;
+			ROS_INFO("%s: Succeeded", action_name_mbt_.c_str());
+			// set the action state to succeeded
+			action_server_mbt_.setSucceeded(result_);
 		}
 
-		// check if the final goal has been reached
-		if (i == path_nodes.size()
-				&& move_base_client_.getState()
-						== actionlib::SimpleClientGoalState::SUCCEEDED) {
-			success = true;
-			ROS_INFO("Hooray: the final topological goal has been reached");
-		}
-	}
-
-	// Handle a successful execution
-	if (success) {
-		result_.success = true;
-		ROS_INFO("%s: Succeeded", action_name_mbt_.c_str());
-		// set the action state to succeeded
-		action_server_mbt_.setSucceeded(result_);
-	}
-	// Handle a unsuccessful execution
-	else {
 		// clear the feedback -> this will also update rviz to not show the path anymore...
 		feedback_.route_node_ids.clear();
 		feedback_.route_edge_ids.clear();
@@ -155,14 +159,13 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
  * getCurrentPose
  */
 tf::Pose MoveBaseTopo::getCurrentPose() {
-	tf::TransformListener tf_listener;
 	tf::Pose robot_pose_tf;
 	tf::StampedTransform robot_transform_tf;
 
 	try {
-		tf_listener.waitForTransform("/map", "/base_link", ros::Time(0),
+		tf_listener_.waitForTransform("/map", "/base_link", ros::Time(0),
 				ros::Duration(10));
-		tf_listener.lookupTransform("/map", "/base_link", ros::Time(0),
+		tf_listener_.lookupTransform("/map", "/base_link", ros::Time(0),
 				robot_transform_tf);
 	} catch (tf::TransformException &ex) {
 		ROS_ERROR("Error looking up transformation\n%s", ex.what());
