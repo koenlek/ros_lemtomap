@@ -4,8 +4,8 @@ map_type: voxel
 publish_voxel_map: true #currently, false would be ok too...
 
 inflation_layer: #http://wiki.ros.org/costmap_2d/hydro/inflation
-  inflation_radius: 0.50
-  cost_scaling_factor: 10.0
+  inflation_radius: 0.55 #default 0.55
+  cost_scaling_factor: 10.0 #default 10.0
 
 obstacle_layer: #http://wiki.ros.org/costmap_2d/hydro/obstacles
   max_obstacle_height: 1.50  # assume something like an arm is mounted on top of the robot

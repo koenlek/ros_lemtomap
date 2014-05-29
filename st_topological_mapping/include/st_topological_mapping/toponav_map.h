@@ -19,9 +19,9 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 #include <base_local_planner/line_iterator.h> //Use this to find the cost of a line. Although it is meant to be used in a base_local_planner context, it is also suitable to check if an edge should be created
-#include <navfn/navfn_ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <nav_msgs/GetPlan.h> //service
 
 // Local includes
 #include "toponav_node.h"
@@ -65,11 +65,13 @@ private:
 	tf::TransformListener tf_listener_;
 	unsigned int costmap_lastupdate_seq_;
 	Eigen::MatrixXi costmap_matrix_;
-	double max_dist_between_nodes_;
+	double max_edge_length_;
+	double new_node_distance_;
 	tf::TransformBroadcaster br_;
 	tf::Transform local_costmap_origin_tf_;
 	tf::TransformListener listener_;
 	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
+	ros::ServiceClient fakeplan_client_;
 
 	#if DEBUG
 		int test_executed_;
@@ -90,8 +92,10 @@ private:
 	void lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 	void getCurrentPose(); // get current pose
 	void publishTopoNavMap(); //publish the full map to a msg
+	void updateLCostmapMatrix(); //update the matrix that has the local costmap in it.
+	bool fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length);
 
-	void mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const;  //convert a point in /map to a cell in the local costmap
+	bool mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const;  //convert a point in /map to a cell in the local costmap
 	int getCMLineCost(const int &cell1_i, const int &cell1_j, const int &cell2_i, const int &cell2_j) const;
 	int getCMLineCost(const tf::Point &point1,const tf::Point &point2) const;
 

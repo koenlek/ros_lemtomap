@@ -50,7 +50,7 @@ public:
 		area_id_ = area_id;
 		last_updated_ = ros::Time::now();
 	}
-	void setPose(tf::Pose pose) {
+	void setPose(tf::Pose pose) { //should only be used for small updates to the pose
 		pose_ = pose;
 		last_updated_ = ros::Time::now();
 	}
@@ -65,7 +65,7 @@ private:
 	 */
 	NodeID node_id_; //node_ids should never be changed!
 	ros::Time last_updated_;
-	tf::Pose pose_;
+	tf::Pose pose_; //TODO - p3 - It would be better to use a Stamped Pose, relative frames would become possible (not all will be defined in /map, but e.g. in previous frame). setPose could still be kept, not much would have to change...
 	bool is_door_;
 	int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
 	NodeMap &nodes_;

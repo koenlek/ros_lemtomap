@@ -19,10 +19,8 @@ catkin REQUIRED COMPONENTS
   message_generation
   tf
   rosbag #for loading previous maps
-  navfn
 )
 find_package(Eigen REQUIRED)
-find_package(PCL REQUIRED) #for navfn
 
 add_message_files(
   FILES
@@ -46,19 +44,9 @@ include_directories(
   include 
   ${Eigen_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS} #for navfn
 )
 
 add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp)
-target_link_libraries(topological_navigation_mapper ${navfn_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
 add_dependencies(topological_navigation_mapper ${catkin_EXPORTED_TARGETS}) # KL: to make sure that message headers in devel/include/${PROJECT_NAME} are recognized
-
-install(
-    TARGETS
-        topological_navigation_mapper
-	#add more lines for more nodes
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 

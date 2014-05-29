@@ -10,7 +10,7 @@
  * Constructor.
  */
 TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
-		n_(n), costmap_lastupdate_seq_(0), max_dist_between_nodes_(2.5), move_base_client_("move_base", true) // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
+		n_(n), costmap_lastupdate_seq_(0), max_edge_length_(2.5), new_node_distance_(1.0), move_base_client_("move_base", true) // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
 {
 	ros::NodeHandle private_nh("~");
 	std::string scan_topic;
@@ -28,16 +28,19 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 	n_.param("/move_base/local_costmap/height",cm_height,int(0));
 	n_.param("/move_base/local_costmap/width",cm_width,int(0));
 	cm_min = std::min(cm_height,cm_width);
-	if (max_dist_between_nodes_> cm_min/2 - 0.3) // when new edges are created, begin and end need to be in local costmap. The robot is *approx.* in the middle of the local costmap. - 0.3 is to give it some play for safety as it is only approx. in the middle.
-		ROS_ERROR("The maximum distances between nodes was specified to be %.3fm, while the local costmap is %d x %dm. This is too small: cost lookups for edge creating have a high risk to become out of bounds",max_dist_between_nodes_,cm_height,cm_width);
+	if (max_edge_length_> cm_min/2 - 0.3) // when new edges are created, begin and end need to be in local costmap. The robot is *approx.* in the middle of the local costmap. - 0.3 is to give it some play for safety as it is only approx. in the middle.
+		ROS_ERROR("The maximum distances between nodes was specified to be %.3fm, while the local costmap is %d x %dm. This is too small: cost lookups for edge creating have a high risk to become out of bounds",max_edge_length_,cm_height,cm_width);
 
+	//Create subscribers/publishers
+	fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("/move_base/NavfnROS/make_plan");
 	local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
 	scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
 	toponav_map_pub_ = private_nh.advertise<
 			st_topological_mapping::TopologicalNavigationMap>(
 			"topological_navigation_map", 1,true);
 
-	updateMap(); //update the map one time, at construction. This will create the first map node.
+	//update the map one time, at construction. This will create the first map node.
+	updateMap();
 	ROS_INFO("TopoNavMap object is initialized");
 
 #if DEBUG
@@ -222,8 +225,7 @@ bool TopoNavMap::checkCreateNode() {
 		//TODO - p3 - later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
 		create_node = true;
 		is_door = true;
-	} else if (distanceToClosestNode() > 1) {
-		//FIXME - p1 - Remove magic number "1", which is the min distance here...
+	} else if (distanceToClosestNode() > new_node_distance_) {
 		create_node = true;
 	}
 	if (create_node) {
@@ -238,58 +240,120 @@ bool TopoNavMap::checkCreateNode() {
 }
 
 /*!
- * checkCreateEdges
+ * \brief checkCreateEdges
  */
 bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 	//TODO - p3 - This method compares with all nodes: does not scale very well.
 	bool edge_created = false;
 	if (getNumberOfNodes() < 2) return false; //only continue if there are 2 or more nodes
-
-	/** Fake plannner code starts here */
-	costmap_2d::Costmap2DROS* costmap_ros = new costmap_2d::Costmap2DROS("local_costmap_fakeplanner",listener_);
-	costmap_ros->start();
-
-	ROS_INFO("Global Frame ID is: %s",costmap_ros->getGlobalFrameID().c_str());
-
-	geometry_msgs::PoseStamped start;
-	start.header.frame_id="odom";
-	geometry_msgs::PoseStamped goal;
-	goal.header.frame_id="odom";
-	goal.pose.position.x=1;
-
-	std::vector<geometry_msgs::PoseStamped> plan;
-	ROS_INFO("(pre) Planner size is: %lu",plan.size());
-	navfn::NavfnROS planner("fakeplanner",costmap_ros);
-	planner.makePlan(start, goal, plan);
-	ROS_INFO("Planner size is: %lu",plan.size());
-	costmap_ros->stop();
-	delete costmap_ros;
-	/** Fake plannner code ends here */
+	double fake_path_length;
 
 	for (TopoNavNode::NodeMap::iterator it=nodes_.begin(); it!=nodes_.end(); it++) {
+		//Not compare with itself
 		if (it->second->getNodeID() == node.getNodeID())
-			continue; //Not compare with itself
-		if (calcDistance(node, *it->second) > max_dist_between_nodes_)
-			continue; //Only if it is close enough
+			continue;
+		// If it is very close, do not check using directNavigable,
+		// but using fakePathLength to make sure that current node is always connected with the node you came from...
+		// Steering a sharp corner around a doorpost could otherwise result in orphan nodes..
+		// new_node_distance_+ 0.4 is because nodes are more or less 1 meter from each other, but often is 1.1, 1.2, or even 1.3 as well, as they are created a bit too late, while movement had already happened.
+		if (calcDistance(node, *it->second) < (new_node_distance_+ 0.4)){
+			fakePathLength(it->second->getPose(),node.getPose(),fake_path_length);
+			if (fake_path_length < calcDistance(node, *it->second)*1.6) // allow the curved path to be up to 1.6 times longer
+				addEdge(node, *(it->second));
+			continue;
+		}
+		//Only if it is close enough
+		if (calcDistance(node, *it->second) > max_edge_length_)
+			continue;
+		//If it is close enough AND directNavigable, create an edge
 		if (!edgeExists(node, *(it->second)) && directNavigable(node.getPose().getOrigin(), it->second->getPose().getOrigin())) {
 			addEdge(node, *(it->second));
 			edge_created = true;
 		}
 	}
-	ROS_DEBUG_COND(!edge_created,
-			"During this 'checkCreateEdges' call, no edge was created.");
+	ROS_WARN_COND(!edge_created,
+			"During this 'checkCreateEdges' call, no edge was created. This can lead to a graph that has 'subgraphs' that are completely unconnected!");
 	return edge_created;
-
 }
 
 /*!
- * directNavigable
+ * \brief checkCreateEdges
+ * \param pose1 The start pose
+ * \param pose2 The end pose
+ * \param length (output) The length of the path in meters
+ * \return false if no path can be found
+ */
+//bool TopoNavMap::fakePathDistance(const tf::Stamped<tf::Pose> &pose1, const tf::Point &pose2, double distance) {
+//	return fakePathDistance()
+//}
+bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length) {
+	bool valid_plan = false;
+	length = 0;
+
+	geometry_msgs::PoseStamped pose1sm, pose2sm;
+	pose1sm.header.frame_id = "/map";
+	pose2sm = pose1sm; //equal the pose msgs to have the same headers
+
+	poseTFToMsg(pose1,pose1sm.pose);
+	poseTFToMsg(pose2,pose2sm.pose);
+
+	nav_msgs::GetPlan srv;
+	std::vector<geometry_msgs::PoseStamped> path;
+	srv.request.start = pose1sm;
+	srv.request.goal = pose2sm;
+
+	for(int retry = 0 ; retry <= 3 ; retry++){ //if it fails, try multiple times. It sometimes seems to feel because it is too busy?
+		if (fakeplan_client_.call(srv) && srv.response.plan.poses.size() > 0){
+			path = srv.response.plan.poses;
+			for (int i=0;i<path.size()-1;i++){
+				length = length + calcDistance(path.at(i).pose,path.at(i+1).pose);
+			}
+			ROS_DEBUG("path.size(): %ld", path.size());
+			ROS_DEBUG("Path has length=%.4fm. Start point x=%.4f,y=%.4f. End point x=%.4f,y=%.4f",
+					length,
+					pose1sm.pose.position.x,
+					pose1sm.pose.position.y,
+					pose2sm.pose.position.x,
+					pose2sm.pose.position.y);
+			break;
+		}
+		else{
+			ROS_ERROR("fakePathLength() failed to receive a valid plan");
+		}
+	}
+	return valid_plan;
+}
+
+/*!
+ * \brief directNavigable
  */
 const bool TopoNavMap::directNavigable(const tf::Point &point1,
 		const tf::Point &point2) {
 	bool navigable = false;
 
 	//Check if the local_costmap has changed since last run, if so, update it
+	updateLCostmapMatrix();
+
+	int line_cost;
+	line_cost = getCMLineCost(point1,point2);
+	ROS_DEBUG("Straight line in /map from (x1,y1)=(%.4f,%.4f) to (x2,y2)=(%.4f,%.4f) has cost: %d",
+			point1.getX(),
+			point1.getY(),
+			point2.getX(),
+			point2.getY(),
+			line_cost);
+	// 100 is LETHAL (obstacle), 99 is INSCRIBED (will hit due to robot footprint), -1 is unknown.
+	// See: http://wiki.ros.org/costmap_2d
+	// See the cost_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
+	if (line_cost<90 && line_cost>=0)
+		navigable = true;
+
+	return navigable;
+}
+
+/**\brief updates the local costmap matrix (in occupancy grid map msgs valuation).
+ */
+void TopoNavMap::updateLCostmapMatrix(){
 	if (local_costmap_.header.seq > costmap_lastupdate_seq_){ //only update the matrix if a newer version of the costmap has been published
 		//set lastupdate to the current message
 		costmap_lastupdate_seq_ = local_costmap_.header.seq;
@@ -307,21 +371,6 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1,
 			}
 		}
 	}
-	int line_cost;
-	line_cost = getCMLineCost(point1,point2);
-	ROS_INFO("Line in /map from (x1,y1)=(%.4f,%.4f) to (x2,y2)=(%.4f,%.4f) has cost: %d",
-			point1.getX(),
-			point1.getY(),
-			point2.getX(),
-			point2.getY(),
-			line_cost);
-	//100 is LETHAL (obstacle), 99 is INSCRIBED (will hit due to robot footprint), -1 is unknown.
-	// See: http://wiki.ros.org/costmap_2d
-	// See the cost_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
-	if (line_cost<90 && line_cost>=0)
-		navigable = true;
-
-	return navigable;
 }
 
 /**\brief turn a /map tf::Point into a cell of the local costmap
@@ -330,8 +379,9 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1,
  * \param cell_y (output) The girdcell coordinate y
  * \return N/A
  */
-void TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const {
+bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const {
 	// Calculate a Transform from map coordinates to costmap origin coordinates (which is at costmap_matrix_(0,0))
+	bool validpoint = true;
 	std::string costmap_frame_id; //global frame as specified in move_base local costmap params
 	costmap_frame_id = local_costmap_.header.frame_id;
 
@@ -349,8 +399,11 @@ void TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
 	cell_i = floor(map_coordinate_incostmap_origin.getY()/local_costmap_.info.resolution); // i is row, i.e. y
 	cell_j = floor(map_coordinate_incostmap_origin.getX()/local_costmap_.info.resolution); // j is column, i.e. x
 
-	if (cell_i < 0 || cell_j < 0 || cell_i >= local_costmap_.info.height || cell_j >= local_costmap_.info.width)
+	if (cell_i < 0 || cell_j < 0 || cell_i >= local_costmap_.info.height || cell_j >= local_costmap_.info.width){
 		ROS_ERROR("mapPoint2costmapCell: Index out of bounds!");
+		validpoint = false;
+	}
+	return validpoint;
 }
 
 /**\brief Find the max. cost between two points
@@ -360,9 +413,10 @@ void TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
  */
 int TopoNavMap::getCMLineCost(const tf::Point &point1,const tf::Point &point2) const{
 	int cell1_i, cell1_j, cell2_i, cell2_j;
-	mapPoint2costmapCell(point1,cell1_i,cell1_j);
-	mapPoint2costmapCell(point2,cell2_i,cell2_j);
-	return getCMLineCost(cell1_i,cell1_j,cell2_i,cell2_j);
+	if (mapPoint2costmapCell(point1,cell1_i,cell1_j) && mapPoint2costmapCell(point2,cell2_i,cell2_j))
+		return getCMLineCost(cell1_i,cell1_j,cell2_i,cell2_j);
+	else
+		return INT_MAX;
 }
 
 /** \brief Find the max. cost between two points */
