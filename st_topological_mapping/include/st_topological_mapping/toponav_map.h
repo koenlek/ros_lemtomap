@@ -23,6 +23,9 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <nav_msgs/GetPlan.h> //service
 
+#include <ecl/time/cpuwatch.hpp>
+#include <ecl/time/time_data.hpp>
+
 // Local includes
 #include "toponav_node.h"
 #include "toponav_edge.h"

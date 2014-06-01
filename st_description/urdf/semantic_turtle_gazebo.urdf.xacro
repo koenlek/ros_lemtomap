@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!-- Part of the sensors (like odometry) are already described in kobuki_gazebo.urdf.xacro in kobuki_gazebo -->
 <robot name="st_gazebo"
 	xmlns:xacro="http://ros.org/wiki/xacro">
 	<!-- Microsoft Kinect / ASUS Xtion PRO Live for simulation -->

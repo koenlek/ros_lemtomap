@@ -52,7 +52,13 @@ int main(int argc, char** argv) {
 	std::vector<ros::Time> benchm_update_time;
 	benchm_update_time.push_back(ros::Time::now());*/
 
+	ecl::CpuWatch cpuwatch;
+	ecl::TimeData timings;
+	ecl::Duration duration;
+
 	while (n.ok()) {
+		cpuwatch.restart();
+
 		/*cycle++;
 		benchm_update_time.push_back(ros::Time::now());
 		freq_cur=1/(benchm_update_time.at(cycle)-benchm_update_time.at(cycle-1)).toSec();
@@ -62,6 +68,12 @@ int main(int argc, char** argv) {
 
 		topo_nav_map.updateMap();
 		show_topo_nav_map.updateVisualization();
+
+	    duration = cpuwatch.split();
+	    timings.push_back(duration);
+
+		ROS_DEBUG_STREAM("Average : " << timings.average());
+		ROS_DEBUG_STREAM("Variance: " << timings.variance());
 
 		ros::spinOnce();
 		r.sleep();

@@ -13,6 +13,8 @@ else()
 add_definitions(-DDEBUG=0)
 endif()
 
+add_definitions(-DBENCHMARKING=1) 
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   actionlib
@@ -21,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   #move_base_msgs 
   tf
   st_topological_mapping
+  ecl_time
 )
 
 add_action_files(

@@ -14,6 +14,8 @@
 	</node>
 
 	<!-- Run Move Base Topo -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen"/>
+	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="100" /> <!-- default is 1hz currently -->
+	</node>
 </launch>
 

@@ -14,6 +14,11 @@
 #include "tf/transform_listener.h"
 #include "tf/transform_datatypes.h"
 #include <move_base_msgs/MoveBaseAction.h>
+#include <nav_msgs/Path.h>
+
+#include <ecl/time/stopwatch.hpp>
+#include <ecl/time/cpuwatch.hpp>
+#include <ecl/time/time_data.hpp>
 
 // Local includes
 #include <st_navigation/shortest_paths.h>
@@ -41,6 +46,14 @@ protected:
   std::string toponav_map_topic_;
   std::string goal_frame_id_;
   tf::TransformListener tf_listener_;
+
+#if BENCHMARKING
+  ros::Subscriber move_base_feedback_sub_;
+  void moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr& path);
+  ecl::CpuWatch cpuwatch_;
+  ecl::StopWatch stopwatch_;
+  bool benchmark_inprogress;
+#endif
 
 public:
   MoveBaseTopo(std::string name);

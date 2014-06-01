@@ -2,7 +2,7 @@
 <package>
   <name>semantic_turtle</name>
   <version>0.0.0</version>
-  <description>The semantic_turtle package</description>
+  <description>The semantic_turtle metapackage</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>BSD</license>
 
@@ -11,6 +11,7 @@
   <run_depend>st_bringup</run_depend>
   <run_depend>st_description</run_depend>
   <run_depend>st_gazebo</run_depend>
+  <run_depend>st_gmapping_rolling</run_depend>
   <run_depend>st_map_server</run_depend>
   <run_depend>st_navigation</run_depend>
   <run_depend>st_simulation</run_depend>

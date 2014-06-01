@@ -25,8 +25,16 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
 			"topological_navigation_mapper/topological_navigation_map";
 	toponavmap_sub_ = nh_.subscribe(toponav_map_topic_, 1,
 			&MoveBaseTopo::toponavmapCB, this);
+
+	#if BENCHMARKING
+		move_base_feedback_sub_ = nh_.subscribe("/move_base/NavfnROS/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
+		benchmark_inprogress = false;
+	#endif
 	action_server_mbt_.start();
 
+	ROS_INFO("Waiting for move_base action server");
+	move_base_client_.waitForServer();
+	ROS_INFO("Waiting for move_base action server -- Finished");
 }
 
 void MoveBaseTopo::toponavmapCB(
@@ -36,11 +44,27 @@ void MoveBaseTopo::toponavmapCB(
 	toponavmap_ = *toponav_map;
 }
 
+#if BENCHMARKING
+void MoveBaseTopo::moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr & path) {
+	if(path->poses.size() > 0 && benchmark_inprogress){
+		ecl::TimeStamp time;
+		time = stopwatch_.split();
+		ROS_INFO_STREAM("It took: " << time << "[s] from receiving topo nav goal (/move_base_topo/goal) to receiving a global metric path (/move_base/NavfnROS/plan)");
+		benchmark_inprogress = false;
+	}
+}
+#endif
+
+
 void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //CB stands for CallBack...
 		{
-	ROS_INFO("Waiting for move_base action server");
-	move_base_client_.waitForServer();
-	ROS_INFO("Waiting for move_base action server -- Finished");
+    #if BENCHMARKING
+		benchmark_inprogress = true;
+		ecl::TimeStamp time;
+		ecl::Duration duration;
+		cpuwatch_.restart(); //sets current `lap` to zero.
+		stopwatch_.restart(); //sets current `lap` to zero.
+	#endif
 
 	// helper variables
 	bool success = false;
@@ -52,6 +76,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 
 	// Calculate the topological path
 	start_node_id = getCurrentAssociatedNode();
+
 	if(!st_shortest_paths::findShortestPath(toponavmap_, start_node_id,goal->target_node_id,path_nodes)){
 		// if it has NOT found a valid shortest path
 		ROS_WARN("No valid path could be found from Node %d to %d. This move_base_topo action is aborted",start_node_id,goal->target_node_id);
@@ -94,6 +119,13 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 						nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
 				move_base_goal.target_pose = node_pose;
 				move_base_client_.sendGoal(move_base_goal);
+
+				#if BENCHMARKING
+					duration = cpuwatch_.elapsed();
+					ROS_INFO_STREAM("Cpuwatch took " << duration <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
+					ROS_INFO_STREAM("Stopwatch took " << stopwatch_.elapsed() <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
+				#endif
+
 				i++; // current i is always +1 compared to the current goal node vector position in path_nodes
 			}
 			ROS_DEBUG("Distance between robot and intermediate Goal NodeID %d = %f",
@@ -137,6 +169,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 							== actionlib::SimpleClientGoalState::SUCCEEDED) {
 				success = true;
 				ROS_INFO("Hooray: the final topological goal has been reached");
+
 			}
 		}
 
@@ -152,6 +185,12 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 		feedback_.route_node_ids.clear();
 		feedback_.route_edge_ids.clear();
 		action_server_mbt_.publishFeedback(feedback_);
+
+ 	 	#if BENCHMARKING
+			duration = cpuwatch_.elapsed();
+			ROS_INFO_STREAM("Cpuwatch took " << duration <<"[s] from initial move_base_topo action until a goal was completed");
+			ROS_INFO_STREAM("Stopwatch took " << stopwatch_.elapsed() <<"[s] from initial move_base_topo action until a goal was completed");
+		#endif
 	}
 }
 

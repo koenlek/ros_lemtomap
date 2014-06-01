@@ -11,6 +11,8 @@ else()
 add_definitions(-DDEBUG=0)
 endif()
 
+add_definitions(-DBENCHMARKING=1) 
+
 find_package(
 catkin REQUIRED COMPONENTS
   roscpp
@@ -19,6 +21,7 @@ catkin REQUIRED COMPONENTS
   message_generation
   tf
   rosbag #for loading previous maps
+  ecl_time
 )
 find_package(Eigen REQUIRED)
 
