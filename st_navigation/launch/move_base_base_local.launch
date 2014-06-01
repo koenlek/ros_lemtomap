@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<launch>
+	<arg name="odom_topic" default="odom" />
+
+	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
+	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml" />
+	<include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml" />
+
+	<!-- Navigation components -->
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base"
+		output="screen" clear_params="true">
+		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+		<rosparam file="$(find st_navigation)/param/local_costmap_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="$(find st_navigation)/param/global_costmap_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="$(find st_navigation)/param/base_local_planner_params.yaml" command="load" />
+		<rosparam file="$(find st_navigation)/param/move_base_params.yaml" command="load" />
+		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
+		<remap from="odom" to="$(arg odom_topic)" />
+		<remap from="scan_hokuyo" to="scan" />
+	</node>
+
+</launch>

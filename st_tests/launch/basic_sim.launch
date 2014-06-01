@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!-- A basic simulation -->
+
+<launch>
+
+	<arg name="use_sim_time" default="true" />
+
+	<!-- set use_sim_time flag -->
+	<group if="$(arg use_sim_time)">
+		<param name="/use_sim_time" value="true" />
+	</group>
+
+	<!--- RVIZ -->
+	<include file="$(find st_tests)/launch/includes/view_robot.launch" />
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find st_simulation)/launch/bringup_simulated.launch" />
+		
+	<!-- Gazebo -->
+	<include
+		file="$(find st_gazebo)/launch/turtlebot_gazebo_world.launch" />
+
+	<!-- Teleop -->
+	<include file="$(find turtlebot_teleop)/launch/keyboard_teleop.launch" />
+</launch>

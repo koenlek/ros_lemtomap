@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>st_map_server</name>
+  <version>0.0.0</version>
+  <description>The st_map_server package</description>
+  <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rosbag</build_depend>
+  <build_depend>st_topological_mapping</build_depend>  
+  <run_depend>roscpp</run_depend>
+  <run_depend>rosbag</run_depend>
+  <run_depend>st_topological_mapping</run_depend>
+</package>
