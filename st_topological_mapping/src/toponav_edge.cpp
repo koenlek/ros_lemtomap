@@ -6,23 +6,23 @@
 
 #include <st_topological_mapping/toponav_edge.h>
 
-TopoNavEdge::TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode::NodeID start_node_id, const TopoNavNode::NodeID end_node_id, EdgeMap &edges, const TopoNavNode::NodeMap &nodes):
-edge_id_(edge_id), last_updated_(last_updated), edges_(edges), cost_(cost), start_node_id_(start_node_id), end_node_id_(end_node_id), nodes_(nodes){
+TopoNavEdge::TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost, const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges):
+edge_id_(edge_id), last_updated_(last_updated), edges_(edges), cost_(cost), start_node_(start_node), end_node_(end_node){
 	if (edge_id_>=UIDGenerator_)
 		UIDGenerator_=edge_id_+1;
 	edges_[edge_id_]=this;
 }
 
-TopoNavEdge::TopoNavEdge(const TopoNavNode::NodeID start_node_id, const TopoNavNode::NodeID end_node_id, EdgeMap &edges, const TopoNavNode::NodeMap &nodes) :
-    start_node_id_(start_node_id), end_node_id_(end_node_id), edges_(edges), nodes_(nodes)
+TopoNavEdge::TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges) :
+    start_node_(start_node), end_node_(end_node), edges_(edges)
 {
   edge_id_=UIDGenerator_++;
   last_updated_ = ros::Time::now();
   updateCost();
   ROS_DEBUG("Edge created. id= %d from Node %d to %d, cost = %f, updated at %f",
            edge_id_,
-           start_node_id_,
-           end_node_id_, cost_,
+           start_node_.getNodeID(),
+           end_node_.getNodeID(), cost_,
            last_updated_.toSec());
   edges_[edge_id_]=this;
 }
@@ -40,7 +40,7 @@ TopoNavEdge::~TopoNavEdge()
 const double TopoNavEdge::updateCost()
 {
   //Recalculation could also be only triggered if any of the nodes had changed. I.e. iff edge.last_updated_ < node1.last_update_ ||
-  cost_ = calcDistance(nodes_.at(start_node_id_)->getPose(), nodes_.at(end_node_id_)->getPose());
+  cost_ = calcDistance(start_node_, end_node_);
   return cost_;
 }
 

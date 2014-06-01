@@ -120,13 +120,13 @@ void ShowTopoNavMap::visualizeEdges ()
       edge_marker.points.resize(2); // each line_list exits of one line
 
       //Source
-      edge_marker.points[0].x = nodes_.at(it->second->getStartNode())->getPose().getOrigin().getX();
-      edge_marker.points[0].y = nodes_.at(it->second->getStartNode())->getPose().getOrigin().getY();
+      edge_marker.points[0].x = it->second->getStartNode().getPose().getOrigin().getX();
+      edge_marker.points[0].y = it->second->getStartNode().getPose().getOrigin().getY();
       edge_marker.points[0].z = 0.0f;
 
       //Destination
-      edge_marker.points[1].x = nodes_.at(it->second->getEndNode())->getPose().getOrigin().getX();
-      edge_marker.points[1].y = nodes_.at(it->second->getEndNode())->getPose().getOrigin().getY();
+      edge_marker.points[1].x = it->second->getEndNode().getPose().getOrigin().getX();
+      edge_marker.points[1].y = it->second->getEndNode().getPose().getOrigin().getY();
       edge_marker.points[1].z = 0.0f;
 
       //If it is part of the navigation path: give it a nice color

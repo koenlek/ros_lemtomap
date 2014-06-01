@@ -20,11 +20,11 @@ public:
 	typedef int EdgeID; //This can be used to help function signatures see the difference between a edge_id form any int
 	typedef std::map<EdgeID, TopoNavEdge*> EdgeMap;
 
-	TopoNavEdge(const TopoNavNode::NodeID start_node_id, const TopoNavNode::NodeID end_node_id,
-			EdgeMap &edges, const TopoNavNode::NodeMap &nodes);
+	TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node,
+			EdgeMap &edges);
 	TopoNavEdge(EdgeID edge_id, ros::Time last_updated, double cost,
-			const TopoNavNode::NodeID start_node_id, const TopoNavNode::NodeID end_node_id,
-			EdgeMap &edges, const TopoNavNode::NodeMap &nodes); // only to be used when loading map from message!
+			const TopoNavNode &start_node, const TopoNavNode &end_node,
+			EdgeMap &edges); // only to be used when loading map from message!
 	~TopoNavEdge();
 
 	/**
@@ -42,11 +42,11 @@ public:
 	const double getCost() const {
 		return cost_;
 	}
-	const TopoNavNode::NodeID getStartNode() const {
-		return start_node_id_;
+	const TopoNavNode& getStartNode() const {
+		return start_node_;
 	}
-	const TopoNavNode::NodeID getEndNode() const {
-		return end_node_id_;
+	const TopoNavNode& getEndNode() const {
+		return end_node_;
 	}
 
 	// set Methods
@@ -62,11 +62,10 @@ private:
 	EdgeID edge_id_; //edge ids are automatically generated (starting from 1) and should never be changed!
 	ros::Time last_updated_;
 	double cost_;
-	const TopoNavNode::NodeID start_node_id_;
-	const TopoNavNode::NodeID end_node_id_;
+	const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
+	const TopoNavNode &end_node_;
 
 	EdgeMap &edges_;
-	const TopoNavNode::NodeMap &nodes_;
 	/**
 	 * Private Methods
 	 */

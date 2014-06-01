@@ -125,7 +125,7 @@ public:
 			const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
 
 	// these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
-	void addEdge(const TopoNavNode::NodeID start_node, const TopoNavNode::NodeID end_node);
+	void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
 	void addNode(const tf::Pose &pose, bool is_door, int area_id);
 	void deleteEdge(TopoNavEdge::EdgeID edge_id);
 	void deleteEdge(TopoNavEdge &edge);
@@ -152,7 +152,7 @@ public:
 
 	// conversions from/to ROS msgs
 	void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg,
-			TopoNavEdge::EdgeMap &edges, TopoNavNode::NodeMap &nodes);
+			TopoNavEdge::EdgeMap &edges);
 	void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg,
 			TopoNavNode::NodeMap &nodes);
 	st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(
