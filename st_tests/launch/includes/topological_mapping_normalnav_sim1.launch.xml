@@ -31,6 +31,7 @@
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
+		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
 	</node>
 
 	<!-- Teleop -->

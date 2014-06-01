@@ -12,10 +12,10 @@
 	<!-- Navigation components -->
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base"
 		output="screen" clear_params="true">
-		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
 		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
-		<rosparam file="$(find st_navigation)/param/local_costmap_params.yaml" command="load" />
-		<rosparam file="$(find st_navigation)/param/global_costmap_params.yaml" command="load" />
+		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+		<rosparam file="$(find st_navigation)/param/local_costmap_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="$(find st_navigation)/param/local_costmap_params.yaml" command="load" ns="global_costmap"/> <!-- global costmap uses same as local costmap-->
 		<rosparam file="$(find st_navigation)/param/dwa_local_planner_params.yaml" command="load" />
 		<rosparam file="$(find st_navigation)/param/move_base_params.yaml" command="load" />
 

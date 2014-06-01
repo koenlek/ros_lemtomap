@@ -1,11 +1,17 @@
+##### common part (usually) #####
+robot_base_frame: /base_footprint
+robot_radius: 0.18
+
+##### normal part #####
+
 global_frame: /map
-update_frequency: 1.0
-publish_frequency: 0.2
+update_frequency: 0.01 #0 also possible?
+publish_frequency: 0.01 #0 also possible?
 static_map: true
 #transform_tolerance: 0.5
 resolution: 0.05 #default seems to be 0.05
 plugins:
-- {name: footprint_layer, type: "costmap_2d::FootprintLayer"} #does not seem to be visualizable in rviz easily
+#- {name: footprint_layer, type: "costmap_2d::FootprintLayer"} #does not seem to be visualizable in rviz easily
 - {name: static_map_layer, type: "costmap_2d::StaticLayer"} #http://wiki.ros.org/costmap_2d/hydro/staticmap
 - {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
 - {name: inflation_layer,   type: "costmap_2d::InflationLayer"}

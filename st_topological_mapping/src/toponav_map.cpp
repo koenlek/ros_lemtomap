@@ -156,9 +156,10 @@ void TopoNavMap::loadMapFromMsg(
 				toponavmap_msg.edges.at(i).edge_id, //edge_id
 				toponavmap_msg.edges.at(i).last_updated, //last_updated
 				toponavmap_msg.edges.at(i).cost, //cost
-				*nodes_[toponavmap_msg.edges.at(i).start_node_id],
-				*nodes_[toponavmap_msg.edges.at(i).end_node_id],
-				edges_ //edges std::map
+				toponavmap_msg.edges.at(i).start_node_id,
+				toponavmap_msg.edges.at(i).end_node_id,
+				edges_, //edges std::map
+				nodes_
 				);
 		ROS_DEBUG("Loaded edge with ID=%lu to std::map edges_", toponavmap_msg.nodes.at(i).node_id);
 	}
@@ -258,8 +259,10 @@ bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 		// new_node_distance_+ 0.4 is because nodes are more or less 1 meter from each other, but often is 1.1, 1.2, or even 1.3 as well, as they are created a bit too late, while movement had already happened.
 		if (calcDistance(node, *it->second) < (new_node_distance_+ 0.4)){
 			fakePathLength(it->second->getPose(),node.getPose(),fake_path_length);
-			if (fake_path_length < calcDistance(node, *it->second)*1.6) // allow the curved path to be up to 1.6 times longer
-				addEdge(node, *(it->second));
+			if (fake_path_length < calcDistance(node, *it->second)*1.6){ // allow the curved path to be up to 1.6 times longer
+				addEdge(node.getNodeID(), it->second->getNodeID());
+				edge_created = true;
+			}
 			continue;
 		}
 		//Only if it is close enough
@@ -267,7 +270,7 @@ bool TopoNavMap::checkCreateEdges(const TopoNavNode &node) {
 			continue;
 		//If it is close enough AND directNavigable, create an edge
 		if (!edgeExists(node, *(it->second)) && directNavigable(node.getPose().getOrigin(), it->second->getPose().getOrigin())) {
-			addEdge(node, *(it->second));
+			addEdge(node.getNodeID(), it->second->getNodeID());
 			edge_created = true;
 		}
 	}
@@ -496,9 +499,9 @@ double TopoNavMap::distanceToClosestNode() {
 /*!
  * addEdge
  */
-void TopoNavMap::addEdge(const TopoNavNode &start_node,
-		const TopoNavNode &end_node) {
-	new TopoNavEdge(start_node, end_node, edges_); //Using "new", the object will not be destructed after leaving this method!
+void TopoNavMap::addEdge(const TopoNavNode::NodeID start_node,
+		const TopoNavNode::NodeID end_node) {
+	new TopoNavEdge(start_node, end_node, edges_, nodes_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!
@@ -536,8 +539,8 @@ TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(
 		const TopoNavNode &node) const { //TODO - p3 - scales poorly: all edges are checked!
 	TopoNavEdge::EdgeMap connected_edges;
 	for (TopoNavEdge::EdgeMap::const_iterator it=edges_.begin(); it!=edges_.end(); it++) {
-		if (it->second->getStartNode().getNodeID() == node.getNodeID()
-				|| it->second->getEndNode().getNodeID() == node.getNodeID()) {
+		if (it->second->getStartNode() == node.getNodeID()
+				|| it->second->getEndNode() == node.getNodeID()) {
 			connected_edges[it->second->getEdgeID()]=(it->second);
 		}
 	}
@@ -559,21 +562,22 @@ void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg nod
 	);
 }
 
-void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, TopoNavEdge::EdgeMap &edges) {
+void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg, TopoNavEdge::EdgeMap &edges, TopoNavNode::NodeMap &nodes) {
 	new TopoNavEdge(edge_msg.edge_id, //edge_id
 			edge_msg.last_updated, //last_updated
 			edge_msg.cost, //cost
-			*nodes_[edge_msg.start_node_id], //start_node
-			*nodes_[edge_msg.end_node_id], //end_node
-			edges //edges std::map
+			edge_msg.start_node_id, //start_node
+			edge_msg.end_node_id, //end_node
+			edges, //edges std::map
+			nodes
 			);
 }
 st_topological_mapping::TopoNavEdgeMsg TopoNavMap::edgeToRosMsg(const TopoNavEdge* edge){
 	st_topological_mapping::TopoNavEdgeMsg msg_edge;
 	msg_edge.edge_id = edge->getEdgeID();
 	msg_edge.last_updated = edge->getLastUpdatedTime();
-	msg_edge.start_node_id = edge->getStartNode().getNodeID();
-	msg_edge.end_node_id = edge->getEndNode().getNodeID();
+	msg_edge.start_node_id = edge->getStartNode();
+	msg_edge.end_node_id = edge->getEndNode();
 	msg_edge.cost = edge->getCost();
 
 	return msg_edge;

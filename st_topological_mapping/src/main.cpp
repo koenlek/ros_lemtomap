@@ -17,8 +17,12 @@ int main(int argc, char** argv) {
 	ros::NodeHandle private_nh("~");
 
 	std::string load_map_path;
+	double frequency; //main loop frequency in Hz
 
 	private_nh.param("load_map_directory", load_map_path, std::string("")); //requires a full path to the top level directory, ~ and other env. vars are not accepted
+	private_nh.param("main_loop_frequency", frequency, 4.0); //requires a full path to the top level directory, ~ and other env. vars are not accepted
+
+	ros::Rate r(frequency);
 
 	TopoNavMap topo_nav_map(n);
 	if (load_map_path != "") {
@@ -32,8 +36,6 @@ int main(int argc, char** argv) {
 	}
 
 	ShowTopoNavMap show_topo_nav_map(n, topo_nav_map.getNodes(), topo_nav_map.getEdges());
-
-	ros::Rate r(4);
 
 	#ifdef CMAKE_BUILD_TYPE_DEF
 	#include <boost/preprocessor/stringize.hpp>
@@ -63,6 +65,9 @@ int main(int argc, char** argv) {
 
 		ros::spinOnce();
 		r.sleep();
+		if (r.cycleTime() > ros::Duration(1 / frequency))
+		    ROS_WARN("%s main loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds (%.4fHz)", ros::this_node::getName().c_str(), frequency,
+		             r.cycleTime().toSec(),1/r.cycleTime().toSec());
 	}
 
 	return 0;

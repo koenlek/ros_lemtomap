@@ -229,8 +229,13 @@ std::vector<int> MoveBaseTopo::nodesPathToEdgesPath(
 int main(int argc, char** argv) {
 	ros::init(argc, argv, "move_base_topo");
 	ros::NodeHandle n;
+	ros::NodeHandle private_nh("~");
 
-	ros::Rate r(1);
+	double frequency; //main loop frequency in Hz
+
+	private_nh.param("main_loop_frequency", frequency, 1.0); //requires a full path to the top level directory, ~ and other env. vars are not accepted
+
+	ros::Rate r(frequency);
 
 	MoveBaseTopo move_base_topo(ros::this_node::getName());
 
@@ -251,6 +256,9 @@ int main(int argc, char** argv) {
 
 		ros::spinOnce();
 		r.sleep();
+		if (r.cycleTime() > ros::Duration(1 / frequency))
+		    ROS_WARN("%s main loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds (%.4fHz)", ros::this_node::getName().c_str(), frequency,
+		             r.cycleTime().toSec(),1/r.cycleTime().toSec());
 	}
 
 	return 0;
