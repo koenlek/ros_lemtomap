@@ -3,7 +3,7 @@
 <launch>
 
 	<arg name="use_sim_time" default="true" />
-	<arg name="world_name_short" default="willowgarage.world" /> <!-- playground,empty,ball,willowgarage -->
+	<arg name="world_name_short" default="willowgarage_large.world" /> <!-- playground,empty,ball,willowgarage -->
 	<arg name="load_map_directory" default=""/>
 
 	<!-- RVIZ -->

@@ -14,7 +14,7 @@
 			of the sensor. If regions with no obstacles within the range of the sensor 
 			should appear as free space in the map, set maxUrange < maximum range of 
 			the real sensor <= maxRange. -->
-		<param name="sigma" value="0.05" />
+		<param name="sigma" value="0.00" />
 		<param name="kernelSize" value="1" />
 		<param name="lstep" value="0.05" />
 		<param name="astep" value="0.05" />
@@ -26,8 +26,8 @@
 		<param name="srt" value="0.00" />
 		<param name="str" value="0.00" />
 		<param name="stt" value="0.00" />
-		<param name="linearUpdate" value="0.5" />
-		<param name="angularUpdate" value="0.436" />
+		<param name="linearUpdate" value="1000000" />
+		<param name="angularUpdate" value="1000000" />
 		<param name="temporalUpdate" value="-1.0" />
 		<param name="resampleThreshold" value="0.5" />
 		<param name="particles" value="80" />

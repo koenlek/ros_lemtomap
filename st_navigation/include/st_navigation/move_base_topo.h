@@ -16,9 +16,11 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <nav_msgs/Path.h>
 
+#if BENCHMARKING
 #include <ecl/time/stopwatch.hpp>
 #include <ecl/time/cpuwatch.hpp>
 #include <ecl/time/time_data.hpp>
+#endif
 
 // Local includes
 #include <st_navigation/shortest_paths.h>
@@ -48,11 +50,11 @@ protected:
   tf::TransformListener tf_listener_;
 
 #if BENCHMARKING
-  ros::Subscriber move_base_feedback_sub_;
+  ros::Subscriber move_base_global_plan_sub_;
   void moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr& path);
   ecl::CpuWatch cpuwatch_;
   ecl::StopWatch stopwatch_;
-  bool benchmark_inprogress;
+  bool benchmark_inprogress_;
 #endif
 
 public:

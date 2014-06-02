@@ -27,9 +27,10 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
 			&MoveBaseTopo::toponavmapCB, this);
 
 	#if BENCHMARKING
-		move_base_feedback_sub_ = nh_.subscribe("/move_base/NavfnROS/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
-		benchmark_inprogress = false;
+		move_base_global_plan_sub_ = nh_.subscribe("/move_base/NavfnROS/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
+		benchmark_inprogress_ = false;
 	#endif
+
 	action_server_mbt_.start();
 
 	ROS_INFO("Waiting for move_base action server");
@@ -46,11 +47,11 @@ void MoveBaseTopo::toponavmapCB(
 
 #if BENCHMARKING
 void MoveBaseTopo::moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr & path) {
-	if(path->poses.size() > 0 && benchmark_inprogress){
+	if(path->poses.size() > 0 && benchmark_inprogress_){
 		ecl::TimeStamp time;
 		time = stopwatch_.split();
 		ROS_INFO_STREAM("It took: " << time << "[s] from receiving topo nav goal (/move_base_topo/goal) to receiving a global metric path (/move_base/NavfnROS/plan)");
-		benchmark_inprogress = false;
+		benchmark_inprogress_ = false;
 	}
 }
 #endif
@@ -59,7 +60,7 @@ void MoveBaseTopo::moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr & path) {
 void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //CB stands for CallBack...
 		{
     #if BENCHMARKING
-		benchmark_inprogress = true;
+		benchmark_inprogress_ = true;
 		ecl::TimeStamp time;
 		ecl::Duration duration;
 		cpuwatch_.restart(); //sets current `lap` to zero.
