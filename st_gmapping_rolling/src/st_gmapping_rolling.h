@@ -100,10 +100,10 @@ class SlamGMapping
     double lsigma_;
     double ogain_;
     int lskip_;
-    double srr_;
-    double srt_;
-    double str_;
-    double stt_;
+    double srr_; //Odometry error in translation as a function of translation (rho/rho)
+    double srt_; //Odometry error in translation as a function of rotation (rho/theta)
+    double str_; //Odometry error in rotation as a function of translation (theta/rho)
+    double stt_; //Odometry error in rotation as a function of rotation (theta/theta)
     double linearUpdate_;
     double angularUpdate_;
     double temporalUpdate_;
@@ -119,6 +119,9 @@ class SlamGMapping
     double llsamplestep_;
     double lasamplerange_;
     double lasamplestep_;
-    
+
+    double windowsize_;
+    bool rolling_; //KL
+
     double tf_delay_;
 };

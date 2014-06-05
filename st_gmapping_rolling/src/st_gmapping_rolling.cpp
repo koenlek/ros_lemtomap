@@ -114,7 +114,7 @@ Initial map dimensions and resolution:
 #include "ros/console.h"
 #include "nav_msgs/MapMetaData.h"
 
-#include "gmapping/sensor/sensor_range/rangesensor.h"
+#include "gmapping/sensor/sensor_range/rangesensor.h" //KL: these are openslam_gmapping headers -> openslam_gmapping hasnt used the pkg/include/pkgname/headers (e.g.  openslam_gmapping/include/openslam_gmapping/header.h) structure. it is: openslam_gmapping/include/gmapping/header.h instead, which becomes just this in install space: include/gmapping/header.h
 #include "gmapping/sensor/sensor_odometry/odometrysensor.h"
 
 // compute linear index for given map coords
@@ -217,6 +217,16 @@ SlamGMapping::SlamGMapping():
     lasamplerange_ = 0.005;
   if(!private_nh_.getParam("lasamplestep", lasamplestep_))
     lasamplestep_ = 0.005;
+
+  if(!private_nh_.getParam("windowsize", windowsize_)){
+	  windowsize_ = 0;
+	  rolling_ = false;
+  }
+  else{
+	  rolling_ = true;
+  }
+
+
     
   if(!private_nh_.getParam("tf_delay", tf_delay_))
     tf_delay_ = transform_publish_period;
@@ -272,7 +282,7 @@ SlamGMapping::getOdomPose(GMapping::OrientedPoint& gmap_pose, const ros::Time& t
   {
     tf_.transformPose(odom_frame_, ident, odom_pose);
   }
-  catch(tf::TransformException e)
+  catch(tf::TransformException &e)
   {
     ROS_WARN("Failed to compute odom pose, skipping scan (%s)", e.what());
     return false;
@@ -299,7 +309,7 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   {
     tf_.transformPose(base_frame_, ident, laser_pose);
   }
-  catch(tf::TransformException e)
+  catch(tf::TransformException &e)
   {
     ROS_WARN("Failed to compute laser pose, aborting initialization (%s)",
              e.what());
@@ -309,6 +319,7 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   // create a point 1m above the laser position and transform it into the laser-frame
   tf::Vector3 v;
   v.setValue(0, 0, 1 + laser_pose.getOrigin().z());
+  //KL: up is used for some tricks: including checking if laser is upside down (and auto correct it) and to check if the scans are completely planar (zero roll/pitch!)
   tf::Stamped<tf::Vector3> up(v, scan.header.stamp,
                                       base_frame_);
   try
@@ -484,7 +495,7 @@ SlamGMapping::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   // We can't initialize the mapper until we've got the first scan
   if(!got_first_scan_)
   {
-    if(!initMapper(*scan))
+    if(!initMapper(*scan)) //
       return;
     got_first_scan_ = true;
   }
@@ -607,11 +618,50 @@ SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
   // the map may have expanded, so resize ros message as well
   if(map_.map.info.width != (unsigned int) smap.getMapSizeX() || map_.map.info.height != (unsigned int) smap.getMapSizeY()) {
 
+	if(rolling_){
+		  tf::StampedTransform robot_pose;
+		  try
+		  {
+	  		//tf_.waitForTransform(map_frame_, base_frame_, ros::Time(0), ros::Duration(0.1));
+	  		tf_.lookupTransform(map_frame_, base_frame_, ros::Time(0),
+	  				robot_pose);
+		  }
+		  catch(tf::TransformException &e)
+		  {
+		    ROS_WARN("Failed to compute robot pose (%s)", e.what());
+		  }
+		  ROS_INFO("General:");
+		  ROS_INFO("using rolling window variant of gmapping: %s", rolling_ ? "true" : "false");
+		  ROS_INFO("with windowsize_ = %.4f[m]", windowsize_);
+		  ROS_INFO("map_.map.info.origin.position (x,y) = (%.4f, %.4f)", map_.map.info.origin.position.x,map_.map.info.origin.position.y);
+		  ROS_INFO("map_.map.info.resolution = %.4f\n", map_.map.info.resolution);
+		  ROS_INFO("robot pose (%.4f , %.4f)",robot_pose.getOrigin().getX(),robot_pose.getOrigin().getY());
+
+		  ROS_INFO("Before resize smap: xmin %.4f, ymin %.4f, xmax %.4f, ymax %.4f, center (%.4f , %.4f)",xmin_,ymin_,xmax_,ymax_,(xmin_ + xmax_) / 2.0,(ymin_ + ymax_) / 2.0);
+		  ROS_INFO("smap size x = %d", smap.getMapSizeX());
+		  ROS_INFO("smap size y = %d", smap.getMapSizeY());
+		  ROS_INFO("smap world size x = %.4f", smap.getWorldSizeX());
+		  ROS_INFO("smap world size y = %.4f", smap.getWorldSizeY());
+		  ROS_INFO("map_.map.info.resolution = %.4f\n", map_.map.info.resolution);
+
+		  xmin_=-windowsize_/2 + robot_pose.getOrigin().getX();
+		  ymin_=-windowsize_/2 + robot_pose.getOrigin().getY();
+		  xmax_=windowsize_/2 + robot_pose.getOrigin().getX();
+		  ymax_=windowsize_/2 + robot_pose.getOrigin().getY();
+		  smap.resize(xmin_,ymin_,xmax_,ymax_);
+
+		  ROS_INFO("After resize smap: xmin %.4f, ymin %.4f, xmax %.4f, ymax %.4f, center (%.4f , %.4f)",xmin_,ymin_,xmax_,ymax_,(xmin_ + xmax_) / 2.0,(ymin_ + ymax_) / 2.0);
+		  ROS_INFO("smap size x = %d", smap.getMapSizeX());
+		  ROS_INFO("smap size y = %d", smap.getMapSizeY());
+		  ROS_INFO("smap world size x = %.4f", smap.getWorldSizeX());
+		  ROS_INFO("smap world size y = %.4f\n", smap.getWorldSizeY());
+	}
+
     // NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
     //       so we must obtain the bounding box in a different way
     GMapping::Point wmin = smap.map2world(GMapping::IntPoint(0, 0));
     GMapping::Point wmax = smap.map2world(GMapping::IntPoint(smap.getMapSizeX(), smap.getMapSizeY()));
-    xmin_ = wmin.x; ymin_ = wmin.y;
+    xmin_ = wmin.x; ymin_ = wmin.y; //KL: this is where the map size is updated if it is growing
     xmax_ = wmax.x; ymax_ = wmax.y;
     
     ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", smap.getMapSizeX(), smap.getMapSizeY(),
