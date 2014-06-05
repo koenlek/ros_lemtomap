@@ -100,6 +100,9 @@ Initial map dimensions and resolution:
 - @b "~/ymax" @b [double] maximum y position in the map [m]
 - @b "~/delta" @b [double] size of one pixel [m]
 
+Rolling window:
+- @b "~/windowsize" @b [double] size of the rolling window [m] (will overrule xmin, ymin, xmax, and ymax)
+
 */
 
 
