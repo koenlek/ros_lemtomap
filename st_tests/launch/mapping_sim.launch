@@ -12,7 +12,7 @@
 
 	<!-- Bringup simulated robot -->
 	<include
-		file="$(find st_simulation)/launch/bringup_simulated.launch">
+		file="$(find st_gazebo)/launch/bringup_simulated.launch">
 		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
 		<arg name="y_robot" value="-16" />
 		<arg name="z_robot" value="0" />

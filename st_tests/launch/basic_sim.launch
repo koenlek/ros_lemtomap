@@ -15,7 +15,7 @@
 
 	<!-- Bringup simulated robot -->
 	<include
-		file="$(find st_simulation)/launch/bringup_simulated.launch" />
+		file="$(find st_gazebo)/launch/bringup_simulated.launch" />
 		
 	<!-- Gazebo -->
 	<include

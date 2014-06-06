@@ -7,9 +7,10 @@
               name="gmapping_nostderr">
 	</node>-->
 	<!-- gmapping_nostderr_perfectodom.sh or gmapping_nostderr.sh -->
-	<include file="$(find st_navigation)/launch/gmapping_perfectodometry_rolling.launch">
+	
+	<!--<include file="$(find st_navigation)/launch/gmapping_perfectodometry.launch">
 		<arg name="scan_topic" value="scan_hokuyo"/>
-	</include>
+	</include>-->
 
 	<!-- Navigation components -->
 	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch"/>

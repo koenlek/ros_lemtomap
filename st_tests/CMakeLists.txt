@@ -8,27 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-  USE_SOURCE_PERMISSIONS
-  PATTERN ".svn" EXCLUDE
-)
-
-install(DIRECTORY rosbag/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rosbag
-  USE_SOURCE_PERMISSIONS
-  PATTERN ".svn" EXCLUDE
-)
-
-install(DIRECTORY rviz/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
-  USE_SOURCE_PERMISSIONS
-  PATTERN ".svn" EXCLUDE
-)
-
-install(PROGRAMS
-   scripts/timed_roslaunch.sh
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+include_directories(
+	${catkin_INCLUDE_DIRS}
 )

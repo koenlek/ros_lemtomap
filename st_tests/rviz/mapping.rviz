@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Map1
+        - /Map1/Position1
+        - /Map1/Orientation1
         - /TF1/Tree1
         - /Nav1
         - /Nav1/Local Costmap1
@@ -574,7 +576,7 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 7.08064
+      Scale: 11.4075
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 5.05071
@@ -598,5 +600,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1871
-  X: 1415
+  X: 42
   Y: 24
