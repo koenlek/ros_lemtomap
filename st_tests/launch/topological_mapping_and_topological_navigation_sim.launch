@@ -1,21 +1,62 @@
 <?xml version="1.0"?>
 
 <launch>	
-	<arg name="load_map_directory" default=""/>
+	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage -->
+	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
 
-	<include file="$(find st_tests)/launch/includes/topological_mapping_normalnav_sim1.launch.xml">
-		<arg name="load_map_directory" value="$(arg load_map_directory)"/>
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz"
+		args="-d $(find st_tests)/rviz/mapping.rviz" />
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find st_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
+		<arg name="y_robot" value="-16" />
+		<arg name="z_robot" value="0" />
 	</include>
 
-	<!-- Run timed shell script -->
-	<node pkg="st_tests" 
-              type="timed_roslaunch.sh" args="5 st_tests topological_mapping_normalnav_sim2.launch.xml" 
-              name="timed_roslaunch" output="screen">
+	<!-- Gazebo -->
+	<include
+		file="$(find st_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name"
+			value="$(find st_gazebo)/worlds/$(arg world_name_short)" />
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Topological map builder -->
+	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
+		name="topological_navigation_mapper" output="screen" clear_params="true">
+		<param name="scan_topic" value="scan_hokuyo" />
+		<param name="load_map_directory" value="$(arg load_map_directory)" />
+		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
 	</node>
 
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
+
+	<!-- Gmapping (timed) -->
+	<node pkg="st_tests" 
+              type="timed_roslaunch.sh" args="5 st_gmapping_rolling gmapping_general_launcher.launch scan_topic:=scan_hokuyo rolling:=true windowsize:=20 perfect_odometry:=true suppress_console:=1" 
+              name="timed_roslaunch" output="log">
+	<!-- You can specify:
+	scan_topic:=[topicname] 
+	rolling:=[true/false]
+	windowsize:=[double, size in meters]
+	perfect_odometry:=[true/false]
+	suppress_console:=[1/0, which means true or false]
+	-->
+	</node>
+
+	<!-- Navigation components -->
+	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
+		<!--<arg name="allow_unknown" value="false" /> does not work...--> <!-- for navfn, by defualt, it is true -->
+	</include>
+	
 	<!-- Run Move Base Topo -->
 	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="100" /> <!-- default is 1hz currently -->
+		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
 	</node>
 </launch>
 

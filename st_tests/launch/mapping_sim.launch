@@ -26,12 +26,12 @@
 			value="$(arg use_sim_time)" />
 	</include>
 
-	<!-- Gmapping -->
-	<include file="$(find st_navigation)/launch/gmapping.launch">
-		<arg name="scan_topic" value="scan_hokuyo" />
-	</include>
+	<!-- Gmapping (timed) -->
+	<node pkg="st_tests" 
+              type="timed_roslaunch.sh" args="5 st_gmapping_rolling general_gmapping_nostderr.launch scan_topic:=scan_hokuyo launch_file:=normal_gmapping.launch suppress_console:=1" 
+              name="timed_roslaunch" output="screen">
+	</node>
 
 	<!-- Teleop -->
-	<include file="$(find turtlebot_teleop)/launch/keyboard_teleop.launch" /> <!-- u to . for move. q/z inc/decr max speeds. w/x same for only lin. e/c 
-		same for only angular. space or k: force stop. anything else, stop smoothly -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 </launch>

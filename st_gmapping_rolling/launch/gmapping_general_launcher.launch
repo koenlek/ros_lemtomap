@@ -1,0 +1,11 @@
+<!-- With this script, you can easily start gmapping with out without output (setting output="log" does not fully work for gmapping otherwise) -->
+<launch>
+	<arg name="scan_topic" default="scan" />
+	<arg name="rolling" default="false"/>
+	<arg name="windowsize" default="20"/>
+	<arg name="perfect_odometry" default="false"/>
+	<arg name="suppress_console" default="1" /> <!-- set to zero to not suppress! -->
+
+	<node pkg="st_gmapping_rolling" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="$(arg suppress_console) gmapping_general_launcher_stage2.launch scan_topic:=$(arg scan_topic) windowsize:=$(arg windowsize) perfect_odometry:=$(arg perfect_odometry) rolling:=$(arg rolling)"/>
+
+</launch>

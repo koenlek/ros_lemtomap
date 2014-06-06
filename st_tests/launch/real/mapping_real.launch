@@ -15,7 +15,7 @@
 	<include file="$(find st_bringup)/launch/hokuyo.launch" />
 
 	<!-- Gmapping -->
-	<include file="$(find st_navigation)/launch/gmapping.launch">
+	<include file="$(find st_gmapping_rolling)/launch/normal_gmapping.launch">
 		<arg name="scan_topic" value="scan_hokuyo" />
 	</include>
 

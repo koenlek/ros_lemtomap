@@ -2,9 +2,9 @@
 
 <launch>
 	<arg name="odom_topic" default="odom" />
+	<!--<arg name="allow_unknown" default="true" />-->
 
 	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
-
 	<include
 		file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml" />
 	<include
@@ -21,6 +21,9 @@
 		<rosparam file="$(find st_navigation)/param/move_base_params.yaml" command="load" />
 
 		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" /> <!-- dwa_local planner is better for us than base_local planner -->
+		
+		<!-- does not work 
+		<param name="NavfnROS/allow_unknown" value="$(arg allow_unknown)" />-->
 
 		<!-- these settings will probably be different for each robot, either overrule them here, or use personal or default values in costmap_common_params.yaml -->
 		<param name="local_costmap/obstacle_layer/scan/sensor_frame" value="hokuyo_laser_sensor_link" />
