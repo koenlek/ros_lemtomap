@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-
+<!-- I made this file to check system load using gmapping, but without anything subscribing to /map. It was to check whether gmapping can then just run with acceptable load and how much this is effected by the size of the area explored/mapped so far. Main conclusions -> it does not become significantly heavier if map grows. Memory consumption does grow, but might be considered ok. Also I am not sure if /map subscriptions cause high load in my default system (with topo mapping and navigation enabled). -->
 <launch>	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
@@ -34,30 +34,33 @@
 	</include>
 
 	<!-- Topological map builder -->
-	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
+	<!-- Needs move_base to perform map building -->
+	<!-- <node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-	</node>
+		<param name="main_loop_frequency" value="4" /> --> <!-- default is 4hz currently -->
+	<!-- </node> -->
 
 	<!-- Teleop -->
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
 
-	<!-- Rolling Window Gmapping (timed) -->
+	<!-- Gmapping (timed) -->
 	<node pkg="st_tests" 
               type="timed_roslaunch.sh" args="5 st_gmapping_rolling gmapping_general_launcher.launch scan_topic:=$(arg scan_topic) rolling:=$(arg rolling) windowsize:=$(arg windowsize) perfect_odometry:=$(arg perfect_odometry) suppress_console:=$(arg suppress_console)" 
               name="timed_roslaunch" output="log">
 	</node>
 
 	<!-- Navigation components -->
-	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
+	<!-- Nav components subscribes to /map -->
+	<!-- <include file="$(find st_navigation)/launch/move_base_dwa_local.launch"> -->
 		<!--<arg name="allow_unknown" value="false" /> does not work...--> <!-- for navfn, by defualt, it is true -->
-	</include>
+	<!-- </include> -->
 	
 	<!-- Run Move Base Topo -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
-	</node>
+	<!-- Needs Topological map builder -->
+	<!-- <node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="1" /> --> <!-- default is 1hz currently -->
+	<!-- </node> -->
 </launch>
 

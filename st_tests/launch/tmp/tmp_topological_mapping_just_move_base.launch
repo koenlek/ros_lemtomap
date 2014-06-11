@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-
+<!-- I made this file to check system load using gmapping and move_base only. I wonder whether move_base causes a sudden increase in load, as gmapping + move_base + move_base_topo + topo mapping cause a very much higher load than gmapping alone. -->
 <launch>	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
@@ -34,12 +34,12 @@
 	</include>
 
 	<!-- Topological map builder -->
-	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
+	<!--<node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="scan_hokuyo" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-	</node>
+		<param name="main_loop_frequency" value="4" />--> <!-- default is 4hz currently -->
+	<!--</node>-->
 
 	<!-- Teleop -->
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
@@ -56,8 +56,8 @@
 	</include>
 	
 	<!-- Run Move Base Topo -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
-	</node>
+	<!--<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="1" /> --> <!-- default is 1hz currently -->
+	<!--</node>-->
 </launch>
 
