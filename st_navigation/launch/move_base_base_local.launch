@@ -2,6 +2,7 @@
 
 <launch>
 	<arg name="odom_topic" default="odom" />
+	<arg name="scan_topic" default="scan" />
 
 	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
 	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml" />
@@ -18,7 +19,7 @@
 		<rosparam file="$(find st_navigation)/param/move_base_params.yaml" command="load" />
 		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
 		<remap from="odom" to="$(arg odom_topic)" />
-		<remap from="scan_hokuyo" to="scan" />
+		<remap from="scan" to="$(arg scan_topic)" />
 	</node>
 
 </launch>

@@ -20,7 +20,7 @@ obstacle_layer: #http://wiki.ros.org/costmap_2d/hydro/obstacles
   observation_sources: scan bump
 
   scan: {
-    #sensor_frame: base_link,
+    #sensor_frame: base_link, #by not specifying the sensor frame, you can remap any scan (e.g. hokuyo or kinect) to it. If not speficied "The frame of the origin of the sensor. Leave empty to attempt to read the frame from sensor data." (http://wiki.ros.org/costmap_2d/hydro/obstacles)
     data_type: LaserScan, 
     topic: scan, 
     marking: true, 

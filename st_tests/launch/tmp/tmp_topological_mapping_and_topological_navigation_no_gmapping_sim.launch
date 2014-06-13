@@ -2,6 +2,7 @@
 
 <launch>	
 	<arg name="load_map_directory" default=""/>
+	<arg name="scan_topic" default="scan_hokuyo" />
 
 	<include file="$(find st_tests)/launch/includes/topological_mapping_normalnav_sim1.launch.xml">
 		<arg name="load_map_directory" value="$(arg load_map_directory)"/>
@@ -14,7 +15,9 @@
  	<node pkg="tf" type="static_transform_publisher" name="map_frame_publisher" args="0 0 0 0 0 0 /odom /map 100"/>
 
 	<!-- Navigation components -->
-	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch"/>
+	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
 	<!-- Choose from:
 		move_base_dwa_local		
 		move_base_dwa_local_glob_eq_loc

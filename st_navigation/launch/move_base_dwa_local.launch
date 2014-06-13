@@ -2,6 +2,7 @@
 
 <launch>
 	<arg name="odom_topic" default="odom" />
+	<arg name="scan_topic" default="scan" />
 	<!--<arg name="allow_unknown" default="true" />-->
 
 	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
@@ -25,14 +26,9 @@
 		<!-- does not work 
 		<param name="NavfnROS/allow_unknown" value="$(arg allow_unknown)" />-->
 
-		<!-- these settings will probably be different for each robot, either overrule them here, or use personal or default values in costmap_common_params.yaml -->
-		<param name="local_costmap/obstacle_layer/scan/sensor_frame" value="hokuyo_laser_sensor_link" />
-		<param name="global_costmap/obstacle_layer/scan/sensor_frame" value="hokuyo_laser_sensor_link" />
-		<param name="local_costmap/obstacle_layer/scan/topic" value="scan_hokuyo" />
-		<param name="global_costmap/obstacle_layer/scan/topic" value="scan_hokuyo" />
-		
 		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
 		<remap from="odom" to="$(arg odom_topic)" />
+		<remap from="scan" to="$(arg scan_topic)" />	
 	</node>
 
 </launch>

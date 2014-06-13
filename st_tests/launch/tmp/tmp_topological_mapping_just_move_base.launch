@@ -36,7 +36,7 @@
 	<!-- Topological map builder -->
 	<!--<node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
-		<param name="scan_topic" value="scan_hokuyo" />
+		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
 		<param name="main_loop_frequency" value="4" />--> <!-- default is 4hz currently -->
 	<!--</node>-->
@@ -52,7 +52,7 @@
 
 	<!-- Navigation components -->
 	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
-		<!--<arg name="allow_unknown" value="false" /> does not work...--> <!-- for navfn, by defualt, it is true -->
+		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>
 	
 	<!-- Run Move Base Topo -->

@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>	
+	<arg name="scan_topic" default="scan_hokuyo" />	
 	<arg name="use_sim_time" default="true" />
 	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage -->
 	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
@@ -34,7 +35,7 @@
 	<!-- Topological map builder -->
 	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
 		name="topological_navigation_mapper" output="screen" clear_params="true">
-		<param name="scan_topic" value="scan_hokuyo" />
+		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
 		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
 	</node>
@@ -44,7 +45,7 @@
 
 	<!-- Navigation components (timed -> it seems that otherwise it crashes!) -->
 	<node pkg="st_tests" 
-              type="timed_roslaunch.sh" args="8 st_navigation move_base_dwa_local.launch" 
+              type="timed_roslaunch.sh" args="8 st_navigation move_base_dwa_local.launch scan_topic:=$(arg scan_topic)" 
               name="timed_roslaunch" output="screen">
 	</node>
 	
