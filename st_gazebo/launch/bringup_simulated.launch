@@ -7,7 +7,7 @@
 	<arg name="y_robot" default="0" />
 	<arg name="z_robot" default="0" />
 
-	<include file="$(find st_gazebo)/launch/includes/kobuki.launch">
+	<include file="$(find st_gazebo)/launch/includes/semantic_turtle.launch.xml">
 		<arg name="urdf_file" value="$(arg urdf_file)" />
 		<arg name="x_robot" value="$(arg x_robot)" />
 		<arg name="y_robot" value="$(arg y_robot)" />

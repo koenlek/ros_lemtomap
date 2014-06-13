@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle.urdf.xacro'" />
   <arg name="x_robot" default="0" />

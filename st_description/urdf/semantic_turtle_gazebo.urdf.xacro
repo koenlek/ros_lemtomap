@@ -4,7 +4,7 @@
 	xmlns:xacro="http://ros.org/wiki/xacro">
 	<!-- Microsoft Kinect / ASUS Xtion PRO Live for simulation -->
 	<xacro:macro name="turtlebot_sim_3dsensor">
-		<gazebo reference="camera_sensormiddle_link">
+		<gazebo reference="camera_sensormiddle_frame">
 			<!-- note that currently rgb+depth is used from here, which is incorrect-->
 			<sensor type="depth" name="camera">
 				<always_on>true</always_on>
