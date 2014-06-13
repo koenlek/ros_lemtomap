@@ -14,7 +14,7 @@
 	<include file="$(find st_tests)/launch/includes/view_robot.launch" />
 
 	<!-- Bringup simulated robot -->
-	<include find="$(file st_gazebo)/launch/bringup_simulated.launch">
+	<include file="$(file st_gazebo)/launch/bringup_simulated.launch">
 		<!--<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle_no_urdf.kinect.xacro'" />-->
 	</include>
 	
