@@ -23,7 +23,7 @@
 		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
 		<arg name="y_robot" value="-16" />
 		<arg name="z_robot" value="0" />
-		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle.urdf.xacro'" />
+		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle_no_kinect.urdf.xacro'" />
 		<!--semantic_turtle_no_kinect.urdf.xacro or semantic_turtle.urdf.xacro -->
 	</include>
 
@@ -60,7 +60,7 @@
 	</include>
 	
 	<!-- Run Move Base Topo -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen" launch-prefix="valgrind --tool=callgrind --callgrind-out-file=$(find st_tests)/local/benchmarks/move_base_topo.callgrind.out.%p">
 		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
 	</node>
 </launch>
