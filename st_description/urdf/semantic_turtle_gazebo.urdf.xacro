@@ -69,7 +69,7 @@
 					</scan>
 					<range>
 						<min>0.02</min>
-						<!-- 20mm -->
+						<!-- 20mm, use 0.1m (100mm) for non-gpu variants, otherwise sight is blocked for some reason: i.e. ray instead of gpu_ray and libgazebo_ros_laser.so instead of libgazebo_ros_gpu_laser.so-->
 						<max>5.6</max>
 						<!--  5600mm -->
 						<resolution>0.01</resolution>
@@ -87,7 +87,7 @@
 					</noise>
 				</ray>
 				<plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">
-					<topicName>/scan_hokuyo</topicName>
+					<topicName>scan_hokuyo</topicName>
 					<frameName>hokuyo_laser_link</frameName>
 				</plugin>
 			</sensor>

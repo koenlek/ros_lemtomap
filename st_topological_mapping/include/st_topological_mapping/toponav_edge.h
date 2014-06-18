@@ -30,7 +30,7 @@ public:
 	/**
 	 * Public Methods
 	 */
-	const double updateCost(); //updateCosts recalcs cost when is called, to cover the case that node poses can be updated over time.
+	void updateCost(); //updateCosts recalcs cost when is called, to cover the case that node poses can be updated over time.
 
 	// get Methods
 	const EdgeID getEdgeID() const {
@@ -39,9 +39,8 @@ public:
 	const ros::Time getLastUpdatedTime() const {
 		return last_updated_;
 	}
-	const double getCost() const {
-		return cost_;
-	}
+	const double getCost();
+
 	const TopoNavNode& getStartNode() const {
 		return start_node_;
 	}

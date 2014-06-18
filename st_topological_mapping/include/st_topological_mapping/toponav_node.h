@@ -20,7 +20,7 @@ public:
 	typedef std::map<NodeID, TopoNavNode*> NodeMap; // ptrs are needed, as std::map makes a COPY when adding elements.
 
 	TopoNavNode(tf::Pose pose, bool is_door, int area_id, NodeMap &nodes);
-	TopoNavNode(NodeID node_id, ros::Time last_updated, tf::Pose pose,
+	TopoNavNode(NodeID node_id, ros::Time last_updated, ros::Time last_pose_updated, tf::Pose pose,
 			bool is_door, int area_id, NodeMap &nodes); // only to be used when loading map from message!
 
 	~TopoNavNode();
@@ -36,6 +36,9 @@ public:
 	const ros::Time getLastUpdatedTime() const {
 		return last_updated_;
 	}
+        const ros::Time getLastUpdatedPoseTime() const {
+                return last_pose_updated_;
+        }
 	const int getAreaID() const {
 		return area_id_;
 	}
@@ -53,6 +56,7 @@ public:
 	void setPose(tf::Pose pose) { //should only be used for small updates to the pose
 		pose_ = pose;
 		last_updated_ = ros::Time::now();
+		last_pose_updated_ = ros::Time::now();
 	}
 	void setIsDoor(bool is_door) {
 		is_door_ = is_door;
@@ -65,8 +69,13 @@ private:
 	 */
 	NodeID node_id_; //node_ids should never be changed!
 	ros::Time last_updated_;
+	ros::Time last_pose_updated_; //used to check if edge costs need to be recalculated
 	tf::Pose pose_; //TODO - p3 - It would be better to use a Stamped Pose, relative frames would become possible (not all will be defined in /map, but e.g. in previous frame). setPose could still be kept, not much would have to change...
-	bool is_door_;
+
+	bool is_door_; /*TODO - p2 - Doors should generally be treated much differently from normal nodes, maybe it is easier and makes more sense to not define them as nodes at all, or as a derived class or something like that, otherwise, you need to put in a lot of bool checks to see everytime it if is a normal node or a door node...
+	                * Alternatively normal nodes can be collected in the NodeMap nodes_ while doors are collected in a DoorMap (NodeMap doors_) or so?
+	                */
+
 	int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
 	NodeMap &nodes_;
 

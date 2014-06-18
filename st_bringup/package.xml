@@ -23,4 +23,6 @@
   <run_depend>depthimage_to_laserscan</run_depend>
   <run_depend>turtlebot_bringup</run_depend>
 
+  <run_depend>urg_node</run_depend>
+
 </package>

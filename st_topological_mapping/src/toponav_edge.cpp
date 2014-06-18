@@ -36,12 +36,21 @@ TopoNavEdge::~TopoNavEdge()
   #endif
 }
 
+const double TopoNavEdge::getCost(){
+  if (start_node_.getLastUpdatedPoseTime() > last_updated_ || end_node_.getLastUpdatedPoseTime() > last_updated_){
+     ROS_DEBUG("edgeID %d getCost(): Start and/or End Node pose has been updated later than this Edge was last updated: automatically recalculating cost",edge_id_);
+     double cost_tmp=cost_;
+     updateCost();
+     ROS_DEBUG("edge cost was:%.4f[m] ,is now: %.4f[m]",cost_tmp,cost_);
+  }
+  return cost_;
+}
 
-const double TopoNavEdge::updateCost()
+void TopoNavEdge::updateCost()
 {
   //Recalculation could also be only triggered if any of the nodes had changed. I.e. iff edge.last_updated_ < node1.last_update_ ||
   cost_ = calcDistance(start_node_, end_node_);
-  return cost_;
+  last_updated_ = ros::Time::now();
 }
 
 int TopoNavEdge::UIDGenerator_=1; //needs to be declared here: otherwise a "Undefined reference" error will occur at compile time

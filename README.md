@@ -34,6 +34,7 @@ roscd
 cd ../src
 wstool update semantic_turtle_meta
 rosdep install --from-paths . -i -y
+cd ..
 catkin_make
 ```
 

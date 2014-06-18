@@ -6,8 +6,8 @@
 
 #include <st_topological_mapping/toponav_node.h>
 
-TopoNavNode::TopoNavNode(NodeID node_id, ros::Time last_updated, tf::Pose pose, bool is_door, int area_id, NodeMap &nodes):
-node_id_(node_id), last_updated_(last_updated), pose_(pose),is_door_(is_door),area_id_(area_id), nodes_(nodes){
+TopoNavNode::TopoNavNode(NodeID node_id, ros::Time last_updated, ros::Time last_pose_updated, tf::Pose pose, bool is_door, int area_id, NodeMap &nodes):
+node_id_(node_id), last_updated_(last_updated), last_pose_updated_(last_pose_updated), pose_(pose),is_door_(is_door),area_id_(area_id), nodes_(nodes){
 	if (node_id_>=UIDGenerator_)
 		UIDGenerator_=node_id_+1;
 	nodes_[node_id_]=this;
@@ -18,6 +18,7 @@ pose_(pose),is_door_(is_door),area_id_(area_id),nodes_(nodes)
 {
   node_id_=UIDGenerator_++;
   last_updated_=ros::Time::now();
+  last_pose_updated_=ros::Time::now();
   ROS_DEBUG("TopoNavNode created. id= %d, pose x=%f, y=%f, theta=%f, updated at %f",
             node_id_,
             pose_.getOrigin().x(),

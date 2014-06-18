@@ -23,7 +23,7 @@ class ShowTopoNavMap
 {
 
 public:
-  ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes, const TopoNavEdge::EdgeMap &edges); //Constructor
+  ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes, const TopoNavEdge::EdgeMap &edges, const TopoNavNode::NodeID &associated_node); //Constructor
   /**
    * Public Methods
    */
@@ -36,6 +36,7 @@ private:
   ros::NodeHandle &n_;
   const TopoNavNode::NodeMap &nodes_;
   const TopoNavEdge::EdgeMap &edges_;
+  const TopoNavNode::NodeID  &associated_node_;
 
   std::vector<TopoNavNode::NodeID> topo_path_nodes_;
   std::vector<TopoNavEdge::EdgeID> topo_path_edges_;

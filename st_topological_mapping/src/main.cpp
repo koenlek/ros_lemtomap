@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 				map_loader.getTopologicalNavigationMapMsg());
 	}
 
-	ShowTopoNavMap show_topo_nav_map(n, topo_nav_map.getNodes(), topo_nav_map.getEdges());
+	ShowTopoNavMap show_topo_nav_map(n, topo_nav_map.getNodes(), topo_nav_map.getEdges(),topo_nav_map.getAssociatedNode());
 
 	#ifdef CMAKE_BUILD_TYPE_DEF
 	#include <boost/preprocessor/stringize.hpp>

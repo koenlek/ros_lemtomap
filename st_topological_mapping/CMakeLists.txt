@@ -49,7 +49,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp)
+add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp src/bgl/bgl_functions.cpp)
 target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
 add_dependencies(topological_navigation_mapper ${catkin_EXPORTED_TARGETS}) # KL: to make sure that message headers in devel/include/${PROJECT_NAME} are recognized
 
