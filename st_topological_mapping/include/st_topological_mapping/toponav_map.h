@@ -76,6 +76,7 @@ private:
   tf::Transform local_costmap_origin_tf_;
   tf::TransformBroadcaster br_;
   tf::TransformListener tf_listener_;
+  tf::Transform tf_toponavmap2map_;
 
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
   ros::ServiceClient fakeplan_client_;
@@ -97,14 +98,18 @@ private:
    */
   void laserCB(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
   void lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg);
-  void getCurrentPose(); // get current pose
+  void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
   void updateLCostmapMatrix(); //update the matrix that has the local costmap in it.
   bool fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length);
 
   void updateToponavMapTransform();
   void updateAssociatedNode(); // return the node_id where the robot is currently at.
+
+#if DEPRECATED
   void updateAssociatedNode_method1();
+#endif
+
   void updateAssociatedNode_method2();
   void updateNodeBGLDetails(TopoNavNode::NodeID node_id); // a handy shorthand for the otherwise long "st_bgl::updateNodeDetails" function
 

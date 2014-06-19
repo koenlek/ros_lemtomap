@@ -27,7 +27,7 @@ void updateNodeDetails(
                          )
 {
   if (nodes[node_id]->getLastBGLUpdateTime() >= last_toponavmap_bgl_affecting_update){
-    ROS_INFO("NodeID %d BGL details are up to date, skipping update",node_id);
+    ROS_DEBUG("NodeID %d BGL details are up to date, skipping update",node_id);
     return;
   }
 

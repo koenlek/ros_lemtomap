@@ -3,6 +3,8 @@
 
 #include "ros/ros.h"
 #include "tf/transform_datatypes.h"
+#include "tf/transform_listener.h"
+
 #include <map>
 #include <algorithm> //std::find
 #include <boost/bimap.hpp>
@@ -66,10 +68,15 @@ public:
   {
     return area_id_;
   }
-  const tf::Pose getPose() const
+  const tf::Pose getPose() const //in toponav_map frame
   {
     return pose_;
   }
+  const tf::Pose getPoseInMap(tf::Transform toponavmap2map) const //in map fram
+  {
+    return toponavmap2map * pose_;
+  }
+
   const bool getIsDoor() const
   {
     return is_door_;
@@ -110,7 +117,6 @@ public:
     last_bgl_update_ = ros::WallTime::now();
   }
 
-
   void setAreaID(int area_id)
   {
     area_id_ = area_id;
@@ -122,6 +128,7 @@ public:
     last_updated_ = ros::Time::now();
     last_pose_update_ = ros::Time::now();
   }
+
   void setIsDoor(bool is_door)
   {
     is_door_ = is_door;
@@ -146,6 +153,8 @@ private:
   int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
   NodeMap &nodes_;
   ros::WallTime &last_toponavmap_bgl_affecting_update_;
+
+  tf::TransformListener tf_listener_;
 
   //BGL variables
   PredecessorMapNodeID predecessor_map_;
