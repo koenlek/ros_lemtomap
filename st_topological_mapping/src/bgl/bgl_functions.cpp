@@ -10,22 +10,33 @@ namespace st_bgl //semantic turtle, boost graph library
 {
 
 /*!
- * \brief
- * \param pose1 The start pose
- * \param pose2 The end pose
- * \param length (output) The length of the path in meters
- * \return the time when the function finished, can be used for a 'time last updated' var.
+ * \brief finds details about a node in the TopoNavMap, using the Boost Graph Library tools
+ * \param nodes (input/output) A NodeMap containing all the TopoNavNode objects of the TopoNavMap. It also uses this to update the Node BGL details of the node_id Node.
+ * \param edges A NodeMap containing all the TopoNavNode objects of the TopoNavMap
+ * \param node_id The Node to be examined
+ * \param last_toponavmap_bgl_affecting_update (input/output) It uses this to check if an update is needed, after each update, this is set equal to ros::WallTime::now()
  */
-ros::Time findNodeDetails(
-                         const TopoNavNode::NodeMap &nodes,
+
+//TODO - p2 - It would be better to make this part of the TopoNavMap object, would remove the need to pass nodes_, edges_, and last_toponavmap_bgl_affecting_update_ parameters.
+
+void updateNodeDetails(
+                         TopoNavNode::NodeMap &nodes,
                          const TopoNavEdge::EdgeMap &edges,
-                         const int start_node_id,
-                         std::map<TopoNavNode::NodeID, TopoNavNode::NodeID> &predecessor_map, // output, stores parents
-                         boost::bimap<TopoNavNode::NodeID, double> &distance_map, // output, stores distances
-                         std::vector<TopoNavNode::NodeID> &adjacent_nodes_vector, //output, vector with adjacent nodes
-                         std::vector<TopoNavEdge::EdgeID> &adjacent_edges_vector //output, vector with adjecent edges
+                         const int node_id,
+                         ros::WallTime &last_toponavmap_bgl_affecting_update
                          )
 {
+  if (nodes[node_id]->getLastBGLUpdateTime() >= last_toponavmap_bgl_affecting_update){
+    ROS_INFO("NodeID %d BGL details are up to date, skipping update",node_id);
+    return;
+  }
+
+  ROS_INFO("NodeID %d BGL details were outdated, updating now",node_id);
+
+  TopoNavNode::PredecessorMapNodeID predecessor_map; // output, stores parents
+  TopoNavNode::DistanceBiMapNodeID distance_map; // output, stores distances
+  TopoNavNode::AdjacentNodes adjacent_nodeids_vector; //output, vector with adjacent nodes
+  TopoNavNode::AdjacentEdges adjacent_edgeids_vector; //output, vector with adjecent edges
 
   #if BENCHMARKING
       ecl::StopWatch stopwatch;
@@ -54,7 +65,7 @@ ros::Time findNodeDetails(
   {
     vertices_boost.insert(NodeID2BoostVertex::value_type(it->second->getNodeID(), boost::add_vertex(graph)));
 
-    if (it->second->getNodeID() == start_node_id)
+    if (it->second->getNodeID() == node_id)
     {
       start_node_exists = true;
     }
@@ -62,8 +73,8 @@ ros::Time findNodeDetails(
   if (!start_node_exists)
   {
     ROS_FATAL_COND(!start_node_exists,
-                   "The provided start_node_id %d does not exist in the current toponavmap msg",
-                   start_node_id);
+                   "The provided node_id %d does not exist in the current toponavmap msg",
+                   node_id);
     ROS_FATAL("The '%s' node will now exit",
               ros::this_node::getName().c_str());
     ros::shutdown();
@@ -80,7 +91,7 @@ ros::Time findNodeDetails(
     edges_boost.insert(EdgeID2BoostEdge::value_type(it->second->getEdgeID(),edge_pair.first));
   }
 
-  Vertex vertext_boost_src = vertices_boost.left.at(start_node_id);
+  Vertex vertext_boost_src = vertices_boost.left.at(node_id);
 
   // Create things for Dijkstra
   std::vector<Vertex> predecessors(boost::num_vertices(graph)); // To store parents
@@ -116,20 +127,23 @@ ros::Time findNodeDetails(
   ROS_DEBUG("Adjacent nodes of source NodeID %d are:",vertices_boost.right.at(vertext_boost_src));
   for (boost::tie(vi, vi_end) = boost::adjacent_vertices(vertext_boost_src, graph); vi != vi_end; ++vi){
       ROS_DEBUG("\tAdjacent NodeID:%d",vertices_boost.right.at(*vi));
-      adjacent_nodes_vector.push_back(vertices_boost.right.at(*vi));
+      adjacent_nodeids_vector.push_back(vertices_boost.right.at(*vi));
   }
 
   typename boost::graph_traits < UndirectedGraph >::out_edge_iterator ei, ei_end;
   ROS_DEBUG("Adjacent edges of source NodeID %d are:",vertices_boost.right.at(vertext_boost_src));
   for (boost::tie(ei, ei_end) = boost::out_edges(vertext_boost_src, graph); ei != ei_end; ++ei){
       ROS_DEBUG("\tAdjacent EgdeID:%d",edges_boost.right.at(*ei));
-      adjacent_edges_vector.push_back(edges_boost.right.at(*ei));
+      adjacent_edgeids_vector.push_back(edges_boost.right.at(*ei));
   }
 
   #if BENCHMARKING
     ROS_DEBUG_NAMED("Benchmarks","Executing of st_bgl::findNodeDetails() took %.5f[s](normal time) and %.5f[s](cpu time)",double(stopwatch.split()),double(cpuwatch.split()));
   #endif
 
-  return ros::Time::now(); //as a means to pass 'last_updated'
+  //setBGLNodeDetails updates the Node its last_bgl_update, so next, make last_toponavmap_bgl_affecting_update equal to this.
+  nodes[node_id]->setBGLNodeDetails(predecessor_map, distance_map, adjacent_nodeids_vector, adjacent_edgeids_vector);
+  last_toponavmap_bgl_affecting_update = nodes[node_id]->getLastBGLUpdateTime();
+  return;
 }
 }

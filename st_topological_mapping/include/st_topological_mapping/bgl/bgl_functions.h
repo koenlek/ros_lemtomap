@@ -54,15 +54,12 @@ typedef boost::iterator_property_map < Weight*, IndexMap, Weight, Weight& > Dist
 typedef boost::bimap< TopoNavNode::NodeID,Vertex > NodeID2BoostVertex;
 typedef boost::bimap< TopoNavEdge::EdgeID,Edge > EdgeID2BoostEdge;
 
-ros::Time findNodeDetails(
-       const TopoNavNode::NodeMap &nodes,
-       const TopoNavEdge::EdgeMap &edges,
-       const int start_node_id,
-       std::map<TopoNavNode::NodeID,TopoNavNode::NodeID> &predecessor_map, // output, stores parents
-       boost::bimap<TopoNavNode::NodeID,double> &distance_map, // output, stores distances
-       std::vector<TopoNavNode::NodeID> &adjacent_nodes_vector, //output, vector with adjacent nodes
-       std::vector<TopoNavEdge::EdgeID> &adjacent_edges_vector //output, vector with adjecent edges
-       );
+void updateNodeDetails(
+                         TopoNavNode::NodeMap &nodes,
+                         const TopoNavEdge::EdgeMap &edges,
+                         const int node_id,
+                         ros::WallTime &last_toponavmap_bgl_affecting_update
+                         );
 } // namespace
 
 #endif // include guard

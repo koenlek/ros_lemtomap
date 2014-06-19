@@ -28,7 +28,7 @@ catkin_make
 
 Use `catkin_make -DCMAKE_BUILD_TYPE=Release` for (faster) release build, `catkin_make -DCMAKE_BUILD_TYPE=Debug` for (slower) debuggable build. `catkin_make` will remember last build type you selected, so subsequent build dont need the flag unless you want to change.
 
-### Update
+### Update ###
 ```
 roscd
 cd ../src
@@ -41,11 +41,19 @@ catkin_make
 Usage
 -----
 
-### Create and navigate a topological map
+### Create and navigate a topological map ###
 
 `roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch`
 
-#### Send a topological goal
+#### Drive around manually ####
+
+Use the arrow keys to increment speed, hit space to reset. If you get an error about motors not being powered up, hit 'e'.
+
+#### Send a metric goal ####
+
+Just use the RVIV '2D Nav Goal' tool on any unknown space (should be within the global costmap however)
+
+#### Send a topological goal ####
 
 You can send it to any topological node using this command. The RVIZ select tool can be used to choose a proper target_node_id. 
 
@@ -66,7 +74,7 @@ goal:
 ```
 
 
-### Load and Store topological maps (under development)
+### Load and Store topological maps (under development) ###
 
 save a map (execute for example from ~/catkin_ws/src/st_map_server/maps):
 

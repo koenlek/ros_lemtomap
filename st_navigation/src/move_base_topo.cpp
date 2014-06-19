@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 
 #ifdef CMAKE_BUILD_TYPE_DEF
 #include <boost/preprocessor/stringize.hpp>
-  if (BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF) == "Debug")
+  if (!BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF)=="Release")
     ROS_WARN("This node (%s) had CMAKE_BUILD_TYPE=%s. Please use catkin_make -DCMAKE_BUILD_TYPE=Release for benchmarks!", ros::this_node::getName().c_str(), BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
   else
     ROS_INFO("This node (%s) had CMAKE_BUILD_TYPE=%s.", ros::this_node::getName().c_str(), BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));

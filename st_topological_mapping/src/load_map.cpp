@@ -19,6 +19,7 @@ StMapLoader::StMapLoader(const std::string& map_fullpath) :
 		map_fullpath_.erase(map_fullpath_.end() -1);
 
 	std::string path_to_bagfile = map_fullpath_ + "/toponav_map.bag";
+	path_to_bagfile = boost::filesystem::absolute(path_to_bagfile).c_str();
 	if(!boost::filesystem::exists(boost::filesystem::path(path_to_bagfile)))
 		ROS_FATAL("Could not find the .bag file at:\n\t%s\nPlease verify the supplied path foldername, which was:\n\t%s",path_to_bagfile.c_str(),map_fullpath.c_str());
 
