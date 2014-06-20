@@ -1,0 +1,3 @@
+# Get the associated node id as an int64
+---
+int64 asso_node_id

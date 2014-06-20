@@ -27,7 +27,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   private_nh.param("local_costmap_topic", local_costmap_topic, std::string("move_base/local_costmap/costmap"));
 
   // Set initial transfrom between map and toponav_map
-  tf_toponavmap2map_.setOrigin(tf::Vector3(1.0, -2.0, 0.0));
+  tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
   tf::Quaternion q;
   q.setRPY(0, 0, 0);
   tf_toponavmap2map_.setRotation(q);
@@ -49,6 +49,8 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
   scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
+  asso_node_servserv_ = n_.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
+  predecessor_map_servserv_ = n_.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
 
   //update the map one time, at construction. This will create the first map node.
   updateMap();
@@ -56,6 +58,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 
 #if DEBUG
   test_executed_ = 0;
+  counter_ = 0;
   last_run_update_max_ = 0;
   initialpose_sub_ = n_.subscribe("initialpose", 10, &TopoNavMap::initialposeCB, this);
 #endif
@@ -86,12 +89,47 @@ void TopoNavMap::laserCB(const sensor_msgs::LaserScan::ConstPtr &msg)
 }
 
 /*!
+ * \brief Get Associated Node Service, such that other ROS nodes can know what is the associated node.
+ */
+bool TopoNavMap::associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::Request &req,
+                                     st_topological_mapping::GetAssociatedNode::Response &res)
+{
+  if (associated_node_ > 0)
+      {
+    res.asso_node_id = associated_node_;
+    return true;
+  }
+  else
+    return false;
+}
+
+/*!
+ * \brief Get Predecessor Map Service, such that other ROS nodes can know what is the predessor map of a node.
+ */
+bool TopoNavMap::predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
+                                     st_topological_mapping::GetPredecessorMap::Response &res)
+{
+  int source_node_id = req.source_node_id;
+  updateNodeBGLDetails(source_node_id);
+
+  const TopoNavNode::PredecessorMapNodeID& predecessor_map = nodes_[source_node_id]->getPredecessorMap();
+
+  for (TopoNavNode::PredecessorMapNodeID::const_iterator it = predecessor_map.begin(); it != predecessor_map.end(); it++) {
+    res.nodes.push_back(it->first);
+    res.predecessors.push_back(it->second);
+  }
+
+  return true;
+}
+
+/*!
  * \brief Find the node id that is currently associated with the robot. I.e. the node that the robot is currently at.
  */
 void TopoNavMap::updateAssociatedNode()
 {
   //updateAssociatedNode_method1();
   updateAssociatedNode_method2();
+
 }
 
 #if DEPRECATED
@@ -138,10 +176,24 @@ void TopoNavMap::updateAssociatedNode_method2()
  */
 void TopoNavMap::updateToponavMapTransform()
 {
-  /*tf_toponavmap2map_.setOrigin( tf::Vector3(0.07*ros::Time::now().toSec(), -0.1*ros::Time::now().toSec(), 0.0) );
+
+  /*#if DEBUG
+    if (ros::Time::now().toSec() > counter_*5){
+      tf_toponavmap2map_.setOrigin(tf::Vector3(0.03 * ros::Time::now().toSec(), -0.05 * ros::Time::now().toSec(), 0.0));
+      tf::Quaternion q;
+      q.setRPY(0, 0, 0.05 * ros::Time::now().toSec());
+      tf_toponavmap2map_.setRotation(q);
+      counter_++;
+    }
+  #endif*/
+
+  /*
+  tf_toponavmap2map_.setOrigin(tf::Vector3(1.0, -2, 0.0));
   tf::Quaternion q;
-  q.setRPY(0, 0, 0.05*ros::Time::now().toSec());
-  tf_toponavmap2map_.setRotation(q);*/
+  q.setRPY(0, 0, 0);
+  tf_toponavmap2map_.setRotation(q);
+  */
+
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), tf_listener_.resolve("map"), tf_listener_.resolve("toponav_map")));
 }
 
@@ -586,7 +638,7 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
  * \brief edgeExists
  */
 const bool TopoNavMap::edgeExists(const TopoNavNode &node1, const TopoNavNode &node2) const
-{
+                                  {
   //TODO - p1 - if giving the edges and ID like the string "2to1", you will have unique IDs that are descriptive enough to facilitate edgeExists etc.
   ROS_WARN_ONCE(
                 "edgeExists is not yet implemented. It should help block recreation of edges in checkCreateEdge. This goes well for new edges (there is no risk of duplicates), but triggering checkCreateEdge when updating a node for example will likely lead to duplicate edges. This message will only print once.");
@@ -654,7 +706,7 @@ void TopoNavMap::addEdge(const TopoNavNode &start_node,
  */
 void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id)
 {
-  new TopoNavNode(tf_toponavmap2map_.inverse()*pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+  new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!

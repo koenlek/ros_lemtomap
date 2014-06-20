@@ -26,10 +26,18 @@ catkin REQUIRED COMPONENTS
 find_package(Eigen REQUIRED)
 
 add_message_files(
+  DIRECTORY msg
   FILES
   TopologicalNavigationMap.msg
   TopoNavEdgeMsg.msg
   TopoNavNodeMsg.msg
+)
+
+add_service_files(
+  DIRECTORY srv
+  FILES
+  GetAssociatedNode.srv
+  GetPredecessorMap.srv
 )
 
 generate_messages(   

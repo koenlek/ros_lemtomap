@@ -23,13 +23,14 @@
 #endif
 
 // Local includes
-#include <st_navigation/shortest_paths.h>
-#include <st_navigation/GotoNodeAction.h>
-
 #include "st_topological_mapping/utils.h" //calcDistance
+
+#include <st_navigation/GotoNodeAction.h> //Action
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
 #include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
 #include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
+#include "st_topological_mapping/GetAssociatedNode.h"  //Service
+#include "st_topological_mapping/GetPredecessorMap.h"  //Service
 
 class MoveBaseTopo
 {
@@ -42,9 +43,14 @@ protected:
   st_navigation::GotoNodeFeedback feedback_;
   st_navigation::GotoNodeResult result_;
 
+  double frequency_; //main loop frequency in Hz
+
   st_topological_mapping::TopologicalNavigationMap toponavmap_;
 
   ros::Subscriber toponavmap_sub_;
+  ros::ServiceClient asso_node_servcli_;
+  ros::ServiceClient predecessor_map_servcli_;
+
   std::string toponav_map_topic_;
   std::string goal_frame_id_;
   tf::TransformListener tf_listener_;
@@ -61,11 +67,13 @@ public:
   MoveBaseTopo(std::string name);
 
 private:
-  tf::Pose getCurrentPose();
-  int getCurrentAssociatedNode();
+  tf::Pose getRobotPoseInTopoFrame();
+  int getAssociatedNode();
   void executeCB(const st_navigation::GotoNodeGoalConstPtr& goal);
   void toponavmapCB(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map);
   std::vector<int> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
+  bool getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes);
+  geometry_msgs::PoseStamped poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map);
 
 };
 

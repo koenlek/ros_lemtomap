@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: Image
 Visualization Manager:
   Class: ""
   Displays:
@@ -542,7 +542,8 @@ Visualization Manager:
       Marker Topic: /toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        {}
+        edges: true
+        nodes: true
       Queue Size: 100
       Value: true
   Enabled: true

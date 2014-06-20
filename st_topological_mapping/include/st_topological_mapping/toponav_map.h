@@ -29,13 +29,16 @@
 #include <ecl/time/time_data.hpp>
 
 // Local includes
-#include "toponav_node.h"
-#include "toponav_edge.h"
-#include "utils.h"
+#include "st_topological_mapping/toponav_node.h"
+#include "st_topological_mapping/toponav_edge.h"
+#include "st_topological_mapping/utils.h"
+#include "st_topological_mapping/bgl/bgl_functions.h"
+
 #include "st_topological_mapping/TopologicalNavigationMap.h"  //Message
 #include "st_topological_mapping/TopoNavEdgeMsg.h"  //Message
 #include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
-#include "st_topological_mapping/bgl/bgl_functions.h"
+#include "st_topological_mapping/GetAssociatedNode.h"  //Service
+#include "st_topological_mapping/GetPredecessorMap.h"  //Service
 
 /*
  * @file toponav_map
@@ -67,6 +70,8 @@ private:
   ros::Publisher toponav_map_pub_;
   ros::Subscriber scan_sub_;
   ros::Subscriber local_costmap_sub_;
+  ros::ServiceServer asso_node_servserv_;
+  ros::ServiceServer predecessor_map_servserv_;
 
   unsigned int costmap_lastupdate_seq_;
   Eigen::MatrixXi costmap_matrix_;
@@ -83,6 +88,7 @@ private:
 
   #if DEBUG
     int test_executed_;
+    int counter_;
 
     ros::WallTime last_run_lcostmap_;
     ros::WallTime last_run_update_;
@@ -98,6 +104,11 @@ private:
    */
   void laserCB(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
   void lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+  bool associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::Request &req,
+                               st_topological_mapping::GetAssociatedNode::Response &res);
+  bool predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
+                               st_topological_mapping::GetPredecessorMap::Response &res);
+
   void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
   void updateLCostmapMatrix(); //update the matrix that has the local costmap in it.

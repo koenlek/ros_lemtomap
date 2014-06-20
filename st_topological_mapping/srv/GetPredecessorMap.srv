@@ -1,0 +1,6 @@
+# Get the predecessor map for node source_node_id
+int64 source_node_id
+---
+# the map node_id to predecessor node_id is split in two vectors, which can be easily merged to the original predecessor map again.
+int64[] nodes
+int64[] predecessors

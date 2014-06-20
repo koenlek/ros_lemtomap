@@ -48,6 +48,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(move_base_topo src/move_base_topo.cpp src/shortest_paths.cpp)
+add_executable(move_base_topo src/move_base_topo.cpp)
 target_link_libraries(move_base_topo ${catkin_LIBRARIES})
 add_dependencies(move_base_topo st_topological_mapping_generate_messages_cpp ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
