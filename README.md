@@ -83,3 +83,7 @@ save a map (execute for example from ~/catkin_ws/src/st_map_server/maps):
 load a map:
 
 `roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch load_map_directory:=$(rospack find st_map_server)/maps/my_toponav_map`
+
+OR e.g.:
+`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map" //$(pwd) expands to current directory, i.e. "./my_toponav_map"`
+

@@ -7,6 +7,14 @@
 #ifndef MOVE_BASE_TOPO_H
 #define MOVE_BASE_TOPO_H
 
+#ifndef DEPRECATED
+#define DEPRECATED 0
+#endif
+
+#ifndef BENCHMARKING
+#define BENCHMARKING 0
+#endif
+
 // ROS includes
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>

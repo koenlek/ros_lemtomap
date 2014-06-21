@@ -6,13 +6,7 @@
 
 #include <st_topological_mapping/toponav_map.h>
 
-#ifndef DEPRECATED
-#define DEPRECATED 0
-#endif
-
-#ifndef BENCHMARKING
-#define BENCHMARKING 0
-#endif
+//TODO - p2 - In general, the system should overall switch from normal poses, transforms, etc. to stamped poses, transforms, etc. Transforms are now manually programmed properly, but using stamped it is easier to keep track of in what frame a pose should be considered and some ros functions can automatically cast it to the right frames (e.g. move_base_goals are automatically interpreted in the required frame, you can pass it in any...).
 
 /*!
  * \brief Constructor.
@@ -34,7 +28,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   private_nh.param("scan_topic", scan_topic, std::string("scan"));
   private_nh.param("local_costmap_topic", local_costmap_topic, std::string("move_base/local_costmap/costmap"));
 
-  // Set initial transfrom between map and toponav_map
+  // Set initial transform between map and toponav_map
   tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
   tf::Quaternion q;
   q.setRPY(0, 0, 0);
@@ -202,7 +196,11 @@ void TopoNavMap::updateToponavMapTransform()
    tf_toponavmap2map_.setRotation(q);
    */
 
-  br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), tf_listener_.resolve("map"), tf_listener_.resolve("toponav_map")));
+  #if LTF_PERFECTODOM
+    tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
+  #endif
+
+  br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), "map", "toponav_map"));
 }
 
 /*!
@@ -291,7 +289,7 @@ void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigat
   nodes_.clear();
   edges_.clear();
 
-  //TODO: set associated node as well!!!!
+  //TODO - p2 - set associated node as well!
   ROS_WARN("Load map: Associated Node is currently not set properly, however, usually NodeID 1 is good, so no problems are caused");
 
   for (int i = 0; i < toponavmap_msg.nodes.size(); i++)
@@ -323,13 +321,13 @@ void TopoNavMap::updateMap()
 #endif
   updateRobotPose();
 
-  updateToponavMapTransform();
-
   checkCreateNode();
 
   updateAssociatedNode();
 
   publishTopoNavMap();
+
+  updateToponavMapTransform();
 
 #if DEBUG
 
@@ -700,6 +698,22 @@ void TopoNavMap::addEdge(const TopoNavNode &start_node,
 void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id)
 {
   new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+  #if LTF_PERFECTODOM
+      tf::StampedTransform perfectodom_correction_stamped;
+      tf::Transform perfectodom_correction;
+      try
+      {
+        tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(2));
+        tf_listener_.lookupTransform("odom", "map", ros::Time(0), perfectodom_correction_stamped);
+      }
+      catch (tf::TransformException &ex)
+      {
+        ROS_ERROR("Error looking up transformation\n%s", ex.what());
+      }
+      perfectodom_correction = perfectodom_correction_stamped;
+
+    node_odom_at_creation_map_[nodes_.rbegin()->second->getNodeID()] = perfectodom_correction;
+  #endif
 }
 
 /*!
@@ -731,6 +745,9 @@ void TopoNavMap::deleteNode(TopoNavNode &node)
       {
     deleteEdge((*edges_[connected_edges.at(i)]));
   }
+  #if LTF_PERFECTODOM
+    node_odom_at_creation_map_.erase(node.getNodeID());
+  #endif
   delete &node;
 }
 
@@ -816,6 +833,7 @@ TopoNavMap::nodeToRosMsg(const TopoNavNode* node)
   st_topological_mapping::TopoNavNodeMsg msg_node;
   msg_node.node_id = node->getNodeID();
   msg_node.last_updated = node->getLastUpdatedTime();
+  msg_node.last_pose_updated = node->getLastPoseUpdateTime();
   msg_node.area_id = node->getAreaID();
   poseTFToMsg(node->getPose(), msg_node.pose);
   msg_node.is_door = node->getIsDoor();

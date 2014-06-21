@@ -1,6 +1,18 @@
 #ifndef TOPONAV_MAP_H
 #define TOPONAV_MAP_H
 
+#ifndef DEPRECATED
+#define DEPRECATED 0
+#endif
+
+#ifndef BENCHMARKING
+#define BENCHMARKING 0
+#endif
+
+#ifndef LTF_PERFECTODOM //local transform -> use perfect odom assumption
+#define LTF_PERFECTODOM 1
+#endif
+
 // General includes
 #include "string"
 #include <math.h> //floor
@@ -165,6 +177,10 @@ public:
   #if DEPRECATED //these are likely to be removed later on
     TopoNavEdge::EdgeMap connectedEdges(const TopoNavNode &node) const; //returns a std::map with pointers to the edges connected to node.
     void deleteNode_old(TopoNavNode &node);
+  #endif
+
+  #if LTF_PERFECTODOM
+    std::map<TopoNavNode::NodeID,tf::Transform> node_odom_at_creation_map_;
   #endif
 
   //Get methods

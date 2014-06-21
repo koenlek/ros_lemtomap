@@ -36,7 +36,7 @@ public:
   /**
    * Public Methods
    */
-  void toponavmapCallback(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map_ptr);
+  void toponavmapCallback(st_topological_mapping::TopologicalNavigationMap toponav_map);
 };
 
 #endif

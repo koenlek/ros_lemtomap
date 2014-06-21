@@ -23,11 +23,13 @@ StMapSaver::StMapSaver(const std::string& mapname) :
 /*!
  * toponavmapCallback
  */
-void StMapSaver::toponavmapCallback(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map_ptr)
+void StMapSaver::toponavmapCallback(st_topological_mapping::TopologicalNavigationMap toponav_map)
 {
-	callback_started_=true;
+	if (callback_started_==true) //execute once only!
+	    return;
+        callback_started_=true;
 	ROS_INFO("Received map with %lu nodes and %lu edges",
-			toponav_map_ptr->nodes.size(), toponav_map_ptr->edges.size());
+			toponav_map.nodes.size(), toponav_map.edges.size());
 
 	boost::filesystem::create_directories(mapname_);
 
@@ -40,13 +42,13 @@ void StMapSaver::toponavmapCallback(const st_topological_mapping::TopologicalNav
 		return;
 	}
 	fprintf(topnavmap_metadata_yaml, "#nodes: %lu \n#edges: %lu \n\n",
-			toponav_map_ptr->nodes.size(), toponav_map_ptr->edges.size());
+			toponav_map.nodes.size(), toponav_map.edges.size());
 	fclose(topnavmap_metadata_yaml);
 
 	/* write TopologicalNavigationMap message to .bag file */
 	rosbag::Bag bag;
 	bag.open(mapname_ + "/toponav_map.bag", rosbag::bagmode::Write);
-	bag.write(toponav_map_topic_, ros::Time::now(), toponav_map_ptr);
+	bag.write(toponav_map_topic_, toponav_map.header.stamp, toponav_map);
 	bag.close();
 
 	ROS_INFO("Done saving\n");

@@ -109,16 +109,6 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
     ros::Rate r(frequency_);
     while (!success && ros::ok()) //you need to add ros::ok(), otherwise the loop will never finish
     {
-      // handle the occasion that move_base is aborted: e.g. if the robot is stuck even after /move_base recovery behavior.
-      if (move_base_client_.getState() == actionlib::SimpleClientGoalState::ABORTED)
-          {
-        ROS_WARN("/move_base was Aborted. The robot is probably stuck, even after executing all /move_base recovery behaviors");
-        result_.success = false;
-        ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
-        action_server_mbt_.setAborted(result_);
-        break;
-      }
-
       // check if a /move_base_topo preempt has been requested -> a preempt (cancellation) will automatically be triggered if a new goal is sent!
       if (action_server_mbt_.isPreemptRequested() || !ros::ok())
           {
@@ -144,6 +134,16 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
         #endif
 
         i++; // current i is always +1 compared to the current goal node vector position in path_nodes
+      }
+
+      // handle the occasion that move_base is aborted: e.g. if the robot is stuck even after /move_base recovery behavior.
+      if (move_base_client_.getState() == actionlib::SimpleClientGoalState::ABORTED)
+          {
+        ROS_WARN("/move_base was Aborted. The robot is probably stuck, even after executing all /move_base recovery behaviors");
+        result_.success = false;
+        ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
+        action_server_mbt_.setAborted(result_);
+        break;
       }
 
       // If the transform between map and toponav_map has changed significantly, resend the goal
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
 
 #ifdef CMAKE_BUILD_TYPE_DEF
 #include <boost/preprocessor/stringize.hpp>
-  if (!BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF) == "Release")
+  if (BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF) != "Release")
     ROS_WARN("This node (%s) had CMAKE_BUILD_TYPE=%s. Please use catkin_make -DCMAKE_BUILD_TYPE=Release for benchmarks!", ros::this_node::getName().c_str(), BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
   else
     ROS_INFO("This node (%s) had CMAKE_BUILD_TYPE=%s.", ros::this_node::getName().c_str(), BOOST_PP_STRINGIZE(CMAKE_BUILD_TYPE_DEF));
