@@ -6,6 +6,14 @@
 
 #include <st_topological_mapping/toponav_map.h>
 
+#ifndef DEPRECATED
+#define DEPRECATED 0
+#endif
+
+#ifndef BENCHMARKING
+#define BENCHMARKING 0
+#endif
+
 /*!
  * \brief Constructor.
  */
@@ -178,21 +186,21 @@ void TopoNavMap::updateToponavMapTransform()
 {
 
   /*#if DEBUG
-    if (ros::Time::now().toSec() > counter_*5){
-      tf_toponavmap2map_.setOrigin(tf::Vector3(0.03 * ros::Time::now().toSec(), -0.05 * ros::Time::now().toSec(), 0.0));
-      tf::Quaternion q;
-      q.setRPY(0, 0, 0.05 * ros::Time::now().toSec());
-      tf_toponavmap2map_.setRotation(q);
-      counter_++;
-    }
-  #endif*/
+   if (ros::Time::now().toSec() > counter_*5){
+   tf_toponavmap2map_.setOrigin(tf::Vector3(0.03 * ros::Time::now().toSec(), -0.05 * ros::Time::now().toSec(), 0.0));
+   tf::Quaternion q;
+   q.setRPY(0, 0, 0.05 * ros::Time::now().toSec());
+   tf_toponavmap2map_.setRotation(q);
+   counter_++;
+   }
+   #endif*/
 
   /*
-  tf_toponavmap2map_.setOrigin(tf::Vector3(1.0, -2, 0.0));
-  tf::Quaternion q;
-  q.setRPY(0, 0, 0);
-  tf_toponavmap2map_.setRotation(q);
-  */
+   tf_toponavmap2map_.setOrigin(tf::Vector3(1.0, -2, 0.0));
+   tf::Quaternion q;
+   q.setRPY(0, 0, 0);
+   tf_toponavmap2map_.setRotation(q);
+   */
 
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), tf_listener_.resolve("map"), tf_listener_.resolve("toponav_map")));
 }
@@ -378,10 +386,7 @@ bool TopoNavMap::checkCreateNode()
     return true;
   }
 
-  bool asso_node_dirnav; //if the current associated node is not direct navigable anymore: make a new Node! This can happen for small spaces like doorways.
-  double asso_node_dist;
-  asso_node_dirnav = directNavigable(robot_pose_tf_.getOrigin(), nodes_[associated_node_]->getPoseInMap(tf_toponavmap2map_).getOrigin());
-  asso_node_dist = calcDistance(robot_pose_tf_, nodes_[associated_node_]->getPoseInMap(tf_toponavmap2map_));
+  double asso_node_dist = calcDistance(robot_pose_tf_, nodes_[associated_node_]->getPoseInMap(tf_toponavmap2map_));
 
   if (checkIsNewDoor()) {
     //TODO - p3 - later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
@@ -393,10 +398,7 @@ bool TopoNavMap::checkCreateNode()
   }
   if (create_node) {
     addNode(robot_pose_tf_, is_door, area_id);
-    if (!asso_node_dirnav) { //when 'connection' with current associated node was lost, create at least edge to that one!
-      addEdge(*nodes_.rbegin()->second, *nodes_[associated_node_]);
-    }
-    checkCreateEdges((*nodes_.rbegin()->second)); // try to create additional edges!
+    checkCreateEdges(); // try to create additional edges!
     associated_node_ = nodes_.rbegin()->second->getNodeID(); //update associated node...
     updateNodeBGLDetails(associated_node_);
     return true;
@@ -408,52 +410,41 @@ bool TopoNavMap::checkCreateNode()
 }
 
 /*!
- * \brief checkCreateEdges
+ * \brief checkCreateEdges: should only be used for new nodes where the robot is currently at (as it needs a sufficient large costmap around the node)
  */
-bool TopoNavMap::checkCreateEdges(const TopoNavNode &node)
+void TopoNavMap::checkCreateEdges()
 {
-  //TODO - p3 - This method compares with all nodes: does not scale very well.
-  bool edge_created = false;
+  TopoNavNode &node = (*nodes_.rbegin()->second);
+  double max_topo_dist = 30; //maximal topological distance for edge creation, this is to make sure that loops aren't always closed -> as the node poses are not globally consistent defined, this could otherwise result in false loop closures!
   if (getNumberOfNodes() < 2)
-    return false; //only continue if there are 2 or more nodes
-  double fake_path_length;
+    return; //only continue if there are 2 or more nodes
 
-  for (TopoNavNode::NodeMap::iterator it = nodes_.begin(); it != nodes_.end(); it++)
-      {
-    //Not compare with itself
-    if (it->second->getNodeID() == node.getNodeID())
-      continue;
-    /* If it is very close, do not check using directNavigable,
-     * but using fakePathLength to make sure that current node is always connected with the node you came from...
-     * Steering a sharp corner around a doorpost could otherwise result in orphan nodes...
-     * new_node_distance_+ 0.4 is because nodes are more or less 1 meter from each other,
-     * but often is 1.1, 1.2, or even 1.3 as well, as they are created a bit too late, while movement had already happened.
-     */
-    if (calcDistance(node, *it->second) < (new_node_distance_ + 0.4))
-        {
-      fakePathLength(it->second->getPoseInMap(tf_toponavmap2map_), node.getPoseInMap(tf_toponavmap2map_), fake_path_length);
-      if (fake_path_length < calcDistance(node, *it->second) * 1.6)
-          { // allow the curved path to be up to 1.6 times longer
-        addEdge(node, *(it->second));
-        edge_created = true;
+  addEdge(node, *nodes_[associated_node_]);  //create at least edge between the new and (previous) associated_node one!
+
+  updateNodeBGLDetails(node.getNodeID());
+  TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
+
+  ROS_INFO("Checking edges for Node %d", node.getNodeID());
+  for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++)
+  {
+    if (right_iter->first < max_topo_dist) {
+      if (right_iter->second == node.getNodeID()) //not compare to self!
+        continue;
+      else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
+        continue;
+      else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
+        if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin())) //only create if directNavigable.
+          addEdge(node, *nodes_[right_iter->second]);
       }
-      continue;
+      //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
     }
-    //Only if it is close enough
-    if (calcDistance(node, *it->second) > max_edge_length_)
-      continue;
-    //If it is close enough AND directNavigable, create an edge
-    if (!edgeExists(node, *(it->second)) && directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), it->second->getPoseInMap(tf_toponavmap2map_).getOrigin()))
-                                                            {
-      addEdge(node, *(it->second));
-      edge_created = true;
-    }
+    else
+      break; //as the right version of the bimap is ordered by topo distance, we can break as soon as we have pass max_topo_dist
   }
-  ROS_WARN_COND(!edge_created,
-                "During this 'checkCreateEdges' call, no edge was created. This can lead to a graph that has 'subgraphs' that are completely unconnected!");
-  return edge_created;
+  return;
 }
 
+#if DEPRECATED
 /*!
  * \brief Returns the length of the path calculated between pose1 and pose2, based on the move_base NavFn global planner
  * \param pose1 The start pose
@@ -461,9 +452,6 @@ bool TopoNavMap::checkCreateEdges(const TopoNavNode &node)
  * \param length (output) The length of the path in meters
  * \return false if no path can be found
  */
-//bool TopoNavMap::fakePathDistance(const tf::Stamped<tf::Pose> &pose1, const tf::Point &pose2, double distance) {
-//	return fakePathDistance()
-//}
 bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length)
 {
   bool valid_plan = false;
@@ -482,21 +470,21 @@ bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, do
   srv.request.goal = pose2sm;
 
   for (int retry = 0; retry <= 3; retry++)
-      { //if it fails, try multiple times. It sometimes seems to feel because it is too busy?
+  { //if it fails, try multiple times. It sometimes seems to feel because it is too busy?
     if (fakeplan_client_.call(srv) && srv.response.plan.poses.size() > 0)
-        {
+    {
       path = srv.response.plan.poses;
       for (int i = 0; i < path.size() - 1; i++)
-          {
+      {
         length = length + calcDistance(path.at(i).pose, path.at(i + 1).pose);
       }
       ROS_DEBUG("path.size(): %ld", path.size());
       ROS_DEBUG("Path has length=%.4fm. Start point x=%.4f,y=%.4f. End point x=%.4f,y=%.4f",
-                length,
-                pose1sm.pose.position.x,
-                pose1sm.pose.position.y,
-                pose2sm.pose.position.x,
-                pose2sm.pose.position.y);
+          length,
+          pose1sm.pose.position.x,
+          pose1sm.pose.position.y,
+          pose2sm.pose.position.x,
+          pose2sm.pose.position.y);
       break;
     }
     else
@@ -506,6 +494,7 @@ bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, do
   }
   return valid_plan;
 }
+#endif
 
 /*!
  * \brief directNavigable
@@ -637,12 +626,16 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
 /*!
  * \brief edgeExists
  */
-const bool TopoNavMap::edgeExists(const TopoNavNode &node1, const TopoNavNode &node2) const
-                                  {
-  //TODO - p1 - if giving the edges and ID like the string "2to1", you will have unique IDs that are descriptive enough to facilitate edgeExists etc.
-  ROS_WARN_ONCE(
-                "edgeExists is not yet implemented. It should help block recreation of edges in checkCreateEdge. This goes well for new edges (there is no risk of duplicates), but triggering checkCreateEdge when updating a node for example will likely lead to duplicate edges. This message will only print once.");
-  return false;
+const bool TopoNavMap::edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const
+{
+  std::string edge_id;
+  if (nodeid1 < nodeid2) {
+    edge_id = boost::lexical_cast<std::string>(nodeid1) + "to" + boost::lexical_cast<std::string>(nodeid2);
+  }
+  else {
+    edge_id = boost::lexical_cast<std::string>(nodeid2) + "to" + boost::lexical_cast<std::string>(nodeid1);
+  }
+  return edges_.find(edge_id) != edges_.end();
 }
 
 /*!

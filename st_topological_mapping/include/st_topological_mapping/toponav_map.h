@@ -5,6 +5,7 @@
 #include "string"
 #include <math.h> //floor
 #include <algorithm> //min
+#include <iterator> //std::next
 #include <map>
 #include <Eigen/Dense>
 
@@ -75,7 +76,7 @@ private:
 
   unsigned int costmap_lastupdate_seq_;
   Eigen::MatrixXi costmap_matrix_;
-  double max_edge_length_;
+  double max_edge_length_; // to protect against edge creation outside local costmap area... -> in that case directNavigable won't work properly anymore...
   double new_node_distance_;
 
   tf::Transform local_costmap_origin_tf_;
@@ -112,13 +113,13 @@ private:
   void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
   void updateLCostmapMatrix(); //update the matrix that has the local costmap in it.
-  bool fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length);
 
   void updateToponavMapTransform();
   void updateAssociatedNode(); // return the node_id where the robot is currently at.
 
 #if DEPRECATED
   void updateAssociatedNode_method1();
+  bool fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length);
 #endif
 
   void updateAssociatedNode_method2();
@@ -129,13 +130,12 @@ private:
   int getCMLineCost(const tf::Point &point1, const tf::Point &point2) const;
 
   bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
-  bool checkCreateEdges(const TopoNavNode &node); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
+  void checkCreateEdges(); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
   bool checkIsNewDoor(); //Checks if a there is a new door
   const bool directNavigable(const tf::Point &point1,
                              const tf::Point &point2); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
 
-  const bool edgeExists(const TopoNavNode &node1,
-                        const TopoNavNode &node2) const;
+  const bool edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const;
 
   double distanceToClosestNode(); //Checks the distance from the robot to the closest node.
 

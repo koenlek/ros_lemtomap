@@ -133,7 +133,7 @@ void updateNodeDetails(
   typename boost::graph_traits < UndirectedGraph >::out_edge_iterator ei, ei_end;
   ROS_DEBUG("Adjacent edges of source NodeID %d are:",vertices_boost.right.at(vertext_boost_src));
   for (boost::tie(ei, ei_end) = boost::out_edges(vertext_boost_src, graph); ei != ei_end; ++ei){
-      ROS_DEBUG("\tAdjacent EgdeID:%d",edges_boost.right.at(*ei));
+      ROS_DEBUG("\tAdjacent EgdeID:%s",edges_boost.right.at(*ei).c_str());
       adjacent_edgeids_vector.push_back(edges_boost.right.at(*ei));
   }
 

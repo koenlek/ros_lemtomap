@@ -68,7 +68,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
   // helper variables
   bool success = false;
   std::vector<int> path_nodes;
-  std::vector<int> path_edges;
+  std::vector<std::string> path_edges;
   int start_node_id;
   double dist_tolerance_intermediate = 1.5; // a intermediate node is regarded 'reached' when it is within this distance [m]. New goal will then be passed.
 
@@ -276,9 +276,9 @@ int MoveBaseTopo::getAssociatedNode()
   }
 }
 
-std::vector<int> MoveBaseTopo::nodesPathToEdgesPath(const std::vector<int>& path_nodes)
+std::vector<std::string> MoveBaseTopo::nodesPathToEdgesPath(const std::vector<int>& path_nodes)
 {
-  std::vector<int> path_edges;
+  std::vector<std::string> path_edges;
 
   for (int i = 0; i < path_nodes.size() - 1; i++)
       {

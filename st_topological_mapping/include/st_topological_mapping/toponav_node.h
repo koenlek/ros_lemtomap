@@ -25,7 +25,7 @@ public:
   typedef std::map<TopoNavNode::NodeID, TopoNavNode::NodeID> PredecessorMapNodeID; //parent, child, i.e node, node predecessor.
   typedef boost::bimap<TopoNavNode::NodeID, double> DistanceBiMapNodeID;
   typedef std::vector<TopoNavNode::NodeID> AdjacentNodes;
-  typedef std::vector<int> AdjacentEdges; //TODO you cannot use TopoNavEdge::EdgeID here, because class TopoNavEdge is not included here, which is done as otherwise circular dependency issues arise
+  typedef std::vector<std::string> AdjacentEdges; //TODO you cannot use TopoNavEdge::EdgeID here, because class TopoNavEdge is not included here, which is done as otherwise circular dependency issues arise
 
   //last_toponavmap_bgl_affecting_update needs to be in the constructors: as it is a reference to the main variable in toponav_map!
   TopoNavNode(tf::Pose pose, bool is_door, int area_id, NodeMap &nodes, ros::WallTime &last_toponavmap_bgl_affecting_update);
@@ -88,7 +88,7 @@ public:
       ROS_ERROR("Watch out: nodes_[%d].%s was called, but has an outdated predecessor map. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);
     return predecessor_map_;
   }
-  const DistanceBiMapNodeID getDistacneMap() const
+  const DistanceBiMapNodeID getDistanceMap() const
   {
     if (last_bgl_update_ < last_toponavmap_bgl_affecting_update_)
       ROS_ERROR("Watch out: nodes_[%d].%s was called,  but has an outdated distance map. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);

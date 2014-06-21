@@ -17,7 +17,7 @@
 class TopoNavEdge
 {
 public:
-  typedef int EdgeID; //This can be used to help function signatures see the difference between a edge_id form any int
+  typedef std::string EdgeID; //This can be used to help function signatures see the difference between a edge_id form any string
   typedef std::map<EdgeID, TopoNavEdge*> EdgeMap;
 
   TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges, ros::WallTime &last_toponavmap_bgl_affecting_update);
@@ -65,7 +65,7 @@ private:
   /**
    * Variables
    */
-  EdgeID edge_id_; //edge ids are automatically generated (starting from 1) and should never be changed!
+  EdgeID edge_id_; //edge ids are automatically generated and should never be changed!
   ros::Time last_updated_;
   double cost_;
   const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
@@ -78,8 +78,6 @@ private:
    * Private Methods
    */
 
-protected:
-  static int UIDGenerator_; //generates a unique ID for every new edge.
 };
 
 #endif //TOPONAV_EDGE_H

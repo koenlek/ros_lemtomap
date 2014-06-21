@@ -137,7 +137,12 @@ void ShowTopoNavMap::visualizeEdges()
   for (TopoNavEdge::EdgeMap::const_iterator it = edges_.begin(); it != edges_.end(); it++) //TODO - p3 - This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
   {
     visualization_msgs::Marker edge_marker = edges_marker_template_;
-    edge_marker.id = it->second->getEdgeID();
+
+    //TODO - p2 - maybe this is actually slow and I should just accept a random unique integer (implement like how NodeIDs are generated)
+    std::string edge_id_string = it->second->getEdgeID();
+    boost::replace_all(edge_id_string,"to","000"); //edgeID 1to2 will become 10002, needed because of int limitation
+    edge_marker.id = atoi(edge_id_string.c_str()); //cast to int
+
     edge_marker.points.resize(2); // each line_list exits of one line
 
     //Source
@@ -151,7 +156,7 @@ void ShowTopoNavMap::visualizeEdges()
     edge_marker.points[1].z = 0.0f;
 
     //If it is part of the navigation path: give it a nice color
-    if (std::find(topo_path_edges_.begin(), topo_path_edges_.end(), edge_marker.id) != topo_path_edges_.end())
+    if (std::find(topo_path_edges_.begin(), topo_path_edges_.end(), it->second->getEdgeID()) != topo_path_edges_.end())
     {
       edge_marker.color.r = 0.4;
       edge_marker.color.g = 0.0;

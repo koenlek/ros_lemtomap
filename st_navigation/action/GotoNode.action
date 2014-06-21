@@ -6,4 +6,4 @@ bool success
 ---
 #feedback
 int32[] route_node_ids
-int32[] route_edge_ids
+string[] route_edge_ids

@@ -1,16 +1,21 @@
 #ifndef SHOW_TOPONAV_MAP_H
 #define SHOW_TOPONAV_MAP_H
 
+// General
 #include <string>
 #include <map>
 #include <algorithm> //std::find
+#include <boost/algorithm/string.hpp> //boost::replace_all for rewriting edge ids
+
+//ROS
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include "show_toponav_map.h"
-#include "toponav_node.h"
-#include "toponav_edge.h"
+//Local workspace
+#include "st_topological_mapping/show_toponav_map.h"
+#include "st_topological_mapping/toponav_node.h"
+#include "st_topological_mapping/toponav_edge.h"
 #include "st_navigation/GotoNodeActionFeedback.h"
 
 /*

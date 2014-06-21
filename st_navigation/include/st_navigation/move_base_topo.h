@@ -71,7 +71,7 @@ private:
   int getAssociatedNode();
   void executeCB(const st_navigation::GotoNodeGoalConstPtr& goal);
   void toponavmapCB(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map);
-  std::vector<int> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
+  std::vector<std::string> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
   bool getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes);
   geometry_msgs::PoseStamped poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map);
 
