@@ -3,12 +3,12 @@
 <launch>	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
-	<arg name="rolling" default="false" /> <!-- true/false: use rolling window gmapping or not -->
+	<arg name="rolling" default="true" /> <!-- true/false: use rolling window gmapping or not -->
 	<arg name="windowsize" default="20" /> <!-- double, size in meters for rolling window, will be neglected if rolling is false -->
 	<arg name="perfect_odometry" default="false" /> <!-- true/false: for simulations, perfect odometry can be used -->
 	<arg name="suppress_console" default="1" /> <!-- 1/0, which means true or false. This will suppress stderr output of gmapping -->
 	<arg name="particles" default="80"/>
-	<arg name="minimum_score" default="30"/>
+	<arg name="minimum_score" default="0"/>
 
 	<!-- Set other parameters -->
 	<arg name="use_sim_time" default="true" />
@@ -55,9 +55,11 @@
 	</node>
 
 	<!-- Navigation components -->
-	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
+	<include file="$(find st_navigation)/launch/move_base_dwa_local_rolling.launch">
 		<!--<arg name="allow_unknown" value="false" /> does not work...--> <!-- for navfn, by defualt, it is true -->
 		<arg name="scan_topic" value="$(arg scan_topic)" />
+		
+		<arg name="windowsize" value="$(arg windowsize)" />
 	</include>
 	
 	<!-- Run Move Base Topo -->

@@ -1,8 +1,7 @@
 global_frame: /map
 update_frequency: 1.0
 publish_frequency: 0.5
-#static_map: true #it seems that the static_map is not a param anymore for the new hydro layer implementation. It is superseeded by the static map layer I think...
-rolling_window: false
+#rolling_window: false #false is default, is same as undefined
 transform_tolerance: 0.5
 resolution: 0.05 #default is 0.05
 plugins:

@@ -45,6 +45,14 @@ Usage
 
 `roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch`
 
+Tip: You can experiment by setting:
+rolling:=true (default is false)
+windowsize:=20 (default is 20, is neglected if rolling is false)
+perfect_odometry:=true (default is false)
+
+For example:
+`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch rolling:=true`
+
 #### Drive around manually ####
 
 Use the arrow keys to increment speed, hit space to reset. If you get an error about motors not being powered up, hit 'e'.

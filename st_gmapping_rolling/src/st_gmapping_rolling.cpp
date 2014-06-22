@@ -73,6 +73,7 @@ Laser Parameters:
 - @b "~/lsigma" @b [double] standard deviation for the scan matching process (single laser beam)
 - @b "~/ogain" @b [double] gain for smoothing the likelihood
 - @b "~/lskip" @b [int] take only every (n+1)th laser ray for computing a match (0 = take all rays)
+- @b "~/minimumScore" @b [double] minimum score for considering the outcome of the scanmatching good. Can avoid 'jumping' pose estimates in large open spaces when using laser scanners with limited range (e.g. 5m). (0 = default. Scores go up to 600+, try 50 for example when experiencing 'jumping' estimate issues)
 
 Motion Model Parameters (all standard deviations of a gaussian noise model)
 - @b "~/srr" @b [double] linear noise component (x and y)
@@ -131,7 +132,7 @@ SlamGMapping::SlamGMapping():
 
   // The library is pretty chatty
   //gsp_ = new GMapping::GridSlamProcessor(std::cerr);
-  gsp_ = new GMapping::GridSlamProcessor();
+  gsp_ = new GMapping::GridSlamProcessor(std::cerr);
   ROS_ASSERT(gsp_);
 
   tfB_ = new tf::TransformBroadcaster();
@@ -220,7 +221,8 @@ SlamGMapping::SlamGMapping():
     lasamplerange_ = 0.005;
   if(!private_nh_.getParam("lasamplestep", lasamplestep_))
     lasamplestep_ = 0.005;
-
+  if(!private_nh_.getParam("minimumScore", minimum_score_))
+    minimum_score_ = 0;
   if(!private_nh_.getParam("windowsize", windowsize_)){
 	  windowsize_ = 0;
 	  rolling_ = false;
@@ -419,6 +421,7 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   /// lasamplerange.  It was probably a typo, but who knows.
   gsp_->setlasamplerange(lasamplerange_);
   gsp_->setlasamplestep(lasamplestep_);
+  gsp_->setminimumScore(minimum_score_);
 
   // Call the sampling function once to set the seed.
   GMapping::sampleGaussian(1,time(NULL));

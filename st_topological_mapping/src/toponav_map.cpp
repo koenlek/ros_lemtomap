@@ -422,7 +422,6 @@ void TopoNavMap::checkCreateEdges()
   updateNodeBGLDetails(node.getNodeID());
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
-  ROS_INFO("Checking edges for Node %d", node.getNodeID());
   for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++)
   {
     if (right_iter->first < max_topo_dist) {

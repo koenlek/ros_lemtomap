@@ -5,6 +5,8 @@
 	<arg name="rolling" default="false"/>
 	<arg name="windowsize" default="20"/>
 	<arg name="perfect_odometry" default="false"/> <!-- leave empty to assume normal odo, fill anything to activate perfect odometry utilization -->
+	<arg name="particles" default="80"/>
+	<arg name="minimum_score" default="0"/>
 
 	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
 	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
@@ -57,7 +59,7 @@
 		<param name="angularUpdate" value="$(arg angularUpdate)" /> <!-- default is 0.5rad(28.6deg), turtlebot 0.436rad(25deg), gmapping orig article 0.436rad(25deg) -->
 		<param name="temporalUpdate" value="-1.0" />
 		<param name="resampleThreshold" value="0.5" /> <!-- 0.5 means: resample if Neff < 0.5*N. See gmapping article grisetti2007, formula 20. -->
-		<param name="particles" value="80" /> <!-- default 30, turtlebot default 80 -->
+		<param name="particles" value="$(arg particles)" /> <!-- default 30, turtlebot default 80 -->
 
 		<param name="xmin" value="-30.0" />
 		<param name="ymin" value="-30.0" />
@@ -69,6 +71,8 @@
 		<param name="llsamplestep" value="0.01" /> <!-- ? -->
 		<param name="lasamplerange" value="0.005" /> <!-- ? -->
 		<param name="lasamplestep" value="0.005" /> <!-- ? -->
+
+		<param name="minimumScore" value="$(arg minimum_score)" /> <!-- I added this feature myself, default was 0, but setting to e.g. 50 makes it neglect poor scan_matching... (zero means it only neglects failed scan-matching) -->
 
 		<param name="windowsize" value="$(arg windowsize_param)" />
 

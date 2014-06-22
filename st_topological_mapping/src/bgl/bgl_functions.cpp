@@ -31,7 +31,7 @@ void updateNodeDetails(
     return;
   }
 
-  ROS_INFO("NodeID %d BGL details were outdated, updating now",node_id);
+  ROS_DEBUG("NodeID %d BGL details were outdated, updating now",node_id);
 
   TopoNavNode::PredecessorMapNodeID predecessor_map; // output, stores parents
   TopoNavNode::DistanceBiMapNodeID distance_map; // output, stores distances

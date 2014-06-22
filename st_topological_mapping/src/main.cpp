@@ -27,8 +27,10 @@ int main(int argc, char** argv)
 
   TopoNavMap topo_nav_map(n);
 #if LTF_PERFECTODOM
+  if (load_map_path != ""){
   ROS_ERROR("Loading map while using 'LTF_PERFECTODOM 1' is impossible, skipping map loading...");
   load_map_path="";
+  }
 #endif
   if (load_map_path != "") {
     ROS_INFO("Map will be loaded from: %s", load_map_path.c_str());
