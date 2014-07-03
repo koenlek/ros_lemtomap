@@ -8,6 +8,19 @@
 	<arg name="particles" default="80"/>
 	<arg name="minimum_score" default="0"/>
 
-	<node pkg="st_gmapping_rolling" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="$(arg suppress_console) gmapping_general_launcher_stage2.launch scan_topic:=$(arg scan_topic) windowsize:=$(arg windowsize) perfect_odometry:=$(arg perfect_odometry) rolling:=$(arg rolling) particles:=$(arg particles) minimum_score:=$(arg minimum_score)"/>
+	<arg name="publishCurrentPath" default="false" />
+	<arg name="publishAllPaths" default="false" />
+	<arg name="publishAllMaps" default="false" />
+
+	<node pkg="st_gmapping_rolling" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="$(arg suppress_console) gmapping_general_launcher_stage2.launch 
+	scan_topic:=$(arg scan_topic) 
+	windowsize:=$(arg windowsize) 
+	perfect_odometry:=$(arg perfect_odometry) 
+	rolling:=$(arg rolling) 
+	particles:=$(arg particles) 
+	minimum_score:=$(arg minimum_score)
+	publishCurrentPath:=$(arg publishCurrentPath)
+	publishAllPaths:=$(arg publishAllPaths)
+	publishAllMaps:=$(arg publishAllMaps)"/>
 
 </launch>

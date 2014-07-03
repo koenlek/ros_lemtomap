@@ -59,7 +59,7 @@ private:
    */
   void visualizeNodes();
   void visualizeEdges();
-  void moveBaseTopoFeedbackCB (const st_navigation::GotoNodeActionFeedback feedback);
+  void moveBaseTopoFeedbackCB (const st_navigation::GotoNodeActionFeedback::ConstPtr &feedback);
 };
 
 #endif // SHOW_TOPONAV_MAP_H

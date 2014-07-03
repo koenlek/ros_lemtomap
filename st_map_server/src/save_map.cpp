@@ -16,14 +16,13 @@ StMapSaver::StMapSaver(const std::string& mapname) :
 			"topological_navigation_mapper/topological_navigation_map";
 	ROS_INFO("Waiting for the toponavmap at topic: '%s'",
 			toponav_map_topic_.c_str());
-	toponavmap_sub_ = n.subscribe(toponav_map_topic_, 1,
-			&StMapSaver::toponavmapCallback, this);
+	toponavmap_sub_ = n.subscribe(toponav_map_topic_, 1, &StMapSaver::toponavmapCB, this);
 }
 
 /*!
- * toponavmapCallback
+ * \brief toponavmapCB
  */
-void StMapSaver::toponavmapCallback(st_topological_mapping::TopologicalNavigationMap toponav_map)
+void StMapSaver::toponavmapCB(st_topological_mapping::TopologicalNavigationMap toponav_map)
 {
 	if (callback_started_==true) //execute once only!
 	    return;

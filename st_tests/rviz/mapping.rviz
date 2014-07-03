@@ -8,10 +8,11 @@ Panels:
         - /Map1/Position1
         - /Map1/Orientation1
         - /TF1/Tree1
-        - /Nav1
+        - /Sensors1/LaserScan Hokuyo1
         - /TopoNavMap MarkerArray1/Namespaces1
+        - /GMapping1
       Splitter Ratio: 0.5
-    Tree Height: 579
+    Tree Height: 332
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -29,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Image
+    SyncSource: LaserScan Hokuyo
 Visualization Manager:
   Class: ""
   Displays:
@@ -37,7 +38,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.03
         Value: Lines
@@ -50,7 +51,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Alpha: 0.7
       Class: rviz/Map
       Color Scheme: map
@@ -78,31 +79,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_depth_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        camera_rgb_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_rgb_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_sensormiddle_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         caster_back_link:
           Alpha: 1
           Show Axes: false
@@ -326,7 +302,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.01
+          Size (m): 0.04
           Style: Flat Squares
           Topic: /scan_hokuyo
           Use Fixed Frame: true
@@ -523,18 +499,18 @@ Visualization Manager:
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: true
+          Enabled: false
           Name: Local Costmap
           Topic: /move_base/local_costmap/costmap
-          Value: true
+          Value: false
         - Alpha: 0.5
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: true
+          Enabled: false
           Name: Global Costmap
           Topic: /move_base/global_costmap/costmap
-          Value: true
+          Value: false
       Enabled: true
       Name: Nav
     - Class: rviz/MarkerArray
@@ -546,9 +522,108 @@ Visualization Manager:
         nodes: true
       Queue Size: 100
       Value: true
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /st_gmapping_rolling/all_paths
+          Name: AllParticlePaths
+          Namespaces:
+            path_particle1: true
+            path_particle10: true
+            path_particle11: true
+            path_particle12: true
+            path_particle13: true
+            path_particle14: true
+            path_particle15: true
+            path_particle16: true
+            path_particle17: true
+            path_particle18: true
+            path_particle19: true
+            path_particle2: true
+            path_particle20: true
+            path_particle21: true
+            path_particle22: true
+            path_particle23: true
+            path_particle24: true
+            path_particle25: true
+            path_particle26: true
+            path_particle27: true
+            path_particle28: true
+            path_particle29: true
+            path_particle3: true
+            path_particle30: true
+            path_particle31: true
+            path_particle32: true
+            path_particle33: true
+            path_particle34: true
+            path_particle35: true
+            path_particle36: true
+            path_particle37: true
+            path_particle38: true
+            path_particle39: true
+            path_particle4: true
+            path_particle40: true
+            path_particle41: true
+            path_particle42: true
+            path_particle43: true
+            path_particle44: true
+            path_particle45: true
+            path_particle46: true
+            path_particle47: true
+            path_particle48: true
+            path_particle49: true
+            path_particle5: true
+            path_particle50: true
+            path_particle51: true
+            path_particle52: true
+            path_particle53: true
+            path_particle54: true
+            path_particle55: true
+            path_particle56: true
+            path_particle57: true
+            path_particle58: true
+            path_particle59: true
+            path_particle6: true
+            path_particle60: true
+            path_particle61: true
+            path_particle62: true
+            path_particle63: true
+            path_particle64: true
+            path_particle65: true
+            path_particle66: true
+            path_particle67: true
+            path_particle68: true
+            path_particle69: true
+            path_particle7: true
+            path_particle70: true
+            path_particle71: true
+            path_particle72: true
+            path_particle73: true
+            path_particle74: true
+            path_particle75: true
+            path_particle76: true
+            path_particle77: true
+            path_particle78: true
+            path_particle79: true
+            path_particle8: true
+            path_particle80: true
+            path_particle9: true
+          Queue Size: 100
+          Value: true
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 25; 255; 0
+          Enabled: true
+          Name: CurrentParticlePath
+          Topic: /st_gmapping_rolling/current_path
+          Value: true
+      Enabled: true
+      Name: GMapping
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
+    Background Color: 240; 240; 240
     Fixed Frame: map
     Frame Rate: 30
   Name: root
@@ -565,7 +640,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.571
+      Angle: 1.551
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
@@ -574,21 +649,21 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 48.3534
+      Scale: 13.2847
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 5.05071
-      Y: -0.844308
+      X: 22.3383
+      Y: 3.06603
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1056
+  Height: 744
   Hide Left Dock: false
   Hide Right Dock: false
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000019500000396fc0200000004fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000028000002d2000000dd00fffffffb0000000a0049006d0061006700650100000300000000be0000001600ffffff000000010000014100000396fc0200000005fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000028000000c00000006400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000028000000920000000000000000fb0000000a0056006900650077007301000000ee0000022a000000b000fffffffb0000001200530065006c0065006300740069006f006e010000031e000000a00000006400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000074f0000003efc0100000002fb0000000800540069006d006501000000000000074f000002f600fffffffb0000000800540069006d006501000000000000045000000000000000000000046d0000039600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001950000025efc0200000004fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000028000001db000000dd00fffffffb0000000a0049006d00610067006501000002090000007d0000001600ffffff00000001000001410000025efc0200000005fb0000001e0054006f006f006c002000500072006f007000650072007400690065007301000000280000007e0000006400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000028000000920000000000000000fb0000000a0056006900650077007301000000ac0000016b000000b000fffffffb0000001200530065006c0065006300740069006f006e010000021d000000690000006400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005250000003efc0100000002fb0000000800540069006d0065010000000000000525000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000002430000025e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -597,6 +672,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1871
-  X: 1415
-  Y: 24
+  Width: 1317
+  X: 1065
+  Y: -4

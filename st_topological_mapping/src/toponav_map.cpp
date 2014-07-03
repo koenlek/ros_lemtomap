@@ -17,7 +17,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
     max_edge_length_(2.5),
     new_node_distance_(1.0),
     move_base_client_("move_base", true), // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
-    associated_node_(1),
+    associated_node_(-1),
     last_bgl_affecting_update_(ros::WallTime::now())
 {
   ros::NodeHandle private_nh("~");
@@ -49,7 +49,9 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   //Create subscribers/publishers
   fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("move_base/NavfnROS/make_plan");
   local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
+#if DEPRECATED
   scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
+#endif
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
   asso_node_servserv_ = n_.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
   predecessor_map_servserv_ = n_.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
@@ -84,11 +86,13 @@ TopoNavMap::~TopoNavMap()
 /*!
  * \brief Laser Callback. Update laser_scan_
  */
+#if DEPRECATED
 void TopoNavMap::laserCB(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
   laser_scan_ = *msg;
   ROS_DEBUG("angle_max=%f", laser_scan_.angle_max); // to check whether it uses kinect vs hokuyo
 }
+#endif
 
 /*!
  * \brief Get Associated Node Service, such that other ROS nodes can know what is the associated node.
@@ -174,7 +178,7 @@ void TopoNavMap::updateAssociatedNode_method2()
 }
 
 /*!
- * \brief Laser Callback. Update laser_scan_
+ * \brief ToponavMapTransform()
  */
 void TopoNavMap::updateToponavMapTransform()
 {
@@ -197,14 +201,15 @@ void TopoNavMap::updateToponavMapTransform()
    */
 
   #if LTF_PERFECTODOM
-    tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
+    if (associated_node_ > 0 && node_odom_at_creation_map_.size() > 0)
+      tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
   #endif
 
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), "map", "toponav_map"));
 }
 
 /*!
- * \brief Local Costmap Callback. Update laser_scan_
+ * \brief Local Costmap Callback.
  */
 void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 {
@@ -321,13 +326,13 @@ void TopoNavMap::updateMap()
 #endif
   updateRobotPose();
 
-  checkCreateNode();
+  updateToponavMapTransform();
 
-  updateAssociatedNode();
+  if (!checkCreateNode()){
+    updateAssociatedNode(); //updates are only needed if no new node was created...
+  }
 
   publishTopoNavMap();
-
-  updateToponavMapTransform();
 
 #if DEBUG
 
@@ -380,6 +385,7 @@ bool TopoNavMap::checkCreateNode()
 
   if (number_of_nodes == 0) { // if no nodes, create first and return
     addNode(robot_pose_tf_, is_door, area_id);
+    associated_node_ = nodes_.rbegin()->second->getNodeID(); //update associated node...
     updateNodeBGLDetails(nodes_.rbegin()->second->getNodeID());
     return true;
   }
@@ -784,7 +790,7 @@ TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(const TopoNavNode &node) const
 }
 #endif
 
-void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg)
+void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg)
 {
   tf::Pose tfpose;
   poseMsgToTF(node_msg.pose, tfpose);
@@ -801,7 +807,7 @@ void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg nod
       );
 }
 
-void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg)
+void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &edge_msg)
 {
   new TopoNavEdge(edge_msg.edge_id, //edge_id
       edge_msg.last_updated, //last_updated
@@ -813,7 +819,7 @@ void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edg
       );
 }
 st_topological_mapping::TopoNavEdgeMsg
-TopoNavMap::edgeToRosMsg(TopoNavEdge * edge)
+TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
 //not const, as getCost can cause update of the cost!
 {
   st_topological_mapping::TopoNavEdgeMsg msg_edge;
@@ -826,8 +832,7 @@ TopoNavMap::edgeToRosMsg(TopoNavEdge * edge)
   return msg_edge;
 }
 
-st_topological_mapping::TopoNavNodeMsg
-TopoNavMap::nodeToRosMsg(const TopoNavNode* node)
+st_topological_mapping::TopoNavNodeMsg TopoNavMap::nodeToRosMsg(const TopoNavNode *node)
 {
   st_topological_mapping::TopoNavNodeMsg msg_node;
   msg_node.node_id = node->getNodeID();

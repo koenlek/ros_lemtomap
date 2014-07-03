@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 project(st_gmapping_rolling)
 
+if(BENCHMARKING MATCHES 1)
+add_definitions(-DROSCONSOLE_MIN_SEVERITY=ROSCONSOLE_SEVERITY_INFO) #compiles out all ROS_DEBUG logging, which gives extra speed as it does not need to be printed/processed/logged to disk. Choose from DEBUG INFO WARN ERROR FATAL and NONE (none means no logging at all)
+endif()
+
 find_package(catkin REQUIRED nav_msgs openslam_gmapping roscpp rostest tf)
 
 find_package(Boost REQUIRED signals)

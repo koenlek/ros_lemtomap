@@ -28,7 +28,9 @@
 #include "tf/transform_listener.h"
 #include "tf/transform_datatypes.h"
 #include "tf/transform_broadcaster.h"
+#if DEPRECATED
 #include "sensor_msgs/LaserScan.h"
+#endif
 #include "nav_msgs/OccupancyGrid.h"
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -77,11 +79,13 @@ private:
   TopoNavNode::NodeID associated_node_; // the node with which the robot is currently associated
   tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
 
+#if DEPRECATED
+  ros::Subscriber scan_sub_;
   sensor_msgs::LaserScan laser_scan_; //stores robots current laser scans
+#endif
   nav_msgs::OccupancyGrid local_costmap_;
 
   ros::Publisher toponav_map_pub_;
-  ros::Subscriber scan_sub_;
   ros::Subscriber local_costmap_sub_;
   ros::ServiceServer asso_node_servserv_;
   ros::ServiceServer predecessor_map_servserv_;
@@ -115,12 +119,11 @@ private:
   /**
    * Private Methods
    */
-  void laserCB(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
   void lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg);
   bool associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::Request &req,
-                               st_topological_mapping::GetAssociatedNode::Response &res);
+                           st_topological_mapping::GetAssociatedNode::Response &res);
   bool predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
-                               st_topological_mapping::GetPredecessorMap::Response &res);
+                           st_topological_mapping::GetPredecessorMap::Response &res);
 
   void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
@@ -132,6 +135,7 @@ private:
 #if DEPRECATED
   void updateAssociatedNode_method1();
   bool fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length);
+  void laserCB(const sensor_msgs::LaserScan::ConstPtr &msg); //This could be used for door detection
 #endif
 
   void updateAssociatedNode_method2();
@@ -144,8 +148,7 @@ private:
   bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
   void checkCreateEdges(); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
   bool checkIsNewDoor(); //Checks if a there is a new door
-  const bool directNavigable(const tf::Point &point1,
-                             const tf::Point &point2); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
+  const bool directNavigable(const tf::Point &point1, const tf::Point &point2); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
 
   const bool edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const;
 
@@ -163,8 +166,7 @@ public:
    */
   // updateMap is the method that generates and maintains the topological navigation map and should be called in a (main) loop
   void updateMap();
-  void loadMapFromMsg(
-                      const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
+  void loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
 
   // these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
   void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
@@ -207,8 +209,8 @@ public:
   } // return the number of edges
 
   // conversions from/to ROS msgs
-  void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg edge_msg);
-  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg node_msg);
+  void edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &edge_msg);
+  void nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg);
   st_topological_mapping::TopoNavEdgeMsg edgeToRosMsg(TopoNavEdge* edge);
   st_topological_mapping::TopoNavNodeMsg nodeToRosMsg(const TopoNavNode* node);
 };

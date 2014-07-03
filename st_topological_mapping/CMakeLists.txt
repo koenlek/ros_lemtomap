@@ -11,7 +11,11 @@ else()
 add_definitions(-DDEBUG=0)
 endif()
 
-add_definitions(-DBENCHMARKING=1) 
+if(BENCHMARKING MATCHES 1)
+add_definitions(-DROSCONSOLE_MIN_SEVERITY=ROSCONSOLE_SEVERITY_INFO) #compiles out all ROS_DEBUG logging, which gives extra speed as it does not need to be printed/processed/logged to disk. Choose from DEBUG INFO WARN ERROR FATAL and NONE (none means no logging at all)
+endif()
+
+#add_definitions(-DBENCHMARKING=1) 
 
 find_package(
 catkin REQUIRED COMPONENTS
@@ -60,4 +64,14 @@ include_directories(
 add_executable(topological_navigation_mapper src/toponav_edge.cpp src/toponav_node.cpp src/utils.cpp src/show_toponav_map.cpp src/toponav_map.cpp src/main.cpp src/load_map.cpp src/bgl/bgl_functions.cpp)
 target_link_libraries(topological_navigation_mapper ${catkin_LIBRARIES})
 add_dependencies(topological_navigation_mapper ${catkin_EXPORTED_TARGETS}) # KL: to make sure that message headers in devel/include/${PROJECT_NAME} are recognized
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+catkin_add_gtest(${PROJECT_NAME}-unittest_example test/unittest_example.cpp)
+if(TARGET ${PROJECT_NAME}-unittest_example)
+  #target_link_libraries(${PROJECT_NAME}-unittest_example ${PROJECT_NAME})
+endif()
 

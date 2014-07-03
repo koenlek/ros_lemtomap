@@ -13,7 +13,11 @@ else()
 add_definitions(-DDEBUG=0)
 endif()
 
-add_definitions(-DBENCHMARKING=1) 
+if(BENCHMARKING MATCHES 1)
+add_definitions(-DROSCONSOLE_MIN_SEVERITY=ROSCONSOLE_SEVERITY_INFO) #compiles out all ROS_DEBUG logging, which gives extra speed as it does not need to be printed/processed/logged to disk. Choose from DEBUG INFO WARN ERROR FATAL and NONE (none means no logging at all)
+endif()
+
+#add_definitions(-DBENCHMARKING=1) 
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

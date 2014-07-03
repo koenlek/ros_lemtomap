@@ -30,6 +30,13 @@
 
 #include <boost/thread.hpp>
 
+// KL Visualize and store all paths / maps
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <nav_msgs/Path.h>
+#include "tf/transform_datatypes.h"
+#include <stdio.h>
+
 class SlamGMapping
 {
   public:
@@ -87,7 +94,7 @@ class SlamGMapping
     bool initMapper(const sensor_msgs::LaserScan& scan);
     bool addScan(const sensor_msgs::LaserScan& scan, GMapping::OrientedPoint& gmap_pose);
     double computePoseEntropy();
-    
+
     // Parameters used by GMapping
     double maxRange_;
     double maxUrange_;
@@ -121,8 +128,25 @@ class SlamGMapping
     double lasamplerange_;
     double lasamplestep_;
 
+    double tf_delay_;
+
     double windowsize_;
     bool rolling_; //KL
 
-    double tf_delay_;
+    // Visualize and store all paths and maps
+    geometry_msgs::Pose gMapPoseToGeoPose(const GMapping::OrientedPoint& gmap_pose) const;
+    void updateAllPaths();
+    void publishCurrentPath();
+    void publishAllPaths();
+    std::vector<nav_msgs::Path> all_paths_;
+    visualization_msgs::MarkerArray all_paths_ma_;
+    visualization_msgs::Marker path_m_;
+    ros::Publisher paths_publisher_; //KL
+    ros::Publisher current_path_publisher_; //KL
+    ros::Publisher maps_publisher_; //KL
+    GMapping::GridSlamProcessor::TNode* t_node_current_;
+    bool publish_all_paths_;
+    bool publish_all_maps_;
+    bool publish_current_path_;
+
 };

@@ -7,6 +7,10 @@
 	<arg name="perfect_odometry" default="false"/> <!-- leave empty to assume normal odo, fill anything to activate perfect odometry utilization -->
 	<arg name="particles" default="80"/>
 	<arg name="minimum_score" default="0"/>
+	
+	<arg name="publishCurrentPath" default="false" />
+	<arg name="publishAllPaths" default="false" />
+	<arg name="publishAllMaps" default="false" />
 
 	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
 	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
@@ -75,6 +79,10 @@
 		<param name="minimumScore" value="$(arg minimum_score)" /> <!-- I added this feature myself, default was 0, but setting to e.g. 50 makes it neglect poor scan_matching... (zero means it only neglects failed scan-matching) -->
 
 		<param name="windowsize" value="$(arg windowsize_param)" />
+		
+		<param name="publishCurrentPath" value="$(arg publishCurrentPath)" />
+		<param name="publishAllPaths" value="$(arg publishAllPaths)" />
+		<param name="publishAllMaps" value="$(arg publishAllMaps)" />
 
 		<remap from="scan" to="$(arg scan_topic)" />
 	</node>

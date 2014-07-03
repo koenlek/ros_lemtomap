@@ -36,7 +36,7 @@ public:
   /**
    * Public Methods
    */
-  void toponavmapCallback(st_topological_mapping::TopologicalNavigationMap toponav_map);
+  void toponavmapCB(st_topological_mapping::TopologicalNavigationMap toponav_map); //?copy instead of reference assures no problems of changes during saving?
 };
 
 #endif
