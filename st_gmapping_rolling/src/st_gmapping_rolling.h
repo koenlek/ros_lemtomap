@@ -138,15 +138,20 @@ class SlamGMapping
     void updateAllPaths();
     void publishCurrentPath();
     void publishAllPaths();
+    void publishMapPX();
     std::vector<nav_msgs::Path> all_paths_;
     visualization_msgs::MarkerArray all_paths_ma_;
     visualization_msgs::Marker path_m_;
     ros::Publisher paths_publisher_; //KL
     ros::Publisher current_path_publisher_; //KL
-    ros::Publisher maps_publisher_; //KL
     GMapping::GridSlamProcessor::TNode* t_node_current_;
     bool publish_all_paths_;
-    bool publish_all_maps_;
     bool publish_current_path_;
+    int publish_specific_map_; //int stands for particle index
+    //map publishing
+    ros::Publisher map_px_publisher_; //KL
+    ros::Publisher map_px_info_publisher_; //KL
+    nav_msgs::GetMap::Response map_px_;
+    bool got_map_px_;
 
 };

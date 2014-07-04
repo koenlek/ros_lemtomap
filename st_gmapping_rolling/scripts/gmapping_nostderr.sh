@@ -19,5 +19,5 @@ if [ "$1" = "0" ]; then
 else
  shift
  echo "now running 'roslaunch st_gmapping_rolling $@'"
- roslaunch st_gmapping_rolling $@ 2>1
+ roslaunch st_gmapping_rolling $@ 1>&- 2>&-
 fi

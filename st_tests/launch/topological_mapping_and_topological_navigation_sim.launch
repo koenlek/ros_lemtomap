@@ -11,7 +11,7 @@
 	<arg name="minimum_score" default="250"/>
 	<arg name="publishCurrentPath" default="false" />
 	<arg name="publishAllPaths" default="false" />
-	<arg name="publishAllMaps" default="false" />
+	<arg name="publishSpecificMap" default="-1" /> <!-- -1 is disable -->
 
 	<!-- Set other parameters -->
 	<arg name="use_sim_time" default="true" />
@@ -63,7 +63,7 @@
 			minimum_score:=$(arg minimum_score)
 			publishCurrentPath:=$(arg publishCurrentPath)
 			publishAllPaths:=$(arg publishAllPaths)
-			publishAllMaps:=$(arg publishAllMaps)" 
+			publishSpecificMap:=$(arg publishSpecificMap)" 
               name="timed_roslaunch" output="screen">
 	</node>
 

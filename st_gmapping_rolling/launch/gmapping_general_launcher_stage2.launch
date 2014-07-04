@@ -10,7 +10,7 @@
 	
 	<arg name="publishCurrentPath" default="false" />
 	<arg name="publishAllPaths" default="false" />
-	<arg name="publishAllMaps" default="false" />
+	<arg name="publishSpecificMap" default="-1" />
 
 	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
 	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
@@ -82,7 +82,7 @@
 		
 		<param name="publishCurrentPath" value="$(arg publishCurrentPath)" />
 		<param name="publishAllPaths" value="$(arg publishAllPaths)" />
-		<param name="publishAllMaps" value="$(arg publishAllMaps)" />
+		<param name="publishSpecificMap" value="$(arg publishSpecificMap)" />
 
 		<remap from="scan" to="$(arg scan_topic)" />
 	</node>
