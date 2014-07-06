@@ -235,7 +235,7 @@ SlamGMapping::SlamGMapping() :
     rolling_ = true;
   }
   if(!private_nh_.getParam("rolling_window_option", rolling_window_option_)){
-    rolling_window_option_ = 1; //KL TMP
+    rolling_window_option_ = 0; //KL TMP
   private_nh_.setParam("rolling_window_option", rolling_window_option_);
   }
 
@@ -247,11 +247,18 @@ SlamGMapping::SlamGMapping() :
     publish_all_paths_ = false;
   if (!private_nh_.getParam("publishCurrentPath", publish_current_path_))
     publish_current_path_ = false;
+
   if (!private_nh_.getParam("publishSpecificMap", publish_specific_map_))
     publish_specific_map_ = -1;
-  if (publish_specific_map_ >= particles_) {
-    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so max value is %d. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1);
+  if (publish_specific_map_ > particles_ || publish_specific_map_ < -1) {
+    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1,particles_);
     publish_specific_map_ = -1;
+  }
+  else if (publish_specific_map_ == particles_) {
+    ROS_INFO("Will publish specific smap for best particle");
+  }
+  else{
+    ROS_INFO("Will publish specific smap for particle %d", publish_specific_map_);
   }
 
   entropy_publisher_ = private_nh_.advertise<std_msgs::Float64>("entropy", 1, true);
@@ -726,9 +733,9 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
       //update the map used for visualization
       smap.resize(xmin_, ymin_, xmax_, ymax_);
       //update all the maps stored in the particles
-      for (int i = 0; i < particles_; i++) {
+      /*for (int i = 0; i < particles_; i++) {
         gsp_->getParticlesRW().at(i).map.resize(xmin_, ymin_, xmax_, ymax_);
-      }
+      }*/
 
       ROS_DEBUG("After resize smap: xmin %.4f, ymin %.4f, xmax %.4f, ymax %.4f, center (%.4f , %.4f)", xmin_, ymin_, xmax_, ymax_, (xmin_ + xmax_) / 2.0, (ymin_ + ymax_) / 2.0);
       ROS_DEBUG("smap size x = %d", smap.getMapSizeX());
@@ -747,8 +754,7 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
     ymax_ = wmax.y;
 
     ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", smap.getMapSizeX(), smap.getMapSizeY(),
-              xmin_,
-              ymin_, xmax_, ymax_);
+              xmin_, ymin_, xmax_, ymax_);
 
     map_.map.info.width = smap.getMapSizeX();
     map_.map.info.height = smap.getMapSizeY();
@@ -851,7 +857,9 @@ void SlamGMapping::updateAllPaths()
 //KL Visualize and store all paths / maps
 void SlamGMapping::publishMapPX()
 {
-  publish_specific_map_ = gsp_->getBestParticleIndex(); //uncomment to publish best particle...
+  if (publish_specific_map_ == particles_){
+    publish_specific_map_ = gsp_->getBestParticleIndex();
+  }
   const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[publish_specific_map_];
 
   if (!got_map_px_) {
@@ -887,8 +895,7 @@ void SlamGMapping::publishMapPX()
     map_px_.map.info.origin.position.y = ymin_px;
 
     ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", current_p.map.getMapSizeX(), current_p.map.getMapSizeY(),
-              xmin_px,
-              ymin_px, xmax_px, ymax_px);
+              xmin_px, ymin_px, xmax_px, ymax_px);
     ROS_DEBUG("wmin.x = %.3f, wmin.y = %.3f, wmax.x = %.3f, wmax.y = %.3f", wmin.x, wmin.y, wmax.x, wmax.y);
 
     map_px_.map.data.resize(map_px_.map.info.width * map_px_.map.info.height);

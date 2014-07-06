@@ -154,6 +154,22 @@ class SlamGMapping
     nav_msgs::GetMap::Response map_px_;
     bool got_map_px_;
     int rolling_window_option_;
+    /*\
+     * Goals:
+     *  1. Delete measurements that are outside the rolling window
+     *  2. Make internal maps resized as well
+     *  3. Publish a map that actually shows that it forgets what is outside the window
+     * Option 0: Fully disable Sliding window to the state it was (with sliding window, but without actually forgetting)
+     * Option 1: (not working yet). Deele
+     * Option 2: (not started yet). Run a full smap generation in parallel (in st_gmapping_rolling.cpp) with generateMap(true).
+     *  Advantage: easy to implement, can be used to check if it works
+     *  Disadvantage: (much?) extra cpu load and mem. requirements
+     * Option 3: Make openslam_gmapping internally run with generateMap true, while making sure that everything else keeps working properly.
+     *  Advantage: lighter processing
+     *  Disadvantage: more difficult to do.
+     *
+     */
+
 #if DEBUG
     int tests_performed_;
     void smapToCSV(GMapping::ScanMatcherMap smap, std::string filename = "smap");
