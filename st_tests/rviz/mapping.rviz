@@ -540,6 +540,14 @@ Visualization Manager:
           Name: CurrentParticlePath
           Topic: /st_gmapping_rolling/current_path
           Value: true
+        - Alpha: 0.7
+          Class: rviz/Map
+          Color Scheme: map
+          Draw Behind: false
+          Enabled: false
+          Name: MapPX
+          Topic: /st_gmapping_rolling/map_px
+          Value: false
       Enabled: true
       Name: GMapping
   Enabled: true
@@ -561,7 +569,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.571
+      Angle: 1.566
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
@@ -570,11 +578,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 22.7428
+      Scale: 25.7742
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 7.90675
-      Y: 0.88185
+      X: 5.62688
+      Y: 1.70077
     Saved: ~
 Window Geometry:
   Displays:
@@ -594,5 +602,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1317
-  X: 1066
+  X: 42
   Y: 24

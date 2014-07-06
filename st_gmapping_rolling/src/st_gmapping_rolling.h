@@ -153,5 +153,10 @@ class SlamGMapping
     ros::Publisher map_px_info_publisher_; //KL
     nav_msgs::GetMap::Response map_px_;
     bool got_map_px_;
+    int rolling_window_option_;
+#if DEBUG
+    int tests_performed_;
+    void smapToCSV(GMapping::ScanMatcherMap smap, std::string filename = "smap");
+#endif
 
 };
