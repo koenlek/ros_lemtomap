@@ -127,7 +127,7 @@
 // compute linear index for given map coords
 #define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
 
-SlamGMapping::SlamGMapping() :
+SlamGMappingRolling::SlamGMappingRolling() :
     map_to_odom_(tf::Transform(tf::createQuaternionFromRPY(0, 0, 0), tf::Point(0, 0, 0))),
     laser_count_(0), transform_thread_(NULL)
 {
@@ -227,16 +227,25 @@ SlamGMapping::SlamGMapping() :
     lasamplestep_ = 0.005;
   if (!private_nh_.getParam("minimumScore", minimum_score_))
     minimum_score_ = 0;
+
+  if (!private_nh_.getParam("rolling_window_mode", rolling_window_mode_)) {
+    rolling_window_mode_ = 0; //KL TMP
+  }
+  if (!private_nh_.getParam("rolling_window_delete_mode", rolling_window_delete_mode_)) {
+    rolling_window_delete_mode_ = 0; //KL TMP
+  }
   if (!private_nh_.getParam("windowsize", windowsize_)) {
     windowsize_ = 0;
     rolling_ = false;
+    rolling_window_mode_ = 0;
+    rolling_window_delete_mode_ = 0;
   }
   else {
     rolling_ = true;
-  }
-  if(!private_nh_.getParam("rolling_window_option", rolling_window_option_)){
-    rolling_window_option_ = 0; //KL TMP
-  private_nh_.setParam("rolling_window_option", rolling_window_option_);
+    xmin_=-windowsize_/2;
+    ymin_=-windowsize_/2;
+    xmax_=windowsize_/2;
+    ymax_=windowsize_/2;
   }
 
   if (!private_nh_.getParam("tf_delay", tf_delay_))
@@ -251,13 +260,13 @@ SlamGMapping::SlamGMapping() :
   if (!private_nh_.getParam("publishSpecificMap", publish_specific_map_))
     publish_specific_map_ = -1;
   if (publish_specific_map_ > particles_ || publish_specific_map_ < -1) {
-    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1,particles_);
+    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1, particles_);
     publish_specific_map_ = -1;
   }
   else if (publish_specific_map_ == particles_) {
     ROS_INFO("Will publish specific smap for best particle");
   }
-  else{
+  else {
     ROS_INFO("Will publish specific smap for particle %d", publish_specific_map_);
   }
 
@@ -296,16 +305,16 @@ SlamGMapping::SlamGMapping() :
   tests_performed_ = 0;
 #endif
 
-  ss_ = node_.advertiseService("dynamic_map", &SlamGMapping::mapCallback, this);
+  ss_ = node_.advertiseService("dynamic_map", &SlamGMappingRolling::mapCallback, this);
   scan_filter_sub_ = new message_filters::Subscriber<sensor_msgs::LaserScan>(node_, "scan", 5);
   scan_filter_ = new tf::MessageFilter<sensor_msgs::LaserScan>(*scan_filter_sub_, tf_, odom_frame_, 5);
-  scan_filter_->registerCallback(boost::bind(&SlamGMapping::laserCallback, this, _1));
+  scan_filter_->registerCallback(boost::bind(&SlamGMappingRolling::laserCallback, this, _1));
 
-  transform_thread_ = new boost::thread(boost::bind(&SlamGMapping::publishLoop, this, transform_publish_period));
+  transform_thread_ = new boost::thread(boost::bind(&SlamGMappingRolling::publishLoop, this, transform_publish_period));
 }
 
-void SlamGMapping::publishLoop(double transform_publish_period)
-{
+void SlamGMappingRolling::publishLoop(double transform_publish_period)
+                                      {
   if (transform_publish_period == 0)
     return;
 
@@ -316,7 +325,7 @@ void SlamGMapping::publishLoop(double transform_publish_period)
   }
 }
 
-SlamGMapping::~SlamGMapping()
+SlamGMappingRolling::~SlamGMappingRolling()
 {
   if (transform_thread_) {
     transform_thread_->join();
@@ -335,8 +344,8 @@ SlamGMapping::~SlamGMapping()
 }
 
 bool
-SlamGMapping::getOdomPose(GMapping::OrientedPoint& gmap_pose, const ros::Time& t)
-{
+SlamGMappingRolling::getOdomPose(GMapping::OrientedPoint& gmap_pose, const ros::Time& t)
+                                 {
   // Get the laser's pose
   tf::Stamped<tf::Pose> ident(tf::Transform(tf::createQuaternionFromRPY(0, 0, 0),
                                             tf::Vector3(0, 0, 0)),
@@ -360,8 +369,8 @@ SlamGMapping::getOdomPose(GMapping::OrientedPoint& gmap_pose, const ros::Time& t
 }
 
 bool
-SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
-{
+SlamGMappingRolling::initMapper(const sensor_msgs::LaserScan& scan)
+                                {
   laser_frame_ = scan.header.frame_id;
   // Get the laser's pose, relative to base.
   tf::Stamped<tf::Pose> ident;
@@ -471,7 +480,13 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   gsp_->setMotionModelParameters(srr_, srt_, str_, stt_);
   gsp_->setUpdateDistances(linearUpdate_, angularUpdate_, resampleThreshold_);
 //  gsp_->setUpdatePeriod(temporalUpdate_);
-  gsp_->setgenerateMap(false);
+  if (rolling_window_mode_ == 3 && rolling_) {
+    gsp_->setgenerateMap(true);
+    ROS_INFO("setGenerateMap is TRUE");
+  }
+  else {
+    gsp_->setgenerateMap(false);
+  }
   gsp_->GridSlamProcessor::init(particles_, xmin_, ymin_, xmax_, ymax_,
                                 delta_,
                                 initialPose);
@@ -483,6 +498,7 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   gsp_->setlasamplerange(lasamplerange_);
   gsp_->setlasamplestep(lasamplestep_);
   gsp_->setminimumScore(minimum_score_);
+  gsp_->setminimumScore(minimum_score_); //KL TMP
 
   // Call the sampling function once to set the seed.
   GMapping::sampleGaussian(1, time(NULL));
@@ -492,8 +508,8 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
   return true;
 }
 
-bool SlamGMapping::addScan(const sensor_msgs::LaserScan& scan, GMapping::OrientedPoint& gmap_pose)
-{
+bool SlamGMappingRolling::addScan(const sensor_msgs::LaserScan& scan, GMapping::OrientedPoint& gmap_pose)
+                                  {
   if (!getOdomPose(gmap_pose, scan.header.stamp))
     return false;
 
@@ -551,8 +567,8 @@ bool SlamGMapping::addScan(const sensor_msgs::LaserScan& scan, GMapping::Oriente
 }
 
 void
-SlamGMapping::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
-{
+SlamGMappingRolling::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+                                   {
   laser_count_++;
   if ((laser_count_ % throttle_scans_) != 0)
     return;
@@ -596,7 +612,7 @@ SlamGMapping::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 }
 
 double
-SlamGMapping::computePoseEntropy()
+SlamGMappingRolling::computePoseEntropy()
 {
   double weight_total = 0.0;
   for (std::vector<GMapping::GridSlamProcessor::Particle>::const_iterator it = gsp_->getParticles().begin();
@@ -617,7 +633,577 @@ SlamGMapping::computePoseEntropy()
 }
 
 //KL: udpateMap is only run every map_update_interval_ seconds.
-void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
+void SlamGMappingRolling::updateMap(const sensor_msgs::LaserScan& scan) {
+  if (rolling_window_mode_ == 0){
+    updateMapOrig(scan);
+    return;
+  }
+
+  boost::mutex::scoped_lock map_lock(map_mutex_);
+
+  if (!got_map_) {
+    map_.map.info.resolution = delta_;
+    map_.map.info.origin.position.x = 0.0;
+    map_.map.info.origin.position.y = 0.0;
+    map_.map.info.origin.position.z = 0.0;
+    map_.map.info.origin.orientation.x = 0.0;
+    map_.map.info.origin.orientation.y = 0.0;
+    map_.map.info.origin.orientation.z = 0.0;
+    map_.map.info.origin.orientation.w = 1.0;
+  }
+
+
+  GMapping::Point center;
+  center.x = (xmin_ + xmax_) / 2.0;
+  center.y = (ymin_ + ymax_) / 2.0;
+  GMapping::ScanMatcherMap smap(center, xmin_, ymin_, xmax_, ymax_, delta_);
+
+  /*if (rolling_window_mode_ == 0) {
+    updateMapDefault(scan, smap);
+    if (rolling_) {
+      resizeAllSMaps(smap, false);
+    }
+  }*/
+  if (rolling_window_mode_ == 1) {
+    updateMapRollingMode1(scan, smap);
+    resizeAllSMaps(smap, true);
+  }
+  else if (rolling_window_mode_ == 2) {
+    updateMapRollingMode2(scan, smap);
+    resizeAllSMaps(smap, true);
+  }
+  else if (rolling_window_mode_ == 3) {
+    updateMapRollingMode3(scan, smap);
+    resizeAllSMaps(smap, true);
+  }
+
+  resizeMapMsg(smap);
+
+  for (int x = 0; x < smap.getMapSizeX(); x++)
+      {
+    for (int y = 0; y < smap.getMapSizeY(); y++)
+        {
+      /// @todo Sort out the unknown vs. free vs. obstacle thresholding
+      GMapping::IntPoint p(x, y);
+      double occ = smap.cell(p);
+      assert(occ <= 1.0);
+
+      if (occ < 0)
+        map_.map.data[MAP_IDX(map_.map.info.width, x, y)] = -1;
+      else if (occ > occ_thresh_)
+          {
+        //map_.map.data[MAP_IDX(map_.map.info.width, x, y)] = (int)round(occ*100.0);
+        map_.map.data[MAP_IDX(map_.map.info.width, x, y)] = 100;
+      }
+      else
+        map_.map.data[MAP_IDX(map_.map.info.width, x, y)] = 0;
+    }
+  }
+  got_map_ = true;
+
+  //make sure to set the header information on the map
+  map_.map.header.stamp = ros::Time::now();
+  map_.map.header.frame_id = tf_.resolve(map_frame_);
+
+  sst_.publish(map_.map);
+  sstm_.publish(map_.map.info);
+
+  // KL Visualize and store all paths / maps
+  ROS_INFO("Best particle is %d", gsp_->getBestParticleIndex());
+  if (publish_all_paths_ || publish_current_path_) {
+    updateAllPaths();
+    if (publish_all_paths_) {
+      publishAllPaths();
+    }
+    if (publish_current_path_) {
+      publishCurrentPath();
+    }
+  }
+  if (publish_specific_map_ >= 0) {
+    publishMapPX();
+  }
+
+  /*
+   #if DEBUG
+   if (ros::Time::now() > ros::Time(100) && tests_performed_ < 1) {
+   tests_performed_++;
+   smapToCSV(smap, "smap_forvismap"); //currently visualized smap
+   smapToCSV(gsp_->getParticles()[gsp_->getBestParticleIndex()].map, "smap_frombestparticle"); //any smap
+   }
+   #endif
+   */
+
+}
+
+void SlamGMappingRolling::updateMapDefault(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap) {
+  GMapping::ScanMatcher matcher;
+  double* laser_angles = new double[scan.ranges.size()];
+  double theta = angle_min_;
+  for (unsigned int i = 0; i < scan.ranges.size(); i++)
+      {
+    if (gsp_laser_angle_increment_ < 0)
+      laser_angles[scan.ranges.size() - i - 1] = theta;
+    else
+      laser_angles[i] = theta;
+    theta += gsp_laser_angle_increment_;
+  }
+
+  matcher.setLaserParameters(scan.ranges.size(), laser_angles,
+                             gsp_laser_->getPose());
+
+  delete[] laser_angles;
+  matcher.setlaserMaxRange(maxRange_);
+  matcher.setusableRange(maxUrange_);
+  matcher.setgenerateMap(true);
+
+  GMapping::GridSlamProcessor::Particle best =
+      gsp_->getParticles()[gsp_->getBestParticleIndex()];
+  std_msgs::Float64 entropy;
+  entropy.data = computePoseEntropy();
+  if (entropy.data > 0.0)
+    entropy_publisher_.publish(entropy);
+
+  ROS_DEBUG("Trajectory tree:");
+  for (GMapping::GridSlamProcessor::TNode* n = best.node; n; n = n->parent) {
+    ROS_DEBUG("  %.3f %.3f %.3f",
+              n->pose.x,
+              n->pose.y,
+              n->pose.theta);
+    if (!n->reading) {
+      ROS_DEBUG("Reading is NULL");
+      continue;
+    }
+    /**** Start of Delete Modes specific ****/
+    if (rolling_) {
+      if (n->reading->size() == 0) //do not clear again if already cleared!
+        continue;
+      if (rolling_window_delete_mode_ == 1) {
+        if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
+          ROS_INFO("TNode is out of area, measurement is cleared");
+          n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          continue;
+        }
+      }
+      if (rolling_window_delete_mode_ == 2) {
+        if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
+          ROS_INFO("TNode is out of area, measurement is cleared");
+          n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          continue;
+        }
+      }
+    }
+    /**** End of Delete Modes specific ****/
+
+    matcher.invalidateActiveArea();
+    matcher.computeActiveArea(smap, n->pose, &((*n->reading)[0]));
+    matcher.registerScan(smap, n->pose, &((*n->reading)[0]));
+  }
+}
+
+void SlamGMappingRolling::updateMapRollingMode1(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap) {
+  if (rolling_window_delete_mode_ != 1 && rolling_window_delete_mode_ != 2) {
+    ROS_FATAL("For rolling window mode 1, delete mode 1 or 2 is required. This is currently not the case. Therefore, shutthing down st_gmapping_rolling now!");
+    ros::shutdown();
+  }
+  GMapping::ScanMatcher matcher;
+  double* laser_angles = new double[scan.ranges.size()];
+  double theta = angle_min_;
+  for (unsigned int i = 0; i < scan.ranges.size(); i++)
+      {
+    if (gsp_laser_angle_increment_ < 0)
+      laser_angles[scan.ranges.size() - i - 1] = theta;
+    else
+      laser_angles[i] = theta;
+    theta += gsp_laser_angle_increment_;
+  }
+
+  matcher.setLaserParameters(scan.ranges.size(), laser_angles,
+                             gsp_laser_->getPose());
+
+  delete[] laser_angles;
+  matcher.setlaserMaxRange(maxRange_);
+  matcher.setusableRange(maxUrange_);
+  matcher.setgenerateMap(true);
+
+  GMapping::GridSlamProcessor::Particle best =
+      gsp_->getParticles()[gsp_->getBestParticleIndex()];
+  std_msgs::Float64 entropy;
+  entropy.data = computePoseEntropy();
+  if (entropy.data > 0.0)
+    entropy_publisher_.publish(entropy);
+
+  ROS_DEBUG("Trajectory tree:");
+  for (GMapping::GridSlamProcessor::TNode* n = best.node; n; n = n->parent) {
+    ROS_DEBUG("  %.3f %.3f %.3f",
+              n->pose.x,
+              n->pose.y,
+              n->pose.theta);
+    if (!n->reading) {
+      ROS_DEBUG("Reading is NULL");
+      continue;
+    }
+
+    /**** Start of Resize Mode 2 specific ****/
+    if (n->reading->size() == 0) //do not clear again if already cleared!
+      continue;
+    if (rolling_window_delete_mode_ == 1) {
+      if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
+        ROS_INFO("TNode is out of area, measurement is cleared");
+        n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+        continue;
+      }
+    }
+    if (rolling_window_delete_mode_ == 2) {
+      if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
+        ROS_INFO("TNode is out of area, measurement is cleared");
+        n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+        continue;
+      }
+    }
+    /**** End of Resize Mode 2 specific ****/
+
+    matcher.invalidateActiveArea();
+    matcher.computeActiveArea(smap, n->pose, &((*n->reading)[0]));
+    matcher.registerScan(smap, n->pose, &((*n->reading)[0]));
+  }
+}
+
+void SlamGMappingRolling::updateMapRollingMode2(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap) {
+  if (!got_map_) {
+    for (int i = 0; i < particles_; i++)
+      smap_vector_.push_back(smap);
+  }
+  GMapping::ScanMatcher matcher;
+  double* laser_angles = new double[scan.ranges.size()];
+  double theta = angle_min_;
+  for (unsigned int i = 0; i < scan.ranges.size(); i++)
+      {
+    if (gsp_laser_angle_increment_ < 0)
+      laser_angles[scan.ranges.size() - i - 1] = theta;
+    else
+      laser_angles[i] = theta;
+    theta += gsp_laser_angle_increment_;
+  }
+
+  matcher.setLaserParameters(scan.ranges.size(), laser_angles,
+                             gsp_laser_->getPose());
+
+  delete[] laser_angles;
+  matcher.setlaserMaxRange(maxRange_);
+  matcher.setusableRange(maxUrange_);
+  matcher.setgenerateMap(true);
+
+  GMapping::GridSlamProcessor::Particle best =
+      gsp_->getParticles()[gsp_->getBestParticleIndex()];
+  std_msgs::Float64 entropy;
+  entropy.data = computePoseEntropy();
+  if (entropy.data > 0.0)
+    entropy_publisher_.publish(entropy);
+
+  /**** Start of Delete Modes specific ****/
+  if (rolling_window_delete_mode_ != 0) {
+    ROS_DEBUG("Trajectory tree:");
+    for (GMapping::GridSlamProcessor::TNode* n = best.node; n; n = n->parent) {
+      ROS_DEBUG("  %.3f %.3f %.3f",
+                n->pose.x,
+                n->pose.y,
+                n->pose.theta);
+      if (!n->reading) {
+        ROS_DEBUG("Reading is NULL");
+        continue;
+      }
+      if (n->reading->size() == 0) //do not clear again if already cleared!
+        continue;
+      if (rolling_window_delete_mode_ == 1) {
+        if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
+          ROS_INFO("TNode is out of area, measurement is cleared");
+          n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          continue;
+        }
+      }
+      if (rolling_window_delete_mode_ == 2) {
+        if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
+          ROS_INFO("TNode is out of area, measurement is cleared");
+          n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          continue;
+        }
+      }
+
+    }
+  }
+  /**** End of Delete Modes specific ****/
+
+  /**** Start of Resize Mode 2 specific ****/
+  for (int i = 0; i < particles_; i++) {
+    matcher.invalidateActiveArea();
+    matcher.computeActiveArea(smap_vector_.at(i), gsp_->getParticles()[i].node->pose, &((*(gsp_->getParticles()[i].node)->reading)[0]));
+    matcher.registerScan(smap_vector_.at(i), gsp_->getParticles()[i].node->pose, &((*(gsp_->getParticles()[i].node)->reading)[0]));
+  }
+  smap = gsp_->getParticles()[gsp_->getBestParticleIndex()].map;
+  /**** End of Resize Mode 2 specific ****/
+}
+
+void SlamGMappingRolling::updateMapRollingMode3(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap) {
+  smap = gsp_->getParticles()[gsp_->getBestParticleIndex()].map;
+}
+
+void SlamGMappingRolling::resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool including_particles) {
+  /*tf::StampedTransform robot_pose;
+  try
+  {
+    //tf_.waitForTransform(map_frame_, base_frame_, ros::Time(0), ros::Duration(0.1));
+    tf_.lookupTransform(map_frame_, base_frame_, ros::Time(0), robot_pose);
+  }
+  catch (tf::TransformException &e)
+  {
+    ROS_WARN("Failed to compute robot pose (%s)", e.what());
+  }
+
+  xmin_ = -windowsize_ / 2.0 + robot_pose.getOrigin().getX();
+  ymin_ = -windowsize_ / 2.0 + robot_pose.getOrigin().getY();
+  xmax_ = windowsize_ / 2.0 + robot_pose.getOrigin().getX();
+  ymax_ = windowsize_ / 2.0 + robot_pose.getOrigin().getY();
+  */
+
+  xmin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+  ymin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
+  xmax_ = windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+  ymax_ = windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
+
+  //update the map used for visualization
+  smap.resize(xmin_, ymin_, xmax_, ymax_);
+  /*GMapping::Point center;
+    center.x = (xmin_ + xmax_) / 2.0;
+    center.y = (ymin_ + ymax_) / 2.0;
+  smap.setCenter(center);*/
+  //update all the maps stored in the particles
+  if (including_particles == true) {
+    for (int i = 0; i < particles_; i++) {
+      gsp_->getParticlesRW().at(i).map.resize(xmin_, ymin_, xmax_, ymax_);
+      /*gsp_->getParticlesRW().at(i).map.setCenter(center);*/
+    }
+  }
+}
+
+void SlamGMappingRolling::resizeMapMsg(const GMapping::ScanMatcherMap &smap) {
+// if the map has expanded, resize the map msg
+  if (map_.map.info.width != (unsigned int)smap.getMapSizeX() || map_.map.info.height != (unsigned int)smap.getMapSizeY()) {
+// NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
+//       so we must obtain the bounding box in a different way
+    GMapping::Point wmin = smap.map2world(GMapping::IntPoint(0, 0));
+    GMapping::Point wmax = smap.map2world(GMapping::IntPoint(smap.getMapSizeX(), smap.getMapSizeY()));
+
+    if (!rolling_){
+    xmin_ = wmin.x;
+    ymin_ = wmin.y; //KL: this is where the map size is updated if it is growing
+    xmax_ = wmax.x;
+    ymax_ = wmax.y;
+    }
+
+    ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", smap.getMapSizeX(), smap.getMapSizeY(),
+              xmin_, ymin_, xmax_, ymax_);
+
+    map_.map.info.width = smap.getMapSizeX();
+    map_.map.info.height = smap.getMapSizeY();
+    map_.map.info.origin.position.x = wmin.x;
+    map_.map.info.origin.position.y = wmin.y;
+    map_.map.data.resize(map_.map.info.width * map_.map.info.height);
+
+    ROS_DEBUG("map origin: (%f, %f)", map_.map.info.origin.position.x, map_.map.info.origin.position.y);
+  }
+}
+
+//KL Visualize and store all paths / maps
+geometry_msgs::Pose SlamGMappingRolling::gMapPoseToGeoPose(const GMapping::OrientedPoint& gmap_pose) const {
+  geometry_msgs::Pose geo_pose;
+
+  geo_pose.position.x = gmap_pose.x;
+  geo_pose.position.y = gmap_pose.y;
+  geo_pose.orientation = tf::createQuaternionMsgFromYaw(gmap_pose.theta);
+
+  return geo_pose;
+}
+
+//KL Visualize and store all paths / maps
+void SlamGMappingRolling::updateAllPaths()
+{
+  geometry_msgs::PoseStamped pose;
+  pose.header.frame_id = tf_.resolve(map_frame_);
+
+//TODO - p2 - This recreates all the paths every time, which is causing extra system load. Maybe only update it (add latest poses). Make sure that it survives resampling properly though!!!
+
+  for (int i = 0; i < particles_; i++) {
+    all_paths_.at(i).poses.clear();
+
+//t_node_current_ = gsp_->getTrajectories().at(i); //KL: do not use getTrajectories -> causes some weird memory leak that I do not understand.
+    t_node_current_ = gsp_->getParticles().at(i).node;
+
+    while (t_node_current_ != 0) {
+      //ROS_INFO("t_node_current->pose (x,y,theta) = (%.4f,%.4f,%.4f)",t_node_current_->pose.x,t_node_current_->pose.y,t_node_current_->pose.theta);
+      pose.pose = gMapPoseToGeoPose(t_node_current_->pose);
+      all_paths_.at(i).poses.push_back(pose);
+      t_node_current_ = t_node_current_->parent;
+    }
+  }
+}
+
+//KL Visualize and store all paths / maps
+void SlamGMappingRolling::publishMapPX()
+{
+  if (publish_specific_map_ == particles_) {
+    publish_specific_map_ = gsp_->getBestParticleIndex();
+  }
+  const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[publish_specific_map_];
+
+  if (!got_map_px_) {
+    map_px_.map.info.resolution = delta_;
+    map_px_.map.info.origin.position.x = 0.0;
+    map_px_.map.info.origin.position.y = 0.0;
+    map_px_.map.info.origin.position.z = 0.0;
+    map_px_.map.info.origin.orientation.x = 0.0;
+    map_px_.map.info.origin.orientation.y = 0.0;
+    map_px_.map.info.origin.orientation.z = 0.0;
+    map_px_.map.info.origin.orientation.w = 1.0;
+  }
+
+//ROS_INFO("current_p.map.getMapSizeX() = (x,y) (%d, %d)",current_p.map.getMapSizeX(),current_p.map.getMapSizeY());
+//ROS_INFO("current_p.map.pose (x,y,theta) = (%.4f, %.4f, %.4f)",current_p.pose.x,current_p.pose.y,current_p.pose.theta);
+
+//set the center of the map
+  double xmin_px, xmax_px, ymin_px, ymax_px;
+
+//resize map if needed
+  if (map_px_.map.info.width != (unsigned int)current_p.map.getMapSizeX() || map_px_.map.info.height != (unsigned int)current_p.map.getMapSizeY()) {
+// NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
+//       so we must obtain the bounding box in a different way
+    GMapping::Point wmin = current_p.map.map2world(GMapping::IntPoint(0, 0));
+    GMapping::Point wmax = current_p.map.map2world(GMapping::IntPoint(current_p.map.getMapSizeX(), current_p.map.getMapSizeY()));
+    xmin_px = wmin.x;
+    ymin_px = wmin.y; //KL: this is where the map size is updated if it is growing
+    xmax_px = wmax.x;
+    ymax_px = wmax.y;
+    map_px_.map.info.width = current_p.map.getMapSizeX();
+    map_px_.map.info.height = current_p.map.getMapSizeY();
+    map_px_.map.info.origin.position.x = xmin_px;
+    map_px_.map.info.origin.position.y = ymin_px;
+
+    ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", current_p.map.getMapSizeX(), current_p.map.getMapSizeY(),
+              xmin_px, ymin_px, xmax_px, ymax_px);
+    ROS_DEBUG("wmin.x = %.3f, wmin.y = %.3f, wmax.x = %.3f, wmax.y = %.3f", wmin.x, wmin.y, wmax.x, wmax.y);
+
+    map_px_.map.data.resize(map_px_.map.info.width * map_px_.map.info.height);
+    ROS_DEBUG("map origin: (%f, %f)", map_px_.map.info.origin.position.x, map_px_.map.info.origin.position.y);
+  }
+
+  for (int x = 0; x < current_p.map.getMapSizeX(); x++)
+      {
+    for (int y = 0; y < current_p.map.getMapSizeY(); y++)
+        {
+      /// @todo Sort out the unknown vs. free vs. obstacle thresholding
+      GMapping::IntPoint p(x, y);
+      double occ = current_p.map.cell(p);
+      assert(occ <= 1.0);
+      if (occ < 0)
+        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = -1;
+      else if (occ > occ_thresh_)
+          {
+        //map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = (int)round(occ*100.0);
+        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = 100;
+      }
+      else
+        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = 0;
+    }
+  }
+  got_map_px_ = true;
+
+//make sure to set the header information on the map
+  map_px_.map.header.stamp = ros::Time::now();
+  map_px_.map.header.frame_id = tf_.resolve(map_frame_);
+
+  map_px_publisher_.publish(map_px_.map);
+  map_px_info_publisher_.publish(map_px_.map.info);
+
+}
+
+//KL Visualize and store all paths / maps
+void SlamGMappingRolling::publishCurrentPath()
+{
+  current_path_publisher_.publish(all_paths_.at(gsp_->getBestParticleIndex()));
+}
+
+//KL Visualize and store all paths / maps
+void SlamGMappingRolling::publishAllPaths()
+{
+  path_m_.header.stamp = ros::Time::now();
+  all_paths_ma_.markers.clear();
+
+  for (int i_particle = 0; i_particle < particles_; i_particle++) {
+    path_m_.points.clear();
+    path_m_.id = i_particle;
+    std::ostringstream stringStream;
+    stringStream << "path_particle" << i_particle;
+    path_m_.ns = stringStream.str();
+    for (int i = 0; i < all_paths_.at(i_particle).poses.size(); i++) {
+      path_m_.points.push_back(all_paths_.at(i_particle).poses.at(i).pose.position);
+    }
+    all_paths_ma_.markers.push_back(path_m_);
+  }
+  paths_publisher_.publish(all_paths_ma_);
+}
+
+bool SlamGMappingRolling::mapCallback(nav_msgs::GetMap::Request &req,
+                                      nav_msgs::GetMap::Response &res)
+                                      {
+  boost::mutex::scoped_lock map_lock(map_mutex_);
+  if (got_map_ && map_.map.info.width && map_.map.info.height)
+      {
+    res = map_;
+    return true;
+  }
+  else
+    return false;
+}
+
+void SlamGMappingRolling::publishTransform()
+{
+  map_to_odom_mutex_.lock();
+  ros::Time tf_expiration = ros::Time::now() + ros::Duration(tf_delay_);
+  tfB_->sendTransform(tf::StampedTransform(map_to_odom_, tf_expiration, map_frame_, odom_frame_));
+  map_to_odom_mutex_.unlock();
+}
+
+#if DEBUG
+void SlamGMappingRolling::smapToCSV(GMapping::ScanMatcherMap smap, std::string filename)
+                                    {
+  filename = filename + ".csv";
+  FILE* smap_csv = fopen(filename.c_str(), "w");
+  if (!smap_csv) {
+    ROS_ERROR("Couldn't save map file to %s.csv",
+              filename.c_str());
+    return;
+  }
+  int sizex = smap.getMapSizeX();
+  int sizey = smap.getMapSizeY();
+
+  for (int y = 0; y < sizey; y++) {
+    for (int x = 0; x < sizex; x++) {
+      GMapping::IntPoint p(x, y);
+      double occ = smap.cell(p);
+      //fprintf(smap_csv, "(x;y)(%d;%d)",x,y); //uncomment to check x,y
+      fprintf(smap_csv, "%.4f", occ);
+      if (x != sizex - 1)
+        fprintf(smap_csv, ",");
+    }
+    fprintf(smap_csv, "\n");
+  }
+
+  fclose(smap_csv);
+
+  ROS_INFO("Done saving\n");
+}
+#endif
+
+void SlamGMappingRolling::updateMapOrig(const sensor_msgs::LaserScan& scan)
 {
   boost::mutex::scoped_lock map_lock(map_mutex_);
   GMapping::ScanMatcher matcher;
@@ -663,16 +1249,13 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
   center.y = (ymin_ + ymax_) / 2.0;
 
   GMapping::ScanMatcherMap smap(center, xmin_, ymin_, xmax_, ymax_, delta_);
-  //ROS_INFO("before smap2 copy"); //KL TMP
-  //GMapping::ScanMatcherMap smap2 = best.map; //KL TMP
-  //ROS_INFO("after smap2 copy"); //KL TMP
 
   ROS_DEBUG("Trajectory tree:");
   for (GMapping::GridSlamProcessor::TNode* n = best.node;
       n;
       n = n->parent)
           {
-    ROS_DEBUG("  %.3f %.3f %.3f",
+    ROS_DEBUG(" %.3f %.3f %.3f",
               n->pose.x,
               n->pose.y,
               n->pose.theta);
@@ -681,20 +1264,7 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
       ROS_DEBUG("Reading is NULL");
       continue;
     }
-    /* This works kind of, but is not right yet. It properly seems to delete links to previous measurements (not measurements itself!). also, it needs measurements from outside window to mark parts inside window as free. So not working right!*/
-    /*if (rolling_window_option_ == 1){
-      if ( n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_){
-       ROS_DEBUG("TNode is out of area, measurement is set to 0");
-       n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
-       continue;
-      }
-    }*/
-    //KL TMP
-    //ROS_INFO("before smap2 matcher steps");
-    //matcher.invalidateActiveArea();
-    //matcher.computeActiveArea(smap2, n->pose, &((*n->reading)[0]));
-    //matcher.registerScan(smap2, n->pose, &((*n->reading)[0]));
-    //ROS_INFO("after smap2 matcher steps");
+
     matcher.invalidateActiveArea();
     matcher.computeActiveArea(smap, n->pose, &((*n->reading)[0]));
     matcher.registerScan(smap, n->pose, &((*n->reading)[0]));
@@ -703,49 +1273,23 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
   // if the map has expanded, resize the map msg and all particle GMapping::ScanMatcherMaps
   if (map_.map.info.width != (unsigned int)smap.getMapSizeX() || map_.map.info.height != (unsigned int)smap.getMapSizeY()) {
     if (rolling_) {
-      tf::StampedTransform robot_pose;
-      try
-      {
-        //tf_.waitForTransform(map_frame_, base_frame_, ros::Time(0), ros::Duration(0.1));
-        tf_.lookupTransform(map_frame_, base_frame_, ros::Time(0),
-                            robot_pose);
-      }
-      catch (tf::TransformException &e)
-      {
-        ROS_WARN("Failed to compute robot pose (%s)", e.what());
-      }
-      ROS_DEBUG("Resizing map for rolling window gmapping: windowsize = %.4f[m]", windowsize_);
-      ROS_DEBUG("map_.map.info.origin.position (x,y) = (%.4f, %.4f)", map_.map.info.origin.position.x, map_.map.info.origin.position.y);
-      ROS_DEBUG("map_.map.info.resolution = %.4f\n", map_.map.info.resolution);
-      ROS_DEBUG("robot pose (%.4f , %.4f)", robot_pose.getOrigin().getX(), robot_pose.getOrigin().getY());
 
-      ROS_DEBUG("Before resize smap: xmin %.4f, ymin %.4f, xmax %.4f, ymax %.4f, center (%.4f , %.4f)", xmin_, ymin_, xmax_, ymax_, (xmin_ + xmax_) / 2.0, (ymin_ + ymax_) / 2.0);
-      ROS_DEBUG("smap size x = %d", smap.getMapSizeX());
-      ROS_DEBUG("smap size y = %d", smap.getMapSizeY());
-      ROS_DEBUG("smap world size x = %.4f", smap.getWorldSizeX());
-      ROS_DEBUG("smap world size y = %.4f", smap.getWorldSizeY());
-
-      xmin_ = -windowsize_ / 2 + robot_pose.getOrigin().getX();
-      ymin_ = -windowsize_ / 2 + robot_pose.getOrigin().getY();
-      xmax_ = windowsize_ / 2 + robot_pose.getOrigin().getX();
-      ymax_ = windowsize_ / 2 + robot_pose.getOrigin().getY();
+      xmin_ = -windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+      ymin_ = -windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
+      xmax_ = windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+      ymax_ = windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
 
       //update the map used for visualization
       smap.resize(xmin_, ymin_, xmax_, ymax_);
       //update all the maps stored in the particles
       /*for (int i = 0; i < particles_; i++) {
-        gsp_->getParticlesRW().at(i).map.resize(xmin_, ymin_, xmax_, ymax_);
+      gsp_->getParticlesRW().at(i).map.resize(xmin_, ymin_, xmax_, ymax_);
       }*/
 
-      ROS_DEBUG("After resize smap: xmin %.4f, ymin %.4f, xmax %.4f, ymax %.4f, center (%.4f , %.4f)", xmin_, ymin_, xmax_, ymax_, (xmin_ + xmax_) / 2.0, (ymin_ + ymax_) / 2.0);
-      ROS_DEBUG("smap size x = %d", smap.getMapSizeX());
-      ROS_DEBUG("smap size y = %d", smap.getMapSizeY());
-      ROS_DEBUG("smap world size x = %.4f", smap.getWorldSizeX());
-      ROS_DEBUG("smap world size y = %.4f\n", smap.getWorldSizeY());
     }
 
     // NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
-    //       so we must obtain the bounding box in a different way
+    // so we must obtain the bounding box in a different way
     GMapping::Point wmin = smap.map2world(GMapping::IntPoint(0, 0));
     GMapping::Point wmax = smap.map2world(GMapping::IntPoint(smap.getMapSizeX(), smap.getMapSizeY()));
     xmin_ = wmin.x;
@@ -793,219 +1337,4 @@ void SlamGMapping::updateMap(const sensor_msgs::LaserScan& scan)
   sst_.publish(map_.map);
   sstm_.publish(map_.map.info);
 
-  // KL Visualize and store all paths / maps
-  ROS_INFO("Best particle is %d", gsp_->getBestParticleIndex());
-  if (publish_all_paths_ || publish_current_path_) {
-    updateAllPaths();
-    if (publish_all_paths_) {
-      publishAllPaths();
-    }
-    if (publish_current_path_) {
-      publishCurrentPath();
-    }
-  }
-  if (publish_specific_map_ >= 0) {
-    publishMapPX();
-  }
-
-#if DEBUG
-  if (ros::Time::now() > ros::Time(100) && tests_performed_ < 1) {
-    tests_performed_++;
-    smapToCSV(smap, "smap_forvismap"); //currently visualized smap
-    //smapToCSV(smap2,"smap2_forvismap"); //currently visualized smap
-    smapToCSV(gsp_->getParticles()[gsp_->getBestParticleIndex()].map, "smap_frombestparticle"); //any smap
-  }
-#endif
-
 }
-
-//KL Visualize and store all paths / maps
-geometry_msgs::Pose SlamGMapping::gMapPoseToGeoPose(const GMapping::OrientedPoint& gmap_pose) const
-{
-  geometry_msgs::Pose geo_pose;
-
-  geo_pose.position.x = gmap_pose.x;
-  geo_pose.position.y = gmap_pose.y;
-  geo_pose.orientation = tf::createQuaternionMsgFromYaw(gmap_pose.theta);
-
-  return geo_pose;
-}
-
-//KL Visualize and store all paths / maps
-void SlamGMapping::updateAllPaths()
-{
-  geometry_msgs::PoseStamped pose;
-  pose.header.frame_id = tf_.resolve(map_frame_);
-
-  //TODO - p2 - This recreates all the paths every time, which is causing extra system load. Maybe only update it (add latest poses). Make sure that it survives resampling properly though!!!
-
-  for (int i = 0; i < particles_; i++) {
-    all_paths_.at(i).poses.clear();
-
-    //t_node_current_ = gsp_->getTrajectories().at(i); //KL: do not use getTrajectories -> causes some weird memory leak that I do not understand.
-    t_node_current_ = gsp_->getParticles().at(i).node;
-
-    while (t_node_current_ != 0) {
-      //ROS_INFO("t_node_current->pose (x,y,theta) = (%.4f,%.4f,%.4f)",t_node_current_->pose.x,t_node_current_->pose.y,t_node_current_->pose.theta);
-      pose.pose = gMapPoseToGeoPose(t_node_current_->pose);
-      all_paths_.at(i).poses.push_back(pose);
-      t_node_current_ = t_node_current_->parent;
-    }
-  }
-}
-
-//KL Visualize and store all paths / maps
-void SlamGMapping::publishMapPX()
-{
-  if (publish_specific_map_ == particles_){
-    publish_specific_map_ = gsp_->getBestParticleIndex();
-  }
-  const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[publish_specific_map_];
-
-  if (!got_map_px_) {
-    map_px_.map.info.resolution = delta_;
-    map_px_.map.info.origin.position.x = 0.0;
-    map_px_.map.info.origin.position.y = 0.0;
-    map_px_.map.info.origin.position.z = 0.0;
-    map_px_.map.info.origin.orientation.x = 0.0;
-    map_px_.map.info.origin.orientation.y = 0.0;
-    map_px_.map.info.origin.orientation.z = 0.0;
-    map_px_.map.info.origin.orientation.w = 1.0;
-  }
-
-  //ROS_INFO("current_p.map.getMapSizeX() = (x,y) (%d, %d)",current_p.map.getMapSizeX(),current_p.map.getMapSizeY());
-  //ROS_INFO("current_p.map.pose (x,y,theta) = (%.4f, %.4f, %.4f)",current_p.pose.x,current_p.pose.y,current_p.pose.theta);
-
-  //set the center of the map
-  double xmin_px, xmax_px, ymin_px, ymax_px;
-
-  //resize map if needed
-  if (map_px_.map.info.width != (unsigned int)current_p.map.getMapSizeX() || map_px_.map.info.height != (unsigned int)current_p.map.getMapSizeY()) {
-    // NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
-    //       so we must obtain the bounding box in a different way
-    GMapping::Point wmin = current_p.map.map2world(GMapping::IntPoint(0, 0));
-    GMapping::Point wmax = current_p.map.map2world(GMapping::IntPoint(current_p.map.getMapSizeX(), current_p.map.getMapSizeY()));
-    xmin_px = wmin.x;
-    ymin_px = wmin.y; //KL: this is where the map size is updated if it is growing
-    xmax_px = wmax.x;
-    ymax_px = wmax.y;
-    map_px_.map.info.width = current_p.map.getMapSizeX();
-    map_px_.map.info.height = current_p.map.getMapSizeY();
-    map_px_.map.info.origin.position.x = xmin_px;
-    map_px_.map.info.origin.position.y = ymin_px;
-
-    ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", current_p.map.getMapSizeX(), current_p.map.getMapSizeY(),
-              xmin_px, ymin_px, xmax_px, ymax_px);
-    ROS_DEBUG("wmin.x = %.3f, wmin.y = %.3f, wmax.x = %.3f, wmax.y = %.3f", wmin.x, wmin.y, wmax.x, wmax.y);
-
-    map_px_.map.data.resize(map_px_.map.info.width * map_px_.map.info.height);
-    ROS_DEBUG("map origin: (%f, %f)", map_px_.map.info.origin.position.x, map_px_.map.info.origin.position.y);
-  }
-
-  for (int x = 0; x < current_p.map.getMapSizeX(); x++)
-      {
-    for (int y = 0; y < current_p.map.getMapSizeY(); y++)
-        {
-      /// @todo Sort out the unknown vs. free vs. obstacle thresholding
-      GMapping::IntPoint p(x, y);
-      double occ = current_p.map.cell(p);
-      assert(occ <= 1.0);
-      if (occ < 0)
-        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = -1;
-      else if (occ > occ_thresh_)
-          {
-        //map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = (int)round(occ*100.0);
-        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = 100;
-      }
-      else
-        map_px_.map.data[MAP_IDX(map_px_.map.info.width, x, y)] = 0;
-    }
-  }
-  got_map_px_ = true;
-
-  //make sure to set the header information on the map
-  map_px_.map.header.stamp = ros::Time::now();
-  map_px_.map.header.frame_id = tf_.resolve(map_frame_);
-
-  map_px_publisher_.publish(map_px_.map);
-  map_px_info_publisher_.publish(map_px_.map.info);
-
-}
-
-//KL Visualize and store all paths / maps
-void SlamGMapping::publishCurrentPath()
-{
-  current_path_publisher_.publish(all_paths_.at(gsp_->getBestParticleIndex()));
-}
-
-//KL Visualize and store all paths / maps
-void SlamGMapping::publishAllPaths()
-{
-  path_m_.header.stamp = ros::Time::now();
-  all_paths_ma_.markers.clear();
-
-  for (int i_particle = 0; i_particle < particles_; i_particle++) {
-    path_m_.points.clear();
-    path_m_.id = i_particle;
-    std::ostringstream stringStream;
-    stringStream << "path_particle" << i_particle;
-    path_m_.ns = stringStream.str();
-    for (int i = 0; i < all_paths_.at(i_particle).poses.size(); i++) {
-      path_m_.points.push_back(all_paths_.at(i_particle).poses.at(i).pose.position);
-    }
-    all_paths_ma_.markers.push_back(path_m_);
-  }
-  paths_publisher_.publish(all_paths_ma_);
-}
-
-bool SlamGMapping::mapCallback(nav_msgs::GetMap::Request &req,
-                               nav_msgs::GetMap::Response &res)
-{
-  boost::mutex::scoped_lock map_lock(map_mutex_);
-  if (got_map_ && map_.map.info.width && map_.map.info.height)
-      {
-    res = map_;
-    return true;
-  }
-  else
-    return false;
-}
-
-void SlamGMapping::publishTransform()
-{
-  map_to_odom_mutex_.lock();
-  ros::Time tf_expiration = ros::Time::now() + ros::Duration(tf_delay_);
-  tfB_->sendTransform(tf::StampedTransform(map_to_odom_, tf_expiration, map_frame_, odom_frame_));
-  map_to_odom_mutex_.unlock();
-}
-
-#if DEBUG
-void SlamGMapping::smapToCSV(GMapping::ScanMatcherMap smap, std::string filename)
-{
-  filename = filename + ".csv";
-  FILE* smap_csv = fopen(filename.c_str(), "w");
-  if (!smap_csv) {
-    ROS_ERROR("Couldn't save map file to %s.csv",
-              filename.c_str());
-    return;
-  }
-  int sizex = smap.getMapSizeX();
-  int sizey = smap.getMapSizeY();
-
-  for (int y = 0; y < sizey; y++) {
-    for (int x = 0; x < sizex; x++) {
-      GMapping::IntPoint p(x, y);
-      double occ = smap.cell(p);
-      //fprintf(smap_csv, "(x;y)(%d;%d)",x,y); //uncomment to check x,y
-      fprintf(smap_csv, "%.4f", occ);
-      if (x != sizex - 1)
-        fprintf(smap_csv, ",");
-    }
-    fprintf(smap_csv, "\n");
-  }
-
-  fclose(smap_csv);
-
-  ROS_INFO("Done saving\n");
-}
-#endif

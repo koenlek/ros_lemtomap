@@ -37,11 +37,11 @@
 #include "tf/transform_datatypes.h"
 #include <stdio.h>
 
-class SlamGMapping
+class SlamGMappingRolling
 {
   public:
-    SlamGMapping();
-    ~SlamGMapping();
+    SlamGMappingRolling();
+    ~SlamGMappingRolling();
 
     void publishTransform();
   
@@ -153,21 +153,57 @@ class SlamGMapping
     ros::Publisher map_px_info_publisher_; //KL
     nav_msgs::GetMap::Response map_px_;
     bool got_map_px_;
-    int rolling_window_option_;
+
+    std::vector<GMapping::ScanMatcherMap> smap_vector_; //for resize
+    void updateMapDefault(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
+    void updateMapOrig(const sensor_msgs::LaserScan& scan);
+    void updateMapRollingMode1(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
+    void updateMapRollingMode2(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
+    void updateMapRollingMode3(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
+
+    void resizeMapMsg(const GMapping::ScanMatcherMap &smap);
+    void resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool including_particles = true);
+
+    int rolling_window_mode_;
+    int rolling_window_delete_mode_;
     /*\
+     * Extra notes on rolling_window_mode_ and rolling_window_delete_mode_:
+     * Both are for internal use only to figure out the best way of turning the original gmapping into a rolling window gmapping package.
+     *
      * Goals:
      *  1. Delete measurements that are outside the rolling window
      *  2. Make internal maps resized as well
      *  3. Publish a map that actually shows that it forgets what is outside the window
-     * Option 0: Fully disable Sliding window to the state it was (with sliding window, but without actually forgetting)
-     * Option 1: (not working yet). Deele
-     * Option 2: (not started yet). Run a full smap generation in parallel (in st_gmapping_rolling.cpp) with generateMap(true).
-     *  Advantage: easy to implement, can be used to check if it works
-     *  Disadvantage: (much?) extra cpu load and mem. requirements
-     * Option 3: Make openslam_gmapping internally run with generateMap true, while making sure that everything else keeps working properly.
-     *  Advantage: lighter processing
-     *  Disadvantage: more difficult to do.
      *
+     * *** GENERAL ***
+     * Mode 0: Fully disable Sliding window to the state it was (with sliding window, but without actually forgetting)
+     *
+     * Mode 1: (does not work well!). Delete measurements of all TNodes outside of the window, (or outside window + maxRange of laser).
+     *  Advantage:      light
+     *  Disadvantage:   a TNode's measurement will affect map up to the lasers maxrange,
+     *                  so the result will not be a nicely cut of map as we would actually like to see.
+     *                  Although this looks a bit different from what you'd expect, it might work equally well!
+     *                  Needs changes to openslam_gmapping (as it depends on measurement deleting)
+     *  Notes:          Actually only requires delete mode is 1 or 2!
+     *
+     * Mode 2: (does not work properly). Run a full smap generation in parallel (in st_gmapping_rolling.cpp) with generateMap(true).
+     *  Advantage:      doable to implement, can be used to check if it works
+     *                  No additional changes needed to openslam_gmapping
+     *                  No problems with stuff being out of sync?
+     *  Disadvantage:   (much?) extra cpu load and mem. requirements
+     *
+     * Mode 3: (does not work properly)  Set m_matcher.generateMap(true) in gridslamprocessor.cpp in openslam_gmapping.
+     *  Advantage:      Easy (except for weird, unsolved out of sync bug).
+     *  Disadvantage:   Extra processing power required? May limit performance of scan matcher?
+     *                  Does NOT yet respect the delete mode (does not delete measurements at all!)
+     *
+     * *** DELETING ***
+     * Delete mode 0: Does not delete any measurements
+     *
+     * Delete mode 1 (does not work well): Deletes measurements of TNodes outside of the window
+     *  Disadvantages:                   Needs changes to openslam_gmapping
+     *
+     * Delete mode 2 (does not work well): Deletes measurements of TNodes outside of (window + maxUrange)
      */
 
 #if DEBUG

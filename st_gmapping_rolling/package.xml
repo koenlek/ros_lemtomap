@@ -1,13 +1,11 @@
 <package>
   <name>st_gmapping_rolling</name>
-  <version>1.3.2</version>
+  <version>0.3.1</version>
   <description>A rolling version of gmapping, forked from: https://github.com/ros-perception/slam_gmapping/
   </description>
   <author>Koen Lekkerkerker</author>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
-  <license>CreativeCommons-by-nc-sa-2.0</license>
-
-  <url>http://ros.org/wiki/gmapping</url>
+  <license>GPL</license>
 
   <buildtool_depend version_gte="0.5.68">catkin</buildtool_depend>
 

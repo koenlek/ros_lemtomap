@@ -25,7 +25,7 @@ main(int argc, char** argv)
 {
   ros::init(argc, argv, "st_gmapping_rolling");
 
-  SlamGMapping gn;
+  SlamGMappingRolling gn;
 
   ros::spin();
 
