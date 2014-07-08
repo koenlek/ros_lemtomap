@@ -99,7 +99,7 @@ void TopoNavMap::laserCB(const sensor_msgs::LaserScan::ConstPtr &msg)
  */
 bool TopoNavMap::associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::Request &req,
                                      st_topological_mapping::GetAssociatedNode::Response &res)
-{
+                                     {
   if (associated_node_ > 0)
       {
     res.asso_node_id = associated_node_;
@@ -114,7 +114,7 @@ bool TopoNavMap::associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::
  */
 bool TopoNavMap::predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
                                      st_topological_mapping::GetPredecessorMap::Response &res)
-{
+                                     {
   int source_node_id = req.source_node_id;
   updateNodeBGLDetails(source_node_id);
 
@@ -200,10 +200,23 @@ void TopoNavMap::updateToponavMapTransform()
    tf_toponavmap2map_.setRotation(q);
    */
 
-  #if LTF_PERFECTODOM
-    if (associated_node_ > 0 && node_odom_at_creation_map_.size() > 0)
-      tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
-  #endif
+  /*#if LTF_PERFECTODOM
+   if (associated_node_ > 0 && node_odom_at_creation_map_.size() > 0)
+   tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
+   #endif*/
+
+  tf::StampedTransform tf_toponavmap2map_stamped;
+
+  try
+  {
+    tf_listener_.waitForTransform("map", "odom", ros::Time(0), ros::Duration(2));
+    tf_listener_.lookupTransform("map", "odom", ros::Time(0), tf_toponavmap2map_stamped);
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_ERROR("Error looking up transformation\n%s", ex.what());
+  }
+  tf_toponavmap2map_ = tf_toponavmap2map_stamped;
 
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), "map", "toponav_map"));
 }
@@ -212,7 +225,7 @@ void TopoNavMap::updateToponavMapTransform()
  * \brief Local Costmap Callback.
  */
 void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg)
-{
+                            {
 
 #if DEBUG
   /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());
@@ -227,7 +240,7 @@ void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 
 #if DEBUG
 void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
-{
+                               {
   geometry_msgs::PoseStamped initialpose_previous;
   initialpose_previous = initialpose_;
   initialpose_.header = msg->header;
@@ -290,7 +303,7 @@ void TopoNavMap::updateRobotPose()
  * \brief loadMapFromMsg
  */
 void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg)
-{
+                                {
   nodes_.clear();
   edges_.clear();
 
@@ -328,7 +341,7 @@ void TopoNavMap::updateMap()
 
   updateToponavMapTransform();
 
-  if (!checkCreateNode()){
+  if (!checkCreateNode()) {
     updateAssociatedNode(); //updates are only needed if no new node was created...
   }
 
@@ -429,7 +442,7 @@ void TopoNavMap::checkCreateEdges()
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
   for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++)
-  {
+      {
     if (right_iter->first < max_topo_dist) {
       if (right_iter->second == node.getNodeID()) //not compare to self!
         continue;
@@ -504,7 +517,7 @@ bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, do
  */
 const bool TopoNavMap::directNavigable(const tf::Point &point1,
                                        const tf::Point &point2)
-{
+                                       {
   bool navigable = false;
 
   //Check if the local_costmap has changed since last run, if so, update it
@@ -630,7 +643,7 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
  * \brief edgeExists
  */
 const bool TopoNavMap::edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const
-{
+                                  {
   std::string edge_id;
   if (nodeid1 < nodeid2) {
     edge_id = boost::lexical_cast<std::string>(nodeid1) + "to" + boost::lexical_cast<std::string>(nodeid2);
@@ -693,7 +706,7 @@ double TopoNavMap::distanceToClosestNode()
  */
 void TopoNavMap::addEdge(const TopoNavNode &start_node,
                          const TopoNavNode &end_node)
-{
+                         {
   new TopoNavEdge(start_node, end_node, edges_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
@@ -701,36 +714,36 @@ void TopoNavMap::addEdge(const TopoNavNode &start_node,
  * \brief addNode
  */
 void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id)
-{
+                         {
   new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
-  #if LTF_PERFECTODOM
-      tf::StampedTransform perfectodom_correction_stamped;
-      tf::Transform perfectodom_correction;
-      try
-      {
-        tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(2));
-        tf_listener_.lookupTransform("odom", "map", ros::Time(0), perfectodom_correction_stamped);
-      }
-      catch (tf::TransformException &ex)
-      {
-        ROS_ERROR("Error looking up transformation\n%s", ex.what());
-      }
-      perfectodom_correction = perfectodom_correction_stamped;
+#if LTF_PERFECTODOM
+  tf::StampedTransform perfectodom_correction_stamped;
+  tf::Transform perfectodom_correction;
+  try
+  {
+    tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(2));
+    tf_listener_.lookupTransform("odom", "map", ros::Time(0), perfectodom_correction_stamped);
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_ERROR("Error looking up transformation\n%s", ex.what());
+  }
+  perfectodom_correction = perfectodom_correction_stamped;
 
-    node_odom_at_creation_map_[nodes_.rbegin()->second->getNodeID()] = perfectodom_correction;
-  #endif
+  node_odom_at_creation_map_[nodes_.rbegin()->second->getNodeID()] = perfectodom_correction;
+#endif
 }
 
 /*!
  * \brief deleteEdge
  */
 void TopoNavMap::deleteEdge(TopoNavEdge::EdgeID edge_id)
-{
+                            {
   deleteEdge(*edges_[edge_id]);
 
 }
 void TopoNavMap::deleteEdge(TopoNavEdge &edge)
-{
+                            {
   delete &edge;
 }
 
@@ -738,26 +751,26 @@ void TopoNavMap::deleteEdge(TopoNavEdge &edge)
  * \brief deleteNode
  */
 void TopoNavMap::deleteNode(TopoNavNode::NodeID node_id)
-{
+                            {
   deleteNode(*nodes_[node_id]);
 }
 
 void TopoNavMap::deleteNode(TopoNavNode &node)
-{
+                            {
   updateNodeBGLDetails(node.getNodeID()); //to make sure connected_edges are up to date!
   TopoNavNode::AdjacentEdges connected_edges = node.getAdjacentEdgeIDs();
   for (int i = 0; i < connected_edges.size(); i++)
       {
     deleteEdge((*edges_[connected_edges.at(i)]));
   }
-  #if LTF_PERFECTODOM
-    node_odom_at_creation_map_.erase(node.getNodeID());
-  #endif
+#if LTF_PERFECTODOM
+  node_odom_at_creation_map_.erase(node.getNodeID());
+#endif
   delete &node;
 }
 
 void TopoNavMap::updateNodeBGLDetails(TopoNavNode::NodeID node_id)
-{
+                                      {
   st_bgl::updateNodeDetails(nodes_, edges_, node_id, last_bgl_affecting_update_);
 }
 
@@ -791,37 +804,37 @@ TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(const TopoNavNode &node) const
 #endif
 
 void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg)
-{
+                                {
   tf::Pose tfpose;
   poseMsgToTF(node_msg.pose, tfpose);
 
   new TopoNavNode(node_msg.node_id, //node_id
-      node_msg.last_updated, //last_updated
-      node_msg.last_pose_updated, //last_pose_updated
-      ros::WallTime(0), //last_bgl_update set to 0, which will make any consulting trigger update!
-      tfpose, //pose
-      node_msg.is_door, //is_door
-      node_msg.area_id, //area_id
-      nodes_, //nodes map
-      last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
-      );
+  node_msg.last_updated, //last_updated
+  node_msg.last_pose_updated, //last_pose_updated
+  ros::WallTime(0), //last_bgl_update set to 0, which will make any consulting trigger update!
+  tfpose, //pose
+  node_msg.is_door, //is_door
+  node_msg.area_id, //area_id
+  nodes_, //nodes map
+  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
+  );
 }
 
 void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &edge_msg)
-{
+                                {
   new TopoNavEdge(edge_msg.edge_id, //edge_id
-      edge_msg.last_updated, //last_updated
-      edge_msg.cost, //cost
-      *nodes_[edge_msg.start_node_id], //start_node
-      *nodes_[edge_msg.end_node_id], //end_node
-      edges_, //edges std::map
-      last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
-      );
+  edge_msg.last_updated, //last_updated
+  edge_msg.cost, //cost
+  *nodes_[edge_msg.start_node_id], //start_node
+  *nodes_[edge_msg.end_node_id], //end_node
+  edges_, //edges std::map
+  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
+  );
 }
 st_topological_mapping::TopoNavEdgeMsg
 TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
-//not const, as getCost can cause update of the cost!
-{
+                         //not const, as getCost can cause update of the cost!
+                         {
   st_topological_mapping::TopoNavEdgeMsg msg_edge;
   msg_edge.edge_id = edge->getEdgeID();
   msg_edge.last_updated = edge->getLastUpdatedTime();
@@ -833,7 +846,7 @@ TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
 }
 
 st_topological_mapping::TopoNavNodeMsg TopoNavMap::nodeToRosMsg(const TopoNavNode *node)
-{
+                                                                {
   st_topological_mapping::TopoNavNodeMsg msg_node;
   msg_node.node_id = node->getNodeID();
   msg_node.last_updated = node->getLastUpdatedTime();

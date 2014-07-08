@@ -948,22 +948,6 @@ void SlamGMappingRolling::updateMapRollingMode3(const sensor_msgs::LaserScan& sc
 }
 
 void SlamGMappingRolling::resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool including_particles) {
-  /*tf::StampedTransform robot_pose;
-  try
-  {
-    //tf_.waitForTransform(map_frame_, base_frame_, ros::Time(0), ros::Duration(0.1));
-    tf_.lookupTransform(map_frame_, base_frame_, ros::Time(0), robot_pose);
-  }
-  catch (tf::TransformException &e)
-  {
-    ROS_WARN("Failed to compute robot pose (%s)", e.what());
-  }
-
-  xmin_ = -windowsize_ / 2.0 + robot_pose.getOrigin().getX();
-  ymin_ = -windowsize_ / 2.0 + robot_pose.getOrigin().getY();
-  xmax_ = windowsize_ / 2.0 + robot_pose.getOrigin().getX();
-  ymax_ = windowsize_ / 2.0 + robot_pose.getOrigin().getY();
-  */
 
   xmin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
   ymin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
@@ -1337,4 +1321,18 @@ void SlamGMappingRolling::updateMapOrig(const sensor_msgs::LaserScan& scan)
   sst_.publish(map_.map);
   sstm_.publish(map_.map.info);
 
+  // KL Visualize and store all paths / maps
+  ROS_INFO("Best particle is %d", gsp_->getBestParticleIndex());
+  if (publish_all_paths_ || publish_current_path_) {
+    updateAllPaths();
+    if (publish_all_paths_) {
+      publishAllPaths();
+    }
+    if (publish_current_path_) {
+      publishCurrentPath();
+    }
+  }
+  if (publish_specific_map_ >= 0) {
+    publishMapPX();
+  }
 }
