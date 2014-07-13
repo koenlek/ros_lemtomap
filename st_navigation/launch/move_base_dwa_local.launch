@@ -3,7 +3,7 @@
 <launch>
 	<arg name="odom_topic" default="odom" />
 	<arg name="scan_topic" default="scan" />
-	<!--<arg name="allow_unknown" default="true" />-->
+	<arg name="allow_unknown" default="true" />
 
 	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
 	<include
@@ -11,9 +11,11 @@
 	<include
 		file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml" />
 
+	<param name="navfn/allow_unknown" value="$(arg allow_unknown)" />
+
 	<!-- Navigation components -->
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base"
-		output="screen" clear_params="true">
+		output="screen" clear_params="false">
 		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
 		<rosparam file="$(find st_navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
 		<rosparam file="$(find st_navigation)/param/local_costmap_params.yaml" command="load" ns="local_costmap"/>
@@ -22,9 +24,6 @@
 		<rosparam file="$(find st_navigation)/param/move_base_params.yaml" command="load" />
 
 		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" /> <!-- dwa_local planner is better for us than base_local planner -->
-		
-		<!-- does not work 
-		<param name="NavfnROS/allow_unknown" value="$(arg allow_unknown)" />-->
 
 		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
 		<remap from="odom" to="$(arg odom_topic)" />

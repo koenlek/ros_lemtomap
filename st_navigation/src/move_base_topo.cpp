@@ -63,6 +63,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
   ecl::Duration duration;
   cpuwatch_.restart(); //sets current `lap` to zero.
   stopwatch_.restart(); //sets current `lap` to zero.
+  ROS_INFO_NAMED("Benchmarks","move_base_topo: Received Topo goal at %.4f", ros::WallTime::now().toSec());
 #endif
 
   // helper variables
@@ -130,7 +131,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
         #if BENCHMARKING
           duration = cpuwatch_.elapsed();
           ROS_INFO_STREAM("Cpuwatch took " << duration <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
-                ROS_INFO_STREAM("Stopwatch took " << stopwatch_.elapsed() <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
+          ROS_INFO_STREAM("Stopwatch took " << stopwatch_.elapsed() <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
         #endif
 
         i++; // current i is always +1 compared to the current goal node vector position in path_nodes
@@ -174,7 +175,9 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
           {
         success = true;
         ROS_INFO("Hooray: the final topological goal has been reached");
-
+#if BENCHMARKING
+        ROS_INFO_NAMED("Benchmarks","move_base_topo: Reached Topo goal at %.4f", ros::WallTime::now().toSec());
+#endif
       }
     }
 

@@ -68,9 +68,9 @@
 						</horizontal>
 					</scan>
 					<range>
-						<min>0.02</min>
+						<min>0.1</min>
 						<!-- 20mm, use 0.1m (100mm) for non-gpu variants, otherwise sight is blocked for some reason: i.e. ray instead of gpu_ray and libgazebo_ros_laser.so instead of libgazebo_ros_gpu_laser.so-->
-						<max>5.6</max>
+						<max>5.6</max><!-- 5.6 for Hokuyo URG-04LX, 30 for Hokuyo UTM-30LX -->
 						<!--  5600mm -->
 						<resolution>0.01</resolution>
 						<!-- ? -->

@@ -259,8 +259,8 @@ SlamGMappingRolling::SlamGMappingRolling() :
 
   if (!private_nh_.getParam("publishSpecificMap", publish_specific_map_))
     publish_specific_map_ = -1;
-  if (publish_specific_map_ > particles_ || publish_specific_map_ < -1) {
-    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1, particles_);
+  if (publish_specific_map_ > particles_+1 || publish_specific_map_ < -1) {
+    ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle, or %d for worst particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1, particles_,particles_ + 1);
     publish_specific_map_ = -1;
   }
   else if (publish_specific_map_ == particles_) {
@@ -1034,9 +1034,19 @@ void SlamGMappingRolling::updateAllPaths()
 //KL Visualize and store all paths / maps
 void SlamGMappingRolling::publishMapPX()
 {
+  /*for (int i=0; i < particles_ ; i++){
+    ROS_INFO("Particle %d, has weight %.4f",i,gsp_->getParticles()[i].weightSum);
+  }
+  ROS_INFO("Best particle is %d",gsp_->getBestParticleIndex());
+  ROS_INFO("Worst particle is %d",gsp_->getWorstParticleIndex());
+  */
   if (publish_specific_map_ == particles_) {
     publish_specific_map_ = gsp_->getBestParticleIndex();
   }
+  else if (publish_specific_map_ == particles_+1) {
+      publish_specific_map_ = gsp_->getWorstParticleIndex();
+  }
+
   const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[publish_specific_map_];
 
   if (!got_map_px_) {
