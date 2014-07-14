@@ -657,7 +657,7 @@ void SlamGMappingRolling::updateMap(const sensor_msgs::LaserScan& scan) {
   center.y = (ymin_ + ymax_) / 2.0;
   GMapping::ScanMatcherMap smap(center, xmin_, ymin_, xmax_, ymax_, delta_);
   // unfortunately, resize gives slightly larger sizes than the constructor, by resizing now we never have to resize the map msg.
-  smap.resize(xmin_, ymin_, xmax_, ymax_);
+  smap.resize(xmin_, ymin_, xmax_, ymax_); //fixme - p3 - this is caused by a difference in how smap constructor and .resize size. I could patch this in openslam_gmapping instead, which would be nicer...
 
   if (rolling_window_mode_ == 1 && rolling_ == true) {
     //ROS_INFO("smap.isInside(0.0,0.0) = %s",smap.isInside(0.0,0.0) ? "true":"false");
@@ -667,10 +667,11 @@ void SlamGMappingRolling::updateMap(const sensor_msgs::LaserScan& scan) {
     int tmp_size_y = smap.getMapSizeY(); //KL TMP
     updateMapRollingMode1(scan, smap, scan_out_of_smap);
     //ROS_INFO("(after update) smap size (x,y)=(%d,%d)", smap.getMapSizeX(), smap.getMapSizeY());
-    if (tmp_size_x != smap.getMapSizeX() || tmp_size_y != smap.getMapSizeY()) {
+    if (tmp_size_x != smap.getMapSizeX() || tmp_size_y != smap.getMapSizeY()) { //fixme - p3 - the matcher also resizes smaps if TNodes are outside of the window, so resizing only if new scan is outside window does only work in the start, then it turns into a semi-continuous updating rolling window
       resizeAllSMaps(smap, true);
+      //ROS_INFO("(after resize) smap size (x,y)=(%d,%d)", smap.getMapSizeX(), smap.getMapSizeY());
     }
-    /*if (scan_out_of_smap) { //issue: smap gets actually alsor resized by other TNodes outside the window, this will mess up map msg if you do not resize. If you do resize, the map msg gets really big
+    /*if (scan_out_of_smap) { //issue: smap gets actually also resized by other TNodes outside the window, this will mess up map msg if you do not resize. If you do resize, the map msg gets really big
      resizeAllSMaps(smap, true);
      ROS_INFO("(after resize) smap size (x,y)=(%d,%d)", smap.getMapSizeX(), smap.getMapSizeY());
      }*/
@@ -684,13 +685,14 @@ void SlamGMappingRolling::updateMap(const sensor_msgs::LaserScan& scan) {
     resizeAllSMaps(smap, true);
   }
 
-  //resizeMapMsg(smap); //KL for rolling window Map Msg should never need resize!
   if (map_.map.info.height == 0) {
     map_.map.info.width = smap.getMapSizeX();
     map_.map.info.height = smap.getMapSizeY();
     map_.map.data.resize(map_.map.info.width * map_.map.info.height);
   }
 
+  // resize, as sometimes even after running 'resizeAllSmaps', the smap size changes compared to previous.
+  resizeMapMsg(smap); //KL, ideally for rolling window Map Msg should never need resize!
   map_.map.info.origin.position.x = smap.map2world(GMapping::IntPoint(0, 0)).x;
   map_.map.info.origin.position.y = smap.map2world(GMapping::IntPoint(0, 0)).y;
 
@@ -1002,7 +1004,7 @@ void SlamGMappingRolling::resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool in
   }
 }
 
-#if DEPRECATED
+//#if DEPRECATED
 void SlamGMappingRolling::resizeMapMsg(const GMapping::ScanMatcherMap &smap) {
 // if the map has expanded, resize the map msg
   if (map_.map.info.width != (unsigned int)smap.getMapSizeX() || map_.map.info.height != (unsigned int)smap.getMapSizeY()) {
@@ -1021,7 +1023,7 @@ void SlamGMappingRolling::resizeMapMsg(const GMapping::ScanMatcherMap &smap) {
     ROS_DEBUG("map origin: (%f, %f)", map_.map.info.origin.position.x, map_.map.info.origin.position.y);
   }
 }
-#endif
+//#endif
 
 //KL Visualize and store all paths / maps
 geometry_msgs::Pose SlamGMappingRolling::gMapPoseToGeoPose(const GMapping::OrientedPoint& gmap_pose) const {
