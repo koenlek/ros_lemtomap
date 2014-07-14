@@ -15,7 +15,9 @@
 	<arg     if="$(arg suppress_console)" name="suppress_int" value="1"/>
 	<arg unless="$(arg suppress_console)" name="suppress_int" value="0"/>
 
-	<node pkg="st_gmapping_rolling" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="$(arg suppress_int) gmapping_general_launcher_stage2.launch 
+	<node pkg="st_gmapping_rolling" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="
+	$(arg suppress_int) 
+	gmapping_general_launcher_stage2.launch 
 	scan_topic:=$(arg scan_topic) 
 	windowsize:=$(arg windowsize) 
 	perfect_odometry:=$(arg perfect_odometry) 

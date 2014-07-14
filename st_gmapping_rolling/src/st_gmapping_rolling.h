@@ -157,7 +157,7 @@ class SlamGMappingRolling
     std::vector<GMapping::ScanMatcherMap> smap_vector_; //for resize
     void updateMapDefault(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
     void updateMapOrig(const sensor_msgs::LaserScan& scan);
-    void updateMapRollingMode1(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
+    void updateMapRollingMode1(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap, bool& scan_out_of_smap);
     void updateMapRollingMode2(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
     void updateMapRollingMode3(const sensor_msgs::LaserScan& scan, GMapping::ScanMatcherMap& smap);
 
@@ -178,7 +178,7 @@ class SlamGMappingRolling
      * *** GENERAL ***
      * Mode 0: Fully disable Sliding window to the state it was (with sliding window, but without actually forgetting)
      *
-     * Mode 1: (does not work well!). Delete measurements of all TNodes outside of the window, (or outside window + maxRange of laser).
+     * Mode 1: (works decently!). Delete measurements of all TNodes outside of the window, (or outside window + maxRange of laser).
      *  Advantage:      light
      *  Disadvantage:   a TNode's measurement will affect map up to the lasers maxrange,
      *                  so the result will not be a nicely cut of map as we would actually like to see.
@@ -201,7 +201,7 @@ class SlamGMappingRolling
      * Delete mode 0: Does not delete any measurements
      *
      * Delete mode 1 (does not work well): Deletes measurements of TNodes outside of the window
-     *  Disadvantages:                   Needs changes to openslam_gmapping
+     *  Disadvantages:  Needs changes to openslam_gmapping
      *
      * Delete mode 2 (does not work well): Deletes measurements of TNodes outside of (window + maxUrange)
      */

@@ -12,8 +12,8 @@
 	<arg name="publishAllPaths" default="false" />
 	<arg name="publishSpecificMap" default="-1" />
 	
-	<arg name="rolling_window_mode" default="0" />
-	<arg name="rolling_window_delete_mode" default="0" />
+	<arg name="rolling_window_mode" default="1" />
+	<arg name="rolling_window_delete_mode" default="1" />
 
 	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
 	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
@@ -43,7 +43,8 @@
 		output="screen" clear_params="true">
 		<param name="base_frame" value="base_footprint" />
 		<param name="odom_frame" value="odom" />
-		<param name="map_update_interval" value="5" />
+		<param name="map_frame" value="map" />
+		<param name="map_update_interval" value="1" />
 		<param name="maxUrange" value="5.5" /> <!-- (5.5 for Hokuyo, 6 for Kinect) Default is 80, this should not be necessary -->
 		<param name="maxRange" value="5.6" />
                 <!-- (Either comment out, or 5.6 for Hokuyo, 8 for Kinect) Official documentation: The maximum range 

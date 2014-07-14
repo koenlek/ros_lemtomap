@@ -9,6 +9,7 @@ Panels:
         - /Map1/Orientation1
         - /TF1/Tree1
         - /Sensors1/LaserScan Hokuyo1
+        - /Nav1
         - /TopoNavMap MarkerArray1/Namespaces1
         - /GMapping1
       Splitter Ratio: 0.5
@@ -499,18 +500,18 @@ Visualization Manager:
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: false
+          Enabled: true
           Name: Local Costmap
           Topic: /move_base/local_costmap/costmap
-          Value: false
+          Value: true
         - Alpha: 0.5
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: false
+          Enabled: true
           Name: Global Costmap
           Topic: /move_base/global_costmap/costmap
-          Value: false
+          Value: true
       Enabled: true
       Name: Nav
     - Class: rviz/MarkerArray
@@ -553,7 +554,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 240; 240; 240
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -569,7 +570,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.566
+      Angle: 1.551
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
@@ -578,11 +579,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 25.7742
+      Scale: 17.7247
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 5.62688
-      Y: 1.70077
+      X: 7.31896
+      Y: 0.731676
     Saved: ~
 Window Geometry:
   Displays:
