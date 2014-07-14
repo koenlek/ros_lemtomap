@@ -148,6 +148,8 @@ class SlamGMappingRolling
     bool publish_all_paths_;
     bool publish_current_path_;
     int publish_specific_map_; //int stands for particle index
+    bool visualize_robot_centric_;
+
     //map publishing
     ros::Publisher map_px_publisher_; //KL
     ros::Publisher map_px_info_publisher_; //KL

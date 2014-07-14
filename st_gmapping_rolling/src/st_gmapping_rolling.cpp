@@ -107,7 +107,8 @@
  Extra:
  - @b "~/publishCurrentPath" @b [bool] Publish RVIZ visualizable path for current particle. (default: false)
  - @b "~/publishAllPaths" @b [bool] Publish RVIZ visualizable paths for each particle. WARNING: can be cpu intensive! (default: false)
- - @b "~/publishSpecificMap" @b [int]  Publish RVIZ visualizable maps for a specific particle, as originally stored in that particle. (for debugging facilities) WARNING: can be cpu intensive! (default: -1, means disabled)
+ - @b "~/publishSpecificMap" @b [int] Publish RVIZ visualizable maps for a specific particle, as originally stored in that particle. (for debugging facilities) WARNING: can be cpu intensive! (default: -1, means disabled)
+ - @b "~/visualizeRobotCentric" @b [bool] GMapping is actually 'world-centric', rolling window mode is able to get 'robot-centric' like results from it. Setting this bool to true makes the above extra visualizations appear robot centric as well. (default: true)
 
  */
 
@@ -256,9 +257,11 @@ SlamGMappingRolling::SlamGMappingRolling() :
     publish_all_paths_ = false;
   if (!private_nh_.getParam("publishCurrentPath", publish_current_path_))
     publish_current_path_ = false;
-
   if (!private_nh_.getParam("publishSpecificMap", publish_specific_map_))
     publish_specific_map_ = -1;
+  if (!private_nh_.getParam("visualizeRobotCentric", visualize_robot_centric_))
+    visualize_robot_centric_ = true;
+
   if (publish_specific_map_ > particles_ + 1 || publish_specific_map_ < -1) {
     ROS_ERROR("publishSpecificMap for particle %d impossible, as total particles are %d, so value should be 0 to %d for specific particle, or %d for best particle, or %d for worst particle. Publishing specific map is disabled now.", publish_specific_map_, particles_, particles_ - 1, particles_, particles_ + 1);
     publish_specific_map_ = -1;
@@ -1015,7 +1018,7 @@ void SlamGMappingRolling::resizeMapMsg(const GMapping::ScanMatcherMap &smap) {
     GMapping::Point wmax = smap.map2world(GMapping::IntPoint(smap.getMapSizeX(), smap.getMapSizeY()));
 
     ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", smap.getMapSizeX(), smap.getMapSizeY(),
-        xmin_, ymin_, xmax_, ymax_);
+              xmin_, ymin_, xmax_, ymax_);
     map_.map.info.width = smap.getMapSizeX();
     map_.map.info.height = smap.getMapSizeY();
     map_.map.data.resize(map_.map.info.width * map_.map.info.height);
@@ -1040,19 +1043,33 @@ geometry_msgs::Pose SlamGMappingRolling::gMapPoseToGeoPose(const GMapping::Orien
 void SlamGMappingRolling::updateAllPaths()
 {
   geometry_msgs::PoseStamped pose;
+  geometry_msgs::Pose best_leaf_pose, cur_leaf_pose;
   pose.header.frame_id = tf_.resolve(map_frame_);
 
-//TODO - p2 - This recreates all the paths every time, which is causing extra system load. Maybe only update it (add latest poses). Make sure that it survives resampling properly though!!!
+  //TODO - p2 - This recreates all the paths every time, which is causing extra system load. Maybe only update it (add latest poses). Make sure that it survives resampling properly though!!!
 
   for (int i = 0; i < particles_; i++) {
     all_paths_.at(i).poses.clear();
 
-//t_node_current_ = gsp_->getTrajectories().at(i); //KL: do not use getTrajectories -> causes some weird memory leak that I do not understand.
+    //t_node_current_ = gsp_->getTrajectories().at(i); //KL: do not use getTrajectories -> causes some weird memory leak that I do not understand.
     t_node_current_ = gsp_->getParticles().at(i).node;
 
+    if (visualize_robot_centric_) {
+      best_leaf_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
+      cur_leaf_pose = gMapPoseToGeoPose(gsp_->getParticles()[i].pose);
+    }
     while (t_node_current_ != 0) {
       //ROS_INFO("t_node_current->pose (x,y,theta) = (%.4f,%.4f,%.4f)",t_node_current_->pose.x,t_node_current_->pose.y,t_node_current_->pose.theta);
       pose.pose = gMapPoseToGeoPose(t_node_current_->pose);
+      if (visualize_robot_centric_) {
+        pose.pose.position.x += best_leaf_pose.position.x - cur_leaf_pose.position.x;
+        pose.pose.position.y += best_leaf_pose.position.y - cur_leaf_pose.position.y;
+        pose.pose.position.z += best_leaf_pose.position.z - cur_leaf_pose.position.z;
+        pose.pose.orientation.w += best_leaf_pose.orientation.w - cur_leaf_pose.orientation.w;
+        pose.pose.orientation.x += best_leaf_pose.orientation.x - cur_leaf_pose.orientation.x;
+        pose.pose.orientation.y += best_leaf_pose.orientation.y - cur_leaf_pose.orientation.y;
+        pose.pose.orientation.z += best_leaf_pose.orientation.z - cur_leaf_pose.orientation.z;
+      }
       all_paths_.at(i).poses.push_back(pose);
       t_node_current_ = t_node_current_->parent;
     }
@@ -1068,14 +1085,17 @@ void SlamGMappingRolling::publishMapPX()
    ROS_INFO("Best particle is %d",gsp_->getBestParticleIndex());
    ROS_INFO("Worst particle is %d",gsp_->getWorstParticleIndex());
    */
+  int particle_index;
   if (publish_specific_map_ == particles_) {
-    publish_specific_map_ = gsp_->getBestParticleIndex();
+    particle_index = gsp_->getBestParticleIndex();
+    ROS_INFO("Publishing map for best particle!");
   }
-  else if (publish_specific_map_ == particles_ + 1) {
-    publish_specific_map_ = gsp_->getWorstParticleIndex();
+  else if (publish_specific_map_ == (particles_ + 1)) {
+    particle_index = gsp_->getWorstParticleIndex();
+    ROS_INFO("Publishing map for worst particle!");
   }
 
-  const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[publish_specific_map_];
+  const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[particle_index];
 
   if (!got_map_px_) {
     map_px_.map.info.resolution = delta_;
@@ -1088,16 +1108,57 @@ void SlamGMappingRolling::publishMapPX()
     map_px_.map.info.origin.orientation.w = 1.0;
   }
 
-//ROS_INFO("current_p.map.getMapSizeX() = (x,y) (%d, %d)",current_p.map.getMapSizeX(),current_p.map.getMapSizeY());
-//ROS_INFO("current_p.map.pose (x,y,theta) = (%.4f, %.4f, %.4f)",current_p.pose.x,current_p.pose.y,current_p.pose.theta);
-
-//set the center of the map
+  //set the center of the map
   double xmin_px, xmax_px, ymin_px, ymax_px;
 
-//resize map if needed
+  if (visualize_robot_centric_) {
+    // update the origin of the published map
+    geometry_msgs::Pose best_robot_pose, cur_robot_pose;
+    double x_best, y_best, x_cur_tmp, y_cur_tmp, x_cur_tmp_local, y_cur_tmp_local, x_new, y_new;
+    //tf::Pose map_px_origin;
+    //tf::Transform map_px_rotate;
+    //double yaw_diff;
+    //tf::Quaternion yaw_diff_tf_quat;
+
+    best_robot_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
+    cur_robot_pose = gMapPoseToGeoPose(current_p.pose);
+    /*yaw_diff = tf::getYaw(cur_robot_pose.orientation)-tf::getYaw(best_robot_pose.orientation);
+    yaw_diff_tf_quat = tf::createQuaternionFromRPY(0,0,yaw_diff);*/
+    //ROS_INFO("yaw_diff = %.4f",yaw_diff);
+
+    x_best = current_p.map.map2world(GMapping::IntPoint(0, 0)).x;
+    y_best = current_p.map.map2world(GMapping::IntPoint(0, 0)).y;
+    x_cur_tmp = x_best - (cur_robot_pose.position.x - best_robot_pose.position.x);
+    y_cur_tmp = y_best - (cur_robot_pose.position.y - best_robot_pose.position.y);
+    //ROS_INFO("best (x,y)=(%.4f,%.4f), cur new intermediate (x,y)=(%.4f,%.4f)", x_best, y_best, x_cur_tmp, y_cur_tmp);
+    x_cur_tmp_local = x_cur_tmp - cur_robot_pose.position.x;
+    y_cur_tmp_local = y_cur_tmp - cur_robot_pose.position.y;
+    //ROS_INFO("(before rotation), current particle, local coordinate of origin (upperleft corner) (x,y)=(%.4f,%.4f), with robot as (0,0))", x_cur_tmp_local, y_cur_tmp_local);
+
+    /*x_new = x_cur_tmp_local*cos(yaw_diff)-y_cur_tmp_local*sin(yaw_diff);
+    y_new = x_cur_tmp_local*sin(yaw_diff)+y_cur_tmp_local*cos(yaw_diff);
+    x_new = x_new + cur_robot_pose.position.x;
+    y_new = y_new + cur_robot_pose.position.y;*/
+
+    x_new = x_cur_tmp_local + cur_robot_pose.position.x;
+    y_new = y_cur_tmp_local + cur_robot_pose.position.y;
+    map_px_.map.info.origin.position.x = x_new;
+    map_px_.map.info.origin.position.y = y_new;
+    /*map_px_.map.info.origin.orientation.w = yaw_diff_tf_quat.getW();
+      map_px_.map.info.origin.orientation.x = yaw_diff_tf_quat.getX();;
+      map_px_.map.info.origin.orientation.y = yaw_diff_tf_quat.getY();;
+      map_px_.map.info.origin.orientation.z = yaw_diff_tf_quat.getZ();;
+      ROS_INFO("yaw_orig, based on map: %.4f", tf::getYaw(map_.map.info.origin.orientation));
+      ROS_INFO("yaw_diff, based on map: %.4f", tf::getYaw(map_px_.map.info.origin.orientation));*/
+  } else{
+    map_px_.map.info.origin.position.x = current_p.map.map2world(GMapping::IntPoint(0, 0)).x;
+    map_px_.map.info.origin.position.y = current_p.map.map2world(GMapping::IntPoint(0, 0)).y;
+  }
+
+  //resize map if needed
   if (map_px_.map.info.width != (unsigned int)current_p.map.getMapSizeX() || map_px_.map.info.height != (unsigned int)current_p.map.getMapSizeY()) {
-// NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
-//       so we must obtain the bounding box in a different way
+    // NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
+    //       so we must obtain the bounding box in a different way
     GMapping::Point wmin = current_p.map.map2world(GMapping::IntPoint(0, 0));
     GMapping::Point wmax = current_p.map.map2world(GMapping::IntPoint(current_p.map.getMapSizeX(), current_p.map.getMapSizeY()));
     xmin_px = wmin.x;
@@ -1106,8 +1167,6 @@ void SlamGMappingRolling::publishMapPX()
     ymax_px = wmax.y;
     map_px_.map.info.width = current_p.map.getMapSizeX();
     map_px_.map.info.height = current_p.map.getMapSizeY();
-    map_px_.map.info.origin.position.x = xmin_px;
-    map_px_.map.info.origin.position.y = ymin_px;
 
     ROS_DEBUG("map size is now %dx%d pixels (%f,%f)-(%f, %f)", current_p.map.getMapSizeX(), current_p.map.getMapSizeY(),
               xmin_px, ymin_px, xmax_px, ymax_px);
@@ -1138,7 +1197,7 @@ void SlamGMappingRolling::publishMapPX()
   }
   got_map_px_ = true;
 
-//make sure to set the header information on the map
+  //make sure to set the header information on the map
   map_px_.map.header.stamp = ros::Time::now();
   map_px_.map.header.frame_id = tf_.resolve(map_frame_);
 

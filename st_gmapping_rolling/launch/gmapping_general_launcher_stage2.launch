@@ -14,6 +14,7 @@
 	
 	<arg name="rolling_window_mode" default="1" />
 	<arg name="rolling_window_delete_mode" default="1" />
+	<arg name="visualizeRobotCentric" default="true" />
 
 	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
 	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
@@ -90,7 +91,8 @@
 
 		<param name="rolling_window_mode" value="$(arg rolling_window_mode)" /> <!-- for internal usage -->
 		<param name="rolling_window_delete_mode" value="$(arg rolling_window_delete_mode)" /> <!-- for internal usage -->
-		
+		<param name="visualizeRobotCentric" value="$(arg visualizeRobotCentric)" />
+
 		<!-- Other -->
 		<remap from="scan" to="$(arg scan_topic)" />
 	</node>
