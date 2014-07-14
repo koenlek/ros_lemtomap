@@ -110,6 +110,7 @@ private:
     ros::WallTime last_run_lcostmap_;
     ros::WallTime last_run_update_;
     double last_run_update_max_;
+    double loop_closure_max_topo_dist_; //maximal topological distance for edge creation, this is to make sure that loops aren't always closed -> as the node poses are not globally consistent defined, this could otherwise result in false loop closures!
 
     ros::Subscriber initialpose_sub_;
     geometry_msgs::PoseStamped initialpose_; //I use this to test my getCost implementation to determine if an edge is navigable
@@ -169,7 +170,7 @@ public:
   void loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
 
   // these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
-  void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node);
+  void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, int type);
   void addNode(const tf::Pose &pose, bool is_door, int area_id);
   void deleteEdge(TopoNavEdge::EdgeID edge_id);
   void deleteEdge(TopoNavEdge &edge);

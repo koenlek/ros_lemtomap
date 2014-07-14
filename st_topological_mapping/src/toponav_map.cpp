@@ -27,6 +27,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   // Parameters initialization
   private_nh.param("scan_topic", scan_topic, std::string("scan"));
   private_nh.param("local_costmap_topic", local_costmap_topic, std::string("move_base/local_costmap/costmap"));
+  private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(30));
 
   // Set initial transform between map and toponav_map
   tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
@@ -431,25 +432,24 @@ bool TopoNavMap::checkCreateNode()
 void TopoNavMap::checkCreateEdges()
 {
   TopoNavNode &node = (*nodes_.rbegin()->second);
-  double max_topo_dist = 30; //maximal topological distance for edge creation, this is to make sure that loops aren't always closed -> as the node poses are not globally consistent defined, this could otherwise result in false loop closures!
   if (getNumberOfNodes() < 2)
     return; //only continue if there are 2 or more nodes
 
-  addEdge(node, *nodes_[associated_node_]);  //create at least edge between the new and (previous) associated_node one!
+  addEdge(node, *nodes_[associated_node_],1);  //create at least edge between the new and (previous) associated_node one!
 
   updateNodeBGLDetails(node.getNodeID());
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
   for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++)
       {
-    if (right_iter->first < max_topo_dist) {
+    if (right_iter->first < loop_closure_max_topo_dist_) {
       if (right_iter->second == node.getNodeID()) //not compare to self!
         continue;
       else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
         continue;
       else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
         if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin())) //only create if directNavigable.
-          addEdge(node, *nodes_[right_iter->second]);
+          addEdge(node, *nodes_[right_iter->second],2);
       }
       //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
     }
@@ -704,9 +704,9 @@ double TopoNavMap::distanceToClosestNode()
  * \brief addEdge
  */
 void TopoNavMap::addEdge(const TopoNavNode &start_node,
-                         const TopoNavNode &end_node)
+                         const TopoNavNode &end_node, int type)
                          {
-  new TopoNavEdge(start_node, end_node, edges_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+  new TopoNavEdge(start_node, end_node, type, edges_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!
@@ -826,6 +826,7 @@ void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &ed
   edge_msg.cost, //cost
   *nodes_[edge_msg.start_node_id], //start_node
   *nodes_[edge_msg.end_node_id], //end_node
+  edge_msg.type,
   edges_, //edges std::map
   last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
   );
@@ -838,6 +839,7 @@ TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
   msg_edge.edge_id = edge->getEdgeID();
   msg_edge.last_updated = edge->getLastUpdatedTime();
   msg_edge.start_node_id = edge->getStartNode().getNodeID();
+  msg_edge.type = edge->getType();
   msg_edge.end_node_id = edge->getEndNode().getNodeID();
   msg_edge.cost = edge->getCost();
 

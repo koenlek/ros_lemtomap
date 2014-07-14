@@ -12,6 +12,7 @@ TopoNavEdge::TopoNavEdge(
                          double cost,
                          const TopoNavNode &start_node,
                          const TopoNavNode &end_node,
+                         int type,
                          EdgeMap &edges,
                          ros::WallTime &last_toponavmap_bgl_affecting_update) :
     edge_id_(edge_id),
@@ -20,6 +21,7 @@ TopoNavEdge::TopoNavEdge(
     cost_(cost),
     start_node_(start_node),
     end_node_(end_node),
+    type_(type),
     last_toponavmap_bgl_affecting_update_(last_toponavmap_bgl_affecting_update)
 
 {
@@ -30,10 +32,12 @@ TopoNavEdge::TopoNavEdge(
 TopoNavEdge::TopoNavEdge(
                          const TopoNavNode &start_node,
                          const TopoNavNode &end_node,
+                         int type,
                          EdgeMap &edges,
                          ros::WallTime &last_toponavmap_bgl_affecting_update) :
     start_node_(start_node),
     end_node_(end_node),
+    type_(type),
     edges_(edges),
     last_toponavmap_bgl_affecting_update_(last_toponavmap_bgl_affecting_update)
 

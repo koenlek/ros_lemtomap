@@ -20,12 +20,17 @@ public:
   typedef std::string EdgeID; //This can be used to help function signatures see the difference between a edge_id form any string
   typedef std::map<EdgeID, TopoNavEdge*> EdgeMap;
 
-  TopoNavEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, EdgeMap &edges, ros::WallTime &last_toponavmap_bgl_affecting_update);
+  TopoNavEdge(const TopoNavNode &start_node,
+              const TopoNavNode &end_node,
+              int type,
+              EdgeMap &edges,
+              ros::WallTime &last_toponavmap_bgl_affecting_update);
   TopoNavEdge(EdgeID edge_id,
               ros::Time last_updated,
               double cost,
               const TopoNavNode &start_node,
               const TopoNavNode &end_node,
+              int type,
               EdgeMap &edges,
               ros::WallTime &last_toponavmap_bgl_affecting_update
               ); // only to be used when loading map from message!
@@ -55,6 +60,10 @@ public:
   {
     return end_node_;
   }
+  const int getType() const
+    {
+      return type_;
+  }
 
   // set Methods
   /* There are no set methods: as node and edge ids are not to be changed,
@@ -68,6 +77,7 @@ private:
   EdgeID edge_id_; //edge ids are automatically generated and should never be changed!
   ros::Time last_updated_;
   double cost_;
+  int type_; // type 1 is odom, 2 is near_neighbour, 3 is loop_closure //TODO - p3 - turn into some nice enum instead of a plain int...
   const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
   const TopoNavNode &end_node_;
 

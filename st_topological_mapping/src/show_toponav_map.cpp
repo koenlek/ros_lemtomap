@@ -137,7 +137,15 @@ void ShowTopoNavMap::visualizeEdges()
   for (TopoNavEdge::EdgeMap::const_iterator it = edges_.begin(); it != edges_.end(); it++) //TODO - p3 - This visualizes every time for all edges! Maybe only updated edges should be "revizualized".
   {
     visualization_msgs::Marker edge_marker = edges_marker_template_;
-
+    if (it->second->getType()==1){
+      edge_marker.ns = "edges_odom";
+    } else if (it->second->getType()==2){
+      edge_marker.ns = "edges_near_neighbour";
+    } else if (it->second->getType()==3){
+      edge_marker.ns = "edges_loop_closure";
+    } else{
+      ROS_WARN("Uknown edge type received!");
+    }
     //TODO - p2 - maybe this is actually slow and I should just accept a random unique integer (implement like how NodeIDs are generated)
     std::string edge_id_string = it->second->getEdgeID();
     boost::replace_all(edge_id_string,"to","000"); //edgeID 1to2 will become 10002, needed because of int limitation
