@@ -230,10 +230,10 @@ SlamGMappingRolling::SlamGMappingRolling() :
     minimum_score_ = 0;
 
   if (!private_nh_.getParam("rolling_window_mode", rolling_window_mode_)) {
-    rolling_window_mode_ = 1; //KL TMP
+    rolling_window_mode_ = 1;
   }
   if (!private_nh_.getParam("rolling_window_delete_mode", rolling_window_delete_mode_)) {
-    rolling_window_delete_mode_ = 1; //KL TMP
+    rolling_window_delete_mode_ = 1;
   }
   if (!private_nh_.getParam("windowsize", windowsize_)) {
     windowsize_ = 0;
@@ -243,10 +243,10 @@ SlamGMappingRolling::SlamGMappingRolling() :
   }
   else {
     rolling_ = true;
-    xmin_ = -windowsize_ / 2;
-    ymin_ = -windowsize_ / 2;
-    xmax_ = windowsize_ / 2;
-    ymax_ = windowsize_ / 2;
+    xmin_ = -windowsize_ / 2.0;
+    ymin_ = -windowsize_ / 2.0;
+    xmax_ = windowsize_ / 2.0;
+    ymax_ = windowsize_ / 2.0;
   }
 
   if (!private_nh_.getParam("tf_delay", tf_delay_))
@@ -501,7 +501,6 @@ SlamGMappingRolling::initMapper(const sensor_msgs::LaserScan& scan)
   gsp_->setlasamplerange(lasamplerange_);
   gsp_->setlasamplestep(lasamplestep_);
   gsp_->setminimumScore(minimum_score_);
-  gsp_->setminimumScore(minimum_score_); //KL TMP
 
   // Call the sampling function once to set the seed.
   GMapping::sampleGaussian(1, time(NULL));
@@ -584,8 +583,6 @@ SlamGMappingRolling::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
     if (!initMapper(*scan)) //
       return;
     got_first_scan_ = true;
-    //ROS_INFO("best particle weight:%.4f",gsp_->getParticles()[gsp_->getBestParticleIndex()].weight); //TMP
-    //ROS_INFO("total particle weight:%.4f",gsp_->getParticles()[gsp_->getBestParticleIndex()].weightSum);  //TMP
   }
 
   GMapping::OrientedPoint odom_pose;
@@ -666,8 +663,8 @@ void SlamGMappingRolling::updateMap(const sensor_msgs::LaserScan& scan) {
     //ROS_INFO("smap.isInside(0.0,0.0) = %s",smap.isInside(0.0,0.0) ? "true":"false");
     //ROS_INFO("(before update) smap size (x,y)=(%d,%d)", smap.getMapSizeX(), smap.getMapSizeY());
     bool scan_out_of_smap;
-    int tmp_size_x = smap.getMapSizeX(); //KL TMP
-    int tmp_size_y = smap.getMapSizeY(); //KL TMP
+    int tmp_size_x = smap.getMapSizeX();
+    int tmp_size_y = smap.getMapSizeY();
     updateMapRollingMode1(scan, smap, scan_out_of_smap);
     //ROS_INFO("(after update) smap size (x,y)=(%d,%d)", smap.getMapSizeX(), smap.getMapSizeY());
     if (tmp_size_x != smap.getMapSizeX() || tmp_size_y != smap.getMapSizeY()) { //fixme - p3 - the matcher also resizes smaps if TNodes are outside of the window, so resizing only if new scan is outside window does only work in the start, then it turns into a semi-continuous updating rolling window
@@ -827,9 +824,12 @@ void SlamGMappingRolling::updateMapRollingMode1(const sensor_msgs::LaserScan& sc
     ROS_FATAL("For rolling window mode 1, delete mode 1 or 2 is required. This is currently not the case. Therefore, shutthing down st_gmapping_rolling now!");
     ros::shutdown();
   }
-  int tmp_size_x = smap.getMapSizeX(); //KL TMP
-  int tmp_size_y = smap.getMapSizeY(); //KL TMP
+  /**** Start of Resize Mode 1 specific ****/
+  // for checking scan_out_of_smap
+  int tmp_size_x = smap.getMapSizeX();
+  int tmp_size_y = smap.getMapSizeY();
   scan_out_of_smap = false;
+  /**** End of Resize Mode 1 specific ****/
 
   GMapping::ScanMatcher matcher;
   double* laser_angles = new double[scan.ranges.size()];
@@ -891,6 +891,7 @@ void SlamGMappingRolling::updateMapRollingMode1(const sensor_msgs::LaserScan& sc
     matcher.computeActiveArea(smap, n->pose, &((*n->reading)[0]));
     matcher.registerScan(smap, n->pose, &((*n->reading)[0]));
 
+    // check if the latest scan is out of the current smaps area
     if (n == best.node) {
       if (tmp_size_x != smap.getMapSizeX() || tmp_size_y != smap.getMapSizeY()) {
         scan_out_of_smap = true;
@@ -1011,7 +1012,6 @@ void SlamGMappingRolling::resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool in
 void SlamGMappingRolling::resizeMapMsg(const GMapping::ScanMatcherMap &smap) {
 // if the map has expanded, resize the map msg
   if (map_.map.info.width != (unsigned int)smap.getMapSizeX() || map_.map.info.height != (unsigned int)smap.getMapSizeY()) {
-    //if (map_.map.info.width != (unsigned int)gsp_->getParticles()[gsp_->getBestParticleIndex()].map.getMapSizeX() || map_.map.info.height != (unsigned int)gsp_->getParticles()[gsp_->getBestParticleIndex()].map.getMapSizeY()) { //KL TMP
     // NOTE: The results of ScanMatcherMap::getSize() are different from the parameters given to the constructor
     //       so we must obtain the bounding box in a different way
     GMapping::Point wmin = smap.map2world(GMapping::IntPoint(0, 0));
@@ -1088,11 +1088,11 @@ void SlamGMappingRolling::publishMapPX()
   int particle_index;
   if (publish_specific_map_ == particles_) {
     particle_index = gsp_->getBestParticleIndex();
-    ROS_INFO("Publishing map for best particle!");
+    ROS_DEBUG("Publishing map for best particle!");
   }
   else if (publish_specific_map_ == (particles_ + 1)) {
     particle_index = gsp_->getWorstParticleIndex();
-    ROS_INFO("Publishing map for worst particle!");
+    ROS_DEBUG("Publishing map for worst particle!");
   }
 
   const GMapping::GridSlamProcessor::Particle &current_p = gsp_->getParticles()[particle_index];
@@ -1355,10 +1355,10 @@ void SlamGMappingRolling::updateMapOrig(const sensor_msgs::LaserScan& scan)
   if (map_.map.info.width != (unsigned int)smap.getMapSizeX() || map_.map.info.height != (unsigned int)smap.getMapSizeY()) {
     if (rolling_) {
 
-      xmin_ = -windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
-      ymin_ = -windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
-      xmax_ = windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
-      ymax_ = windowsize_ / 2 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
+      xmin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+      ymin_ = -windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
+      xmax_ = windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.x;
+      ymax_ = windowsize_ / 2.0 + gsp_->getParticles()[gsp_->getBestParticleIndex()].pose.y;
 
       //update the map used for visualization
       smap.resize(xmin_, ymin_, xmax_, ymax_);
@@ -1407,15 +1407,15 @@ void SlamGMappingRolling::updateMapOrig(const sensor_msgs::LaserScan& scan)
   }
   got_map_ = true;
 
-//make sure to set the header information on the map
+  //make sure to set the header information on the map
   map_.map.header.stamp = ros::Time::now();
   map_.map.header.frame_id = tf_.resolve(map_frame_);
 
   sst_.publish(map_.map);
   sstm_.publish(map_.map.info);
 
-// KL Visualize and store all paths / maps
-  ROS_INFO("Best particle is %d", gsp_->getBestParticleIndex());
+  // KL Visualize and store all paths / maps
+  ROS_DEBUG("Best particle is %d", gsp_->getBestParticleIndex());
   if (publish_all_paths_ || publish_current_path_) {
     updateAllPaths();
     if (publish_all_paths_) {

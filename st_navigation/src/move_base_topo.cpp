@@ -25,7 +25,7 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
   predecessor_map_servcli_ = nh_.serviceClient<st_topological_mapping::GetPredecessorMap>("get_predecessor_map");
 
 #if BENCHMARKING
-  move_base_global_plan_sub_ = nh_.subscribe("/move_base/NavfnROS/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
+  move_base_global_plan_sub_ = nh_.subscribe("/move_base/GlobalPlanner/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
   benchmark_inprogress_ = false;
 #endif
 
@@ -49,7 +49,7 @@ void MoveBaseTopo::moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr& path)
       {
     ecl::TimeStamp time;
     time = stopwatch_.split();
-    ROS_INFO_STREAM("It took: " << time << "[s] from receiving topo nav goal (/move_base_topo/goal) to receiving a global metric path (/move_base/NavfnROS/plan)");
+    ROS_INFO_STREAM("It took: " << time << "[s] from receiving topo nav goal (/move_base_topo/goal) to receiving a global metric path (/move_base/GlobalPlanner/plan)");
     benchmark_inprogress_ = false;
   }
 }

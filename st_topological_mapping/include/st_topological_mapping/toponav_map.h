@@ -82,6 +82,7 @@ private:
 #if DEPRECATED
   ros::Subscriber scan_sub_;
   sensor_msgs::LaserScan laser_scan_; //stores robots current laser scans
+  ros::ServiceClient fakeplan_client_;
 #endif
   nav_msgs::OccupancyGrid local_costmap_;
 
@@ -101,7 +102,6 @@ private:
   tf::Transform tf_toponavmap2map_;
 
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
-  ros::ServiceClient fakeplan_client_;
 
   #if DEBUG
     int test_executed_;

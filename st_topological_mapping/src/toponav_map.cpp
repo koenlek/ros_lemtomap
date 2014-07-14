@@ -47,9 +47,9 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
     ROS_ERROR("The maximum distances between nodes was specified to be %.3fm, while the local costmap is %d x %dm. This is too small: cost lookups for edge creating have a high risk to become out of bounds", max_edge_length_, cm_height, cm_width);
 
   //Create subscribers/publishers
-  fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("move_base/NavfnROS/make_plan");
   local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
 #if DEPRECATED
+  fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("move_base/GlobalPlanner/make_plan");
   scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
 #endif
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
@@ -224,8 +224,7 @@ void TopoNavMap::updateToponavMapTransform()
 /*!
  * \brief Local Costmap Callback.
  */
-void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg)
-                            {
+void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg){
 
 #if DEBUG
   /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());

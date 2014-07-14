@@ -2,7 +2,7 @@
 
 <launch>	
 	<!-- Set navigation parameters -->
-	<arg name="nav_allow_unknown" default="false" /> <!-- for navfn, by defualt, it is true -->
+	<arg name="nav_allow_unknown" default="false" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
 	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
@@ -76,7 +76,7 @@
 	</include>-->
 
 	<!-- Navigation components -->
-	<include file="$(find st_navigation)/launch/move_base_dwa_local.launch">
+	<include file="$(find st_navigation)/launch/move_base.launch">
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>

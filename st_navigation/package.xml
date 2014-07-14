@@ -26,5 +26,6 @@
   <run_depend>st_topological_mapping</run_depend>
   <run_depend>move_base</run_depend>
   <run_depend>dwa_local_planner</run_depend>
+  <run_depend>global_planner</run_depend>
   
 </package>

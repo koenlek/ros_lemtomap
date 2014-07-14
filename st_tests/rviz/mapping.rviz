@@ -463,15 +463,15 @@ Visualization Manager:
           Class: rviz/Path
           Color: 25; 255; 0
           Enabled: true
-          Name: Global Path
-          Topic: /move_base/DWAPlannerROS/global_plan
+          Name: Global planner - Global path
+          Topic: /move_base/GlobalPlanner/plan
           Value: true
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
           Color: 255; 0; 0
           Enabled: true
-          Name: Local Path
+          Name: Local planner - Local path
           Topic: /move_base/DWAPlannerROS/local_plan
           Value: true
         - Alpha: 1
@@ -479,8 +479,8 @@ Visualization Manager:
           Class: rviz/Path
           Color: 85; 0; 255
           Enabled: true
-          Name: Planner Path
-          Topic: /move_base/NavfnROS/plan
+          Name: Local planner - Global Path
+          Topic: /move_base/DWAPlannerROS/global_plan
           Value: true
         - Alpha: 1
           Axes Length: 1
@@ -526,108 +526,29 @@ Visualization Manager:
     - Class: rviz/Group
       Displays:
         - Class: rviz/MarkerArray
-          Enabled: true
+          Enabled: false
           Marker Topic: /st_gmapping_rolling/all_paths
           Name: AllParticlePaths
           Namespaces:
-            path_particle0: true
-            path_particle1: true
-            path_particle10: true
-            path_particle11: true
-            path_particle12: true
-            path_particle13: true
-            path_particle14: true
-            path_particle15: true
-            path_particle16: true
-            path_particle17: true
-            path_particle18: true
-            path_particle19: true
-            path_particle2: true
-            path_particle20: true
-            path_particle21: true
-            path_particle22: true
-            path_particle23: true
-            path_particle24: true
-            path_particle25: true
-            path_particle26: true
-            path_particle27: true
-            path_particle28: true
-            path_particle29: true
-            path_particle3: true
-            path_particle30: true
-            path_particle31: true
-            path_particle32: true
-            path_particle33: true
-            path_particle34: true
-            path_particle35: true
-            path_particle36: true
-            path_particle37: true
-            path_particle38: true
-            path_particle39: true
-            path_particle4: true
-            path_particle40: true
-            path_particle41: true
-            path_particle42: true
-            path_particle43: true
-            path_particle44: true
-            path_particle45: true
-            path_particle46: true
-            path_particle47: true
-            path_particle48: true
-            path_particle49: true
-            path_particle5: true
-            path_particle50: true
-            path_particle51: true
-            path_particle52: true
-            path_particle53: true
-            path_particle54: true
-            path_particle55: true
-            path_particle56: true
-            path_particle57: true
-            path_particle58: true
-            path_particle59: true
-            path_particle6: true
-            path_particle60: true
-            path_particle61: true
-            path_particle62: true
-            path_particle63: true
-            path_particle64: true
-            path_particle65: true
-            path_particle66: true
-            path_particle67: true
-            path_particle68: true
-            path_particle69: true
-            path_particle7: true
-            path_particle70: true
-            path_particle71: true
-            path_particle72: true
-            path_particle73: true
-            path_particle74: true
-            path_particle75: true
-            path_particle76: true
-            path_particle77: true
-            path_particle78: true
-            path_particle79: true
-            path_particle8: true
-            path_particle9: true
+            {}
           Queue Size: 100
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
           Color: 25; 255; 0
-          Enabled: true
+          Enabled: false
           Name: CurrentParticlePath
           Topic: /st_gmapping_rolling/current_path
-          Value: true
+          Value: false
         - Alpha: 0.7
           Class: rviz/Map
           Color Scheme: map
           Draw Behind: false
-          Enabled: true
+          Enabled: false
           Name: MapPX
           Topic: /st_gmapping_rolling/map_px
-          Value: true
+          Value: false
       Enabled: true
       Name: GMapping
   Enabled: true
@@ -658,7 +579,7 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 28.0686
+      Scale: 32.1872
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 7.31896
