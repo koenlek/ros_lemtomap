@@ -3,6 +3,18 @@ Changelog for metapackage semantic_turtle
 
 -----------------------------------------
 
+0.4.0 (2014-07-16)
+------------------
+* Topological mapping now by default creates as much edges as allowed based on if the edge is navigable in the global costmap (adherring the max topological distance limit to limit the risky of faulty topological loop closures).
+* Fixed rolling window gmapping: it now truly forgets old measurements and resizes each particle's internal map.
+* Difference between odom edges and near neighbour edges.
+* Switched to `global_planner` as global planner, instead of `navfn`.
+* A lot of other tweaks, including the option to forbid the global planner to plan through unknown space.
+
+### Known issues ###
+* It will likely not run well in real life experiments, as local transform relies on perfect odometry...
+* Apart from that none, a lot of experiments are on the way, which will likely reveal some issues/bugs.
+
 0.3.0 (2014-06-22)
 ------------------
 * `st_gmapping_rolling` now supports setting the `minimumScore` to more than 0, limiting chattering/jumping of gmapping pose estimates in large open spaces.
