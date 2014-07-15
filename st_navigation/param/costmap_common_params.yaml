@@ -2,6 +2,7 @@ robot_base_frame: /base_footprint
 robot_radius: 0.20
 map_type: voxel
 publish_voxel_map: false #currently, false would be ok too...
+always_send_full_costmap: true #this way the full costmap is send every cycle to /move_base/{local|global}_costmap/costmap, instead of combining that with a costmap_updates topic
 
 inflation_layer: #http://wiki.ros.org/costmap_2d/hydro/inflation
   inflation_radius: 0.50 #default 0.55

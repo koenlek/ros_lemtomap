@@ -1,6 +1,6 @@
 <package>
   <name>st_gmapping_rolling</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <description>A rolling version of gmapping, forked from: https://github.com/ros-perception/slam_gmapping/
   </description>
   <author>Koen Lekkerkerker</author>

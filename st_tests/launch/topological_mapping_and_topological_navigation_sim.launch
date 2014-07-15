@@ -50,7 +50,7 @@
 		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
 		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-		<param name="max_edge_creation" value="false" /> <!-- default is true -->
+		<param name="max_edge_creation" value="true" /> <!-- default is true -->
 	</node>
 
 	<!-- Teleop -->

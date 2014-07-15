@@ -17,21 +17,18 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
     n_(n),
     max_edge_length_(2.5),
     new_node_distance_(1.0),
-    move_base_client_("move_base", true), // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
     associated_node_(-1),
     last_bgl_affecting_update_(ros::WallTime::now())
 {
   ros::NodeHandle private_nh("~");
   std::string scan_topic;
-  std::string local_costmap_topic;
-  std::string global_costmap_topic;
 
   // Parameters initialization
   private_nh.param("max_edge_creation", max_edge_creation_, bool(true));
   private_nh.param("scan_topic", scan_topic, std::string("scan"));
-  private_nh.param("local_costmap_topic", local_costmap_topic, std::string("move_base/local_costmap/costmap"));
-  private_nh.param("global_costmap_topic", global_costmap_topic, std::string("move_base/global_costmap/costmap"));
-  private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(30));
+  private_nh.param("local_costmap_topic", local_costmap_topic_, std::string("move_base/local_costmap/costmap"));
+  private_nh.param("global_costmap_topic", global_costmap_topic_, std::string("move_base/global_costmap/costmap"));
+  private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(100));
 
   // Set initial transform between map and toponav_map
   tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
@@ -40,26 +37,22 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   tf_toponavmap2map_.setRotation(q);
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), tf_listener_.resolve("map"), tf_listener_.resolve("toponav_map")));
 
-  // Check for local costmap dimensions
-  ROS_INFO("Waiting for move_base action server");
-  move_base_client_.waitForServer();
-  ROS_INFO("Waiting for move_base action server -- Finished");
-  int cm_height, cm_width, cm_min;
-  n_.param("move_base/local_costmap/height", cm_height, int(0));
-  n_.param("move_base/local_costmap/width", cm_width, int(0));
-  cm_min = std::min(cm_height, cm_width);
-  if (max_edge_length_ > cm_min / 2 - 0.3) // when new edges are created, begin and end need to be in local costmap. The robot is *approx.* in the middle of the local costmap. - 0.3 is to give it some play for safety as it is only approx. in the middle.
-    ROS_ERROR("The maximum distances between nodes was specified to be %.3fm, while the local costmap is %d x %dm. This is too small: cost lookups for edge creating have a high risk to become out of bounds", max_edge_length_, cm_height, cm_width);
-
   //Create subscribers/publishers
-  local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
+  local_costmap_sub_ = n_.subscribe(local_costmap_topic_, 1, &TopoNavMap::lcostmapCB, this);
   if (max_edge_creation_) { //only subscribe if needed (to decrease load)
-    global_costmap_sub_ = n_.subscribe(global_costmap_topic, 1, &TopoNavMap::gcostmapCB, this);
+    global_costmap_sub_ = n_.subscribe(global_costmap_topic_, 1, &TopoNavMap::gcostmapCB, this);
   }
+
 #if DEPRECATED
   fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("move_base/GlobalPlanner/make_plan");
   scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
+  private_nh.param("local_costmap_topic", local_costmap_updates_topic_, std::string("move_base/local_costmap/costmap_updates"));
+  private_nh.param("global_costmap_topic", global_costmap_updates_topic_, std::string("move_base/global_costmap/costmap_updates"));
+  map_metadata_sub_ = n_.subscribe("map_metadata", 1, &TopoNavMap::mapMetaDataCB, this);
+  local_costmap_updates_sub_ = n_.subscribe(local_costmap_updates_topic_, 1, &TopoNavMap::lcostmapUpdateCB, this);
+  global_costmap_updates_sub_ = n_.subscribe(global_costmap_updates_topic_, 1, &TopoNavMap::gcostmapUpdateCB, this);
 #endif
+
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
   asso_node_servserv_ = private_nh.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
   predecessor_map_servserv_ = private_nh.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
@@ -76,8 +69,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 #endif
 }
 
-TopoNavMap::~TopoNavMap()
-{
+TopoNavMap::~TopoNavMap() {
   while (edges_.size() > 0)
   {
     delete edges_.rbegin()->second;
@@ -86,9 +78,7 @@ TopoNavMap::~TopoNavMap()
   {
     delete nodes_.rbegin()->second;
   }
-  std::cerr
-  << "~TopoNavMap: Deleting object -> all TopoNavNodes and TopoNavEdges are destructed"
-      << std::endl;
+  std::cerr << "~TopoNavMap: Deleting object -> all TopoNavNodes and TopoNavEdges are destructed"<< std::endl;
 }
 
 /*!
@@ -106,8 +96,7 @@ void TopoNavMap::laserCB(const sensor_msgs::LaserScan::ConstPtr &msg)
  * \brief Get Associated Node Service, such that other ROS nodes can know what is the associated node.
  */
 bool TopoNavMap::associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::Request &req,
-                                     st_topological_mapping::GetAssociatedNode::Response &res)
-                                     {
+                                     st_topological_mapping::GetAssociatedNode::Response &res) {
   if (associated_node_ > 0)
       {
     res.asso_node_id = associated_node_;
@@ -121,8 +110,7 @@ bool TopoNavMap::associatedNodeSrvCB(st_topological_mapping::GetAssociatedNode::
  * \brief Get Predecessor Map Service, such that other ROS nodes can know what is the predessor map of a node.
  */
 bool TopoNavMap::predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
-                                     st_topological_mapping::GetPredecessorMap::Response &res)
-                                     {
+                                     st_topological_mapping::GetPredecessorMap::Response &res) {
   int source_node_id = req.source_node_id;
   updateNodeBGLDetails(source_node_id);
 
@@ -139,36 +127,7 @@ bool TopoNavMap::predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::
 /*!
  * \brief Find the node id that is currently associated with the robot. I.e. the node that the robot is currently at.
  */
-void TopoNavMap::updateAssociatedNode()
-{
-  //updateAssociatedNode_method1();
-  updateAssociatedNode_method2();
-
-}
-
-#if DEPRECATED
-void TopoNavMap::updateAssociatedNode_method1()
-{
-  double closest_dist = DBL_MAX;
-  double tentative_closest_dist;
-
-  //FIXME - p1 - This loop picks the closest node, not even taking into account blocking obstacles or e.g. the direction in which the robot should travel eventually.
-  ROS_WARN_ONCE("Currently (in this method: updateAssociatedNode_method1), the starting node is the closest node to robot, which could even go through walls. This method should be improved. This warning will only print once.");
-  for (TopoNavNode::NodeMap::iterator it = nodes_.begin(); it != nodes_.end(); it++)
-  {
-    tentative_closest_dist = calcDistance(*(it->second), robot_pose_tf_);
-    if (tentative_closest_dist < closest_dist)
-    {
-      closest_dist = tentative_closest_dist;
-      associated_node_ = it->second->getNodeID();
-    }
-  }
-  ROS_DEBUG("Associated Node ID=%d. Pose is x=%f, y=%f, theta=%f", associated_node_, robot_pose_tf_.getOrigin().x(), robot_pose_tf_.getOrigin().y(), tf::getYaw(robot_pose_tf_.getRotation()));
-}
-#endif
-
-void TopoNavMap::updateAssociatedNode_method2()
-{
+void TopoNavMap::updateAssociatedNode() {
   updateNodeBGLDetails(associated_node_);
   int associated_node_new = associated_node_;
   TopoNavNode::AdjacentNodes candidate_nodes = nodes_[associated_node_]->getAdjacentNodeIDs();
@@ -188,8 +147,7 @@ void TopoNavMap::updateAssociatedNode_method2()
 /*!
  * \brief ToponavMapTransform()
  */
-void TopoNavMap::updateToponavMapTransform()
-{
+void TopoNavMap::updateToponavMapTransform() {
 
   /*#if DEBUG
    if (ros::Time::now().toSec() > counter_*5){
@@ -233,15 +191,8 @@ void TopoNavMap::updateToponavMapTransform()
  * \brief Local Costmap Callback.
  */
 void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
-
-#if DEBUG
-  /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());
-   last_run_lcostmap_ = ros::Time::now();*/
-#endif
-
   ROS_DEBUG("Local Costmap Callback");
   local_costmap_ = *msg;
-  ROS_INFO("local_costmap_.data.size() = %lu", local_costmap_.data.size());
   poseMsgToTF(local_costmap_.info.origin, local_costmap_origin_tf_);
   br_.sendTransform(tf::StampedTransform(local_costmap_origin_tf_, ros::Time::now(), local_costmap_.header.frame_id, "local_costmap_origin"));
 }
@@ -250,22 +201,78 @@ void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
  * \brief Global Costmap Callback.
  */
 void TopoNavMap::gcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
-
-#if DEBUG
-  /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());
-   last_run_lcostmap_ = ros::Time::now();*/
-#endif
-
   ROS_DEBUG("Global Costmap Callback");
   global_costmap_ = *msg;
-  ROS_INFO("global_costmap_.data.size() = %lu", global_costmap_.data.size());
   poseMsgToTF(global_costmap_.info.origin, global_costmap_origin_tf_);
   br_.sendTransform(tf::StampedTransform(global_costmap_origin_tf_, ros::Time::now(), global_costmap_.header.frame_id, "global_costmap_origin"));
 }
 
+#if DEPRECATED
+void TopoNavMap::mapMetaDataCB(const nav_msgs::MapMetaData::ConstPtr &msg){
+  ROS_DEBUG("Map MetaData Callback");
+  map_metadata_ = *msg;
+  ROS_INFO("map origin = (x,y),(%.4f,%.4f)", map_metadata_.origin.position.x,map_metadata_.origin.position.y);
+}
+#endif
+
+#if DEPRECATED
+/*!
+ * \brief Local Costmap Updates Callback.
+ */
+void TopoNavMap::lcostmapUpdateCB(const map_msgs::OccupancyGridUpdate::ConstPtr &update) {
+  ROS_DEBUG("Local Costmap Update Callback");
+  if (update->x < 0 ||
+      update->y < 0 ||
+      local_costmap_.info.width < update->x + update->width ||
+      local_costmap_.info.height < update->y + update->height)
+          {
+    ROS_ERROR("Update area outside of original map area.");
+    return;
+  }
+  // Copy the incoming data into current_map_'s data.
+  for (size_t y = 0; y < update->height; y++)
+      {
+    memcpy(&local_costmap_.data[(update->y + y) * local_costmap_.info.width + update->x],
+           &update->data[y * update->width],
+           update->width);
+  }
+}
+#endif
+
+#if DEPRECATED
+/*!
+ * \brief Global Costmap Updates Callback.
+ */
+void TopoNavMap::gcostmapUpdateCB(const map_msgs::OccupancyGridUpdate::ConstPtr &update) {
+  /*
+   * A published nav_msgs::OccupancyGrid is actually not published as is. Instead ROS uses a (poorly documented)
+   * trick to reduce bandwidth used by map messages. It sends the grid map once, and then sends
+   * map_msgs::OccupancyGridUpdate msgs that need to be merged with this original one. In some cases
+   * a full new nav_msgs::OccupancyGrid is send again (probably is change is too big, or if map is resized,
+   * e.g. with a sliding window costmap). The way this merging is done was based on how rviz does it, see original code here:
+   * https://github.com/ros-visualization/rviz/blob/204d226d99e643a03f90dac0d32c559d5995efbc/src/rviz/default_plugin/map_display.cpp
+   */
+  ROS_DEBUG("Global Costmap Update Callback");
+  if (update->x < 0 ||
+      update->y < 0 ||
+      global_costmap_.info.width < update->x + update->width ||
+      global_costmap_.info.height < update->y + update->height)
+          {
+    ROS_ERROR("Update area outside of original map area.");
+    return;
+  }
+  // Copy the incoming data into current_map_'s data.
+  for (size_t y = 0; y < update->height; y++)
+      {
+    memcpy(&global_costmap_.data[(update->y + y) * global_costmap_.info.width + update->x],
+           &update->data[y * update->width],
+           update->width);
+  }
+}
+#endif
+
 #if DEBUG
-void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
-                               {
+void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg) {
   geometry_msgs::PoseStamped initialpose_previous;
   initialpose_previous = initialpose_;
   initialpose_.header = msg->header;
@@ -281,8 +288,7 @@ void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::C
 /*!
  * \brief Publish the Topological Navigation Map.
  */
-void TopoNavMap::publishTopoNavMap()
-{
+void TopoNavMap::publishTopoNavMap() {
   ROS_DEBUG("publishTopoNavMap");
   st_topological_mapping::TopologicalNavigationMap msg_map;
 
@@ -304,8 +310,7 @@ void TopoNavMap::publishTopoNavMap()
 /*!
  * \brief getCurrentPose
  */
-void TopoNavMap::updateRobotPose()
-{
+void TopoNavMap::updateRobotPose() {
   try
   {
     tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(2));
@@ -350,8 +355,7 @@ void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigat
 /*!
  * \brief updateMap
  */
-void TopoNavMap::updateMap()
-{
+void TopoNavMap::updateMap() {
 
 #if DEBUG
   /*
@@ -361,6 +365,7 @@ void TopoNavMap::updateMap()
    last_run_update_max_ = (ros::Time::now()-last_run_update_).toSec();
    */
 #endif
+
   updateRobotPose();
 
   updateToponavMapTransform();
@@ -413,8 +418,7 @@ void TopoNavMap::updateMap()
 /*!
  * \brief checkCreateNewNode
  */
-bool TopoNavMap::checkCreateNode()
-{
+bool TopoNavMap::checkCreateNode() {
   int number_of_nodes = getNumberOfNodes();
   int area_id = 1; //FIXME - p2 - area_id is always 1!
   bool create_node = false;
@@ -453,8 +457,7 @@ bool TopoNavMap::checkCreateNode()
 /*!
  * \brief checkCreateEdges: should only be used for new nodes where the robot is currently at (as it needs a sufficient large costmap around the node)
  */
-void TopoNavMap::checkCreateEdges()
-{
+void TopoNavMap::checkCreateEdges() {
   TopoNavNode &node = (*nodes_.rbegin()->second);
   if (getNumberOfNodes() < 2)
     return; //only continue if there are 2 or more nodes
@@ -465,7 +468,7 @@ void TopoNavMap::checkCreateEdges()
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
   if (max_edge_creation_) {
-    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++){
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++) {
       if (right_iter->first < loop_closure_max_topo_dist_) {
         if (right_iter->second == node.getNodeID()) //not compare to self!
           continue;
@@ -482,7 +485,7 @@ void TopoNavMap::checkCreateEdges()
     }
   }
   else {
-    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++){
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++) {
       if (right_iter->first < loop_closure_max_topo_dist_) {
         if (right_iter->second == node.getNodeID()) //not compare to self!
           continue;
@@ -509,8 +512,7 @@ void TopoNavMap::checkCreateEdges()
  * \param length (output) The length of the path in meters
  * \return false if no path can be found
  */
-bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length)
-{
+bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, double &length) {
   bool valid_plan = false;
   length = 0;
 
@@ -653,7 +655,7 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
   int line_cost = 0.0;
   int point_cost = -1.0;
 
-  for (base_local_planner::LineIterator line(cell1_i, cell1_j, cell2_i, cell2_j); line.isValid(); line.advance()){
+  for (base_local_planner::LineIterator line(cell1_i, cell1_j, cell2_i, cell2_j); line.isValid(); line.advance()) {
     //point_cost = (*costmap_matrix)(line.getX(), line.getY()); //Score the current point
     point_cost = costmap->data[MAP_IDX(costmap->info.width, line.getY(), line.getX())];
 
@@ -694,7 +696,6 @@ bool TopoNavMap::isInCostmap(double x, double y, bool global) {
 
   if (x < xmax && x > xmin && y < ymax && y > ymin)
     is_inside = true;
-  ROS_INFO("is_inside = %s",is_inside ? "true":"false");
   return is_inside;
 }
 
@@ -725,8 +726,7 @@ bool TopoNavMap::checkIsNewDoor() {
 /*!
  * \brief distanceToClosestNode
  */
-double TopoNavMap::distanceToClosestNode()
-{
+double TopoNavMap::distanceToClosestNode() {
 // TODO - p3 - This method compares to all nodes -> scales poorly eventually!
 // One idea to make it scale slightly better:bool anyNodeCloserThen(max_dist), which return false if there isnt any (full search space needs to be searched) or returns true if there is (usually only first part of search space needs to be searched, if you start at end of nodes_ std::map)
   double dist, minimum_dist;
@@ -762,16 +762,14 @@ double TopoNavMap::distanceToClosestNode()
  * \brief addEdge
  */
 void TopoNavMap::addEdge(const TopoNavNode &start_node,
-                         const TopoNavNode &end_node, int type)
-                         {
+                         const TopoNavNode &end_node, int type) {
   new TopoNavEdge(start_node, end_node, type, edges_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!
  * \brief addNode
  */
-void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id)
-                         {
+void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
   new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 #if LTF_PERFECTODOM
   tf::StampedTransform perfectodom_correction_stamped;
@@ -794,26 +792,22 @@ void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id)
 /*!
  * \brief deleteEdge
  */
-void TopoNavMap::deleteEdge(TopoNavEdge::EdgeID edge_id)
-                            {
+void TopoNavMap::deleteEdge(TopoNavEdge::EdgeID edge_id) {
   deleteEdge(*edges_[edge_id]);
 
 }
-void TopoNavMap::deleteEdge(TopoNavEdge &edge)
-                            {
+void TopoNavMap::deleteEdge(TopoNavEdge &edge) {
   delete &edge;
 }
 
 /*!
  * \brief deleteNode
  */
-void TopoNavMap::deleteNode(TopoNavNode::NodeID node_id)
-                            {
+void TopoNavMap::deleteNode(TopoNavNode::NodeID node_id) {
   deleteNode(*nodes_[node_id]);
 }
 
-void TopoNavMap::deleteNode(TopoNavNode &node)
-                            {
+void TopoNavMap::deleteNode(TopoNavNode &node) {
   updateNodeBGLDetails(node.getNodeID()); //to make sure connected_edges are up to date!
   TopoNavNode::AdjacentEdges connected_edges = node.getAdjacentEdgeIDs();
   for (int i = 0; i < connected_edges.size(); i++)
@@ -826,13 +820,11 @@ void TopoNavMap::deleteNode(TopoNavNode &node)
   delete &node;
 }
 
-void TopoNavMap::updateNodeBGLDetails(TopoNavNode::NodeID node_id)
-                                      {
+void TopoNavMap::updateNodeBGLDetails(TopoNavNode::NodeID node_id) {
   st_bgl::updateNodeDetails(nodes_, edges_, node_id, last_bgl_affecting_update_);
 }
 
-void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg)
-                                {
+void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg) {
   tf::Pose tfpose;
   poseMsgToTF(node_msg.pose, tfpose);
 
@@ -848,8 +840,7 @@ void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &no
   );
 }
 
-void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &edge_msg)
-                                {
+void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &edge_msg) {
   new TopoNavEdge(edge_msg.edge_id, //edge_id
   edge_msg.last_updated, //last_updated
   edge_msg.cost, //cost
@@ -861,9 +852,7 @@ void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &ed
                   );
 }
 st_topological_mapping::TopoNavEdgeMsg
-TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
-                         //not const, as getCost can cause update of the cost!
-                         {
+TopoNavMap::edgeToRosMsg(TopoNavEdge *edge) { //not const, as getCost can cause update of the cost!
   st_topological_mapping::TopoNavEdgeMsg msg_edge;
   msg_edge.edge_id = edge->getEdgeID();
   msg_edge.last_updated = edge->getLastUpdatedTime();
@@ -875,8 +864,7 @@ TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)
   return msg_edge;
 }
 
-st_topological_mapping::TopoNavNodeMsg TopoNavMap::nodeToRosMsg(const TopoNavNode *node)
-                                                                {
+st_topological_mapping::TopoNavNodeMsg TopoNavMap::nodeToRosMsg(const TopoNavNode *node) {
   st_topological_mapping::TopoNavNodeMsg msg_node;
   msg_node.node_id = node->getNodeID();
   msg_node.last_updated = node->getLastUpdatedTime();

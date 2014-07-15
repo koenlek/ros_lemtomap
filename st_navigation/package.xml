@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>st_navigation</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <description>The st_navigation package</description>
   <maintainer email="koenlek@todo.todo">koenlek</maintainer>
   <license>GPL</license>

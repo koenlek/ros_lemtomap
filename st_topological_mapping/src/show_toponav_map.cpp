@@ -142,6 +142,8 @@ void ShowTopoNavMap::visualizeEdges()
       edge_marker.ns = "edges_odom";
     } else if (it->second->getType()==2){
       edge_marker.ns = "edges_near_neighbour";
+      edge_marker.scale.x = 0.03;
+      edge_marker.color.a = 0.3;
     } else if (it->second->getType()==3){
       edge_marker.ns = "edges_loop_closure";
     } else{

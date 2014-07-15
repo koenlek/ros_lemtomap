@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>st_gazebo_perfect_map_generator</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <description>The st_gazebo_perfect_map_generator package</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>GPL</license>

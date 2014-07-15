@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>st_description</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <description>The st_description package</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>GPL</license>

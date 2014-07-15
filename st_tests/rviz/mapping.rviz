@@ -7,7 +7,9 @@ Panels:
         - /Global Options1
         - /TF1/Tree1
         - /Sensors1/LaserScan Hokuyo1
+        - /Nav1
         - /TopoNavMap MarkerArray1
+        - /TopoNavMap MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 332
   - Class: rviz/Selection
@@ -515,7 +517,7 @@ Visualization Manager:
       Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        edges_near_neighbour: true
+        edges_near_neighbour: false
         edges_odom: true
         nodes: true
       Queue Size: 100
@@ -576,11 +578,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 22.1949
+      Scale: 23.1193
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 3.96349
-      Y: 0.917405
+      X: 7.15958
+      Y: -0.970315
     Saved: ~
 Window Geometry:
   Displays:
