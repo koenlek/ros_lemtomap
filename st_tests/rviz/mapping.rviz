@@ -5,13 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Map1/Position1
-        - /Map1/Orientation1
         - /TF1/Tree1
         - /Sensors1/LaserScan Hokuyo1
-        - /Nav1
-        - /TopoNavMap MarkerArray1/Namespaces1
-        - /GMapping1
+        - /TopoNavMap MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 332
   - Class: rviz/Selection
@@ -516,10 +512,11 @@ Visualization Manager:
       Name: Nav
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /toponavmap_markerarray
+      Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        edges: true
+        edges_near_neighbour: true
+        edges_odom: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -570,7 +567,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.551
+      Angle: 1.571
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
@@ -579,11 +576,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 32.1872
+      Scale: 22.1949
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 7.31896
-      Y: 0.731676
+      X: 3.96349
+      Y: 0.917405
     Saved: ~
 Window Geometry:
   Displays:

@@ -13,11 +13,12 @@ ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &n
     nodes_(nodes), edges_(edges), associated_node_(associated_node)
 {
   ROS_DEBUG("ShowTopoNavMap object is constructed");
+  ros::NodeHandle private_nh("~");
 
   std::string movebasetopo_feedback_topic = "move_base_topo/feedback";
   movebasetopo_feedback_sub_ = n_.subscribe(movebasetopo_feedback_topic, 1, &ShowTopoNavMap::moveBaseTopoFeedbackCB, this);
 
-  markers_pub_ = n_.advertise<visualization_msgs::MarkerArray>("toponavmap_markerarray", 1, true);
+  markers_pub_ = private_nh.advertise<visualization_msgs::MarkerArray>("toponavmap_markerarray", 1, true);
 
   // Set all general marker properties to a marker
   nodes_marker_template_.header.frame_id = "toponav_map";

@@ -6,6 +6,8 @@
 
 #include <st_topological_mapping/toponav_map.h>
 
+#define MAP_IDX(sx, i, j) ((sx) * (j) + (i)) //to convert a map matrix coordinate to the index value in a map msg
+
 //TODO - p2 - In general, the system should overall switch from normal poses, transforms, etc. to stamped poses, transforms, etc. Transforms are now manually programmed properly, but using stamped it is easier to keep track of in what frame a pose should be considered and some ros functions can automatically cast it to the right frames (e.g. move_base_goals are automatically interpreted in the required frame, you can pass it in any...).
 
 /*!
@@ -13,7 +15,6 @@
  */
 TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
     n_(n),
-    costmap_lastupdate_seq_(0),
     max_edge_length_(2.5),
     new_node_distance_(1.0),
     move_base_client_("move_base", true), // this way, TopoNavMap is aware of the NodeHandle of this ROS node, just as ShowTopoNavMap will be...
@@ -23,10 +24,13 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   ros::NodeHandle private_nh("~");
   std::string scan_topic;
   std::string local_costmap_topic;
+  std::string global_costmap_topic;
 
   // Parameters initialization
+  private_nh.param("max_edge_creation", max_edge_creation_, bool(true));
   private_nh.param("scan_topic", scan_topic, std::string("scan"));
   private_nh.param("local_costmap_topic", local_costmap_topic, std::string("move_base/local_costmap/costmap"));
+  private_nh.param("global_costmap_topic", global_costmap_topic, std::string("move_base/global_costmap/costmap"));
   private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(30));
 
   // Set initial transform between map and toponav_map
@@ -49,13 +53,16 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 
   //Create subscribers/publishers
   local_costmap_sub_ = n_.subscribe(local_costmap_topic, 1, &TopoNavMap::lcostmapCB, this);
+  if (max_edge_creation_) { //only subscribe if needed (to decrease load)
+    global_costmap_sub_ = n_.subscribe(global_costmap_topic, 1, &TopoNavMap::gcostmapCB, this);
+  }
 #if DEPRECATED
   fakeplan_client_ = n_.serviceClient<nav_msgs::GetPlan>("move_base/GlobalPlanner/make_plan");
   scan_sub_ = n_.subscribe(scan_topic, 1, &TopoNavMap::laserCB, this);
 #endif
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
-  asso_node_servserv_ = n_.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
-  predecessor_map_servserv_ = n_.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
+  asso_node_servserv_ = private_nh.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
+  predecessor_map_servserv_ = private_nh.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
 
   //update the map one time, at construction. This will create the first map node.
   updateMap();
@@ -225,7 +232,7 @@ void TopoNavMap::updateToponavMapTransform()
 /*!
  * \brief Local Costmap Callback.
  */
-void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg){
+void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
 
 #if DEBUG
   /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());
@@ -234,8 +241,26 @@ void TopoNavMap::lcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg){
 
   ROS_DEBUG("Local Costmap Callback");
   local_costmap_ = *msg;
+  ROS_INFO("local_costmap_.data.size() = %lu", local_costmap_.data.size());
   poseMsgToTF(local_costmap_.info.origin, local_costmap_origin_tf_);
   br_.sendTransform(tf::StampedTransform(local_costmap_origin_tf_, ros::Time::now(), local_costmap_.header.frame_id, "local_costmap_origin"));
+}
+
+/*!
+ * \brief Global Costmap Callback.
+ */
+void TopoNavMap::gcostmapCB(const nav_msgs::OccupancyGrid::ConstPtr &msg) {
+
+#if DEBUG
+  /*ROS_INFO("Last lcostmapCB cycle took %.4f seconds",(ros::Time::now()-last_run_lcostmap_).toSec());
+   last_run_lcostmap_ = ros::Time::now();*/
+#endif
+
+  ROS_DEBUG("Global Costmap Callback");
+  global_costmap_ = *msg;
+  ROS_INFO("global_costmap_.data.size() = %lu", global_costmap_.data.size());
+  poseMsgToTF(global_costmap_.info.origin, global_costmap_origin_tf_);
+  br_.sendTransform(tf::StampedTransform(global_costmap_origin_tf_, ros::Time::now(), global_costmap_.header.frame_id, "global_costmap_origin"));
 }
 
 #if DEBUG
@@ -249,7 +274,7 @@ void TopoNavMap::initialposeCB(const geometry_msgs::PoseWithCovarianceStamped::C
   pointMsgToTF(initialpose_.pose.position, point1);
   pointMsgToTF(initialpose_previous.pose.position, point2);
 
-  directNavigable(point1, point2);
+  directNavigable(point1, point2, false);
 }
 #endif
 
@@ -302,8 +327,7 @@ void TopoNavMap::updateRobotPose()
 /*!
  * \brief loadMapFromMsg
  */
-void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg)
-                                {
+void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg) {
   nodes_.clear();
   edges_.clear();
 
@@ -435,26 +459,44 @@ void TopoNavMap::checkCreateEdges()
   if (getNumberOfNodes() < 2)
     return; //only continue if there are 2 or more nodes
 
-  addEdge(node, *nodes_[associated_node_],1);  //create at least edge between the new and (previous) associated_node one!
+  addEdge(node, *nodes_[associated_node_], 1);  //create at least edge between the new and (previous) associated_node one!
 
   updateNodeBGLDetails(node.getNodeID());
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
-  for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++)
-      {
-    if (right_iter->first < loop_closure_max_topo_dist_) {
-      if (right_iter->second == node.getNodeID()) //not compare to self!
-        continue;
-      else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
-        continue;
-      else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
-        if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin())) //only create if directNavigable.
-          addEdge(node, *nodes_[right_iter->second],2);
+  if (max_edge_creation_) {
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++){
+      if (right_iter->first < loop_closure_max_topo_dist_) {
+        if (right_iter->second == node.getNodeID()) //not compare to self!
+          continue;
+        else if (!isInCostmap(right_iter->second, true)) //dont check if the node is outside of the area covered by de occupancy grid map
+          continue;
+        else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
+          if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), true)) //only create if directNavigable.
+            addEdge(node, *nodes_[right_iter->second], 2);
+        }
+        //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
       }
-      //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
+      else
+        break; //as the right version of the bimap is ordered by topo distance, we can break as soon as we have pass max_topo_dist
     }
-    else
-      break; //as the right version of the bimap is ordered by topo distance, we can break as soon as we have pass max_topo_dist
+  }
+  else {
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++){
+      if (right_iter->first < loop_closure_max_topo_dist_) {
+        if (right_iter->second == node.getNodeID()) //not compare to self!
+          continue;
+        else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
+          continue;
+        else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
+          if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), false)) //only create if directNavigable.
+            addEdge(node, *nodes_[right_iter->second], 2);
+        }
+        //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
+      }
+      else
+        break; //as the right version of the bimap is ordered by topo distance, we can break as soon as we have pass max_topo_dist
+    }
   }
   return;
 }
@@ -514,16 +556,14 @@ bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, do
 /*!
  * \brief directNavigable
  */
-const bool TopoNavMap::directNavigable(const tf::Point &point1,
-                                       const tf::Point &point2)
-                                       {
+const bool TopoNavMap::directNavigable(const tf::Point &point1, const tf::Point &point2, bool global) {
   bool navigable = false;
 
   //Check if the local_costmap has changed since last run, if so, update it
-  updateLCostmapMatrix();
+  //updateCostmapMatrix(global);
 
   int line_cost;
-  line_cost = getCMLineCost(point1, point2);
+  line_cost = getCMLineCost(point1, point2, global);
   ROS_DEBUG("Straight line in toponav_map from (x1,y1)=(%.4f,%.4f) to (x2,y2)=(%.4f,%.4f) has cost: %d",
             point1.getX(),
             point1.getY(),
@@ -539,51 +579,34 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1,
   return navigable;
 }
 
-/**\brief updates the local costmap matrix (in occupancy grid map msgs valuation).
- */
-void TopoNavMap::updateLCostmapMatrix()
-{
-  if (local_costmap_.header.seq > costmap_lastupdate_seq_)
-      { //only update the matrix if a newer version of the costmap has been published
-        //set lastupdate to the current message
-    costmap_lastupdate_seq_ = local_costmap_.header.seq;
-
-    int costmap_height_c, costmap_width_c;      //_c for cells
-
-    costmap_height_c = local_costmap_.info.height;
-    costmap_width_c = local_costmap_.info.width;
-
-    // Create the costmap as a matrix. Cost goes from 0 (free), to 100 (obstacle). -1 would be uknown, but I think it is not used for costmaps, only normal gridmaps...
-    costmap_matrix_.resize(costmap_height_c, costmap_width_c);
-    for (int i = 0; i < costmap_height_c; i++)
-        {
-      for (int j = 0; j < costmap_width_c; j++)
-          {
-        costmap_matrix_(i, j) = local_costmap_.data[i * costmap_width_c + j];
-      }
-    }
-  }
-}
-
-/**\brief turn a /map tf::Point into a cell of the local costmap
+/**\brief turn a /map tf::Point into a cell of the local or global costmap
  * \param map_coordinate The coordiante in the /map
- * \param cell_x (output) The girdcell coordinate x
- * \param cell_y (output) The girdcell coordinate y
+ * \param cell_x (output) The gridcell coordinate x
+ * \param cell_y (output) The gridcell coordinate y
  * \return N/A
  */
-bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j) const
-                                      {
-  // Calculate a Transform from map coordinates to costmap origin coordinates (which is at costmap_matrix_(0,0))
+bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell_i, int &cell_j, bool global) const {
+  // create aliases
+  const nav_msgs::OccupancyGrid *costmap;
+  std::string costmap_origin;
+  if (global) {
+    costmap = &global_costmap_;
+    costmap_origin = "global_costmap_origin";
+  }
+  else {
+    costmap = &local_costmap_;
+    costmap_origin = "local_costmap_origin";
+  }
+
   bool validpoint = true;
-  std::string costmap_frame_id;      //global frame as specified in move_base local costmap params
-  costmap_frame_id = local_costmap_.header.frame_id;
+  std::string costmap_frame_id = costmap->header.frame_id; //global frame as specified in move_base local/global costmap params
 
   tf::Stamped<tf::Point> map_coordinate_stamped(map_coordinate, ros::Time(0), "map");
   tf::Stamped<tf::Point> map_coordinate_incostmap_origin;
   try
   {
-    tf_listener_.waitForTransform("local_costmap_origin", "map", ros::Time(0), ros::Duration(2.0)); //not necessary
-    tf_listener_.transformPoint("local_costmap_origin", map_coordinate_stamped, map_coordinate_incostmap_origin);
+    tf_listener_.waitForTransform(costmap_origin, "map", ros::Time(0), ros::Duration(2.0)); //not necessary
+    tf_listener_.transformPoint(costmap_origin, map_coordinate_stamped, map_coordinate_incostmap_origin);
   }
   catch (tf::TransformException &ex)
   {
@@ -591,10 +614,10 @@ bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
   }
   ROS_DEBUG("map_coordinate_incostmap_origin x=%.4f , y=%.4f", map_coordinate_incostmap_origin.getX(), map_coordinate_incostmap_origin.getY());
 
-  cell_i = floor(map_coordinate_incostmap_origin.getY() / local_costmap_.info.resolution); // i is row, i.e. y
-  cell_j = floor(map_coordinate_incostmap_origin.getX() / local_costmap_.info.resolution); // j is column, i.e. x
+  cell_i = floor(map_coordinate_incostmap_origin.getY() / costmap->info.resolution); // i is row, i.e. y
+  cell_j = floor(map_coordinate_incostmap_origin.getX() / costmap->info.resolution); // j is column, i.e. x
 
-  if (cell_i < 0 || cell_j < 0 || cell_i >= local_costmap_.info.height || cell_j >= local_costmap_.info.width)
+  if (cell_i < 0 || cell_j < 0 || cell_i >= costmap->info.height || cell_j >= costmap->info.width)
       {
     ROS_ERROR("mapPoint2costmapCell: Index out of bounds!");
     validpoint = false;
@@ -607,26 +630,32 @@ bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
  * \param point2 end point as a coordinate in /map
  * \return cost - 0 is no obstacles, 100 is blocking obstacle. Anything in between is a degree of blocking...
  */
-int TopoNavMap::getCMLineCost(const tf::Point &point1, const tf::Point &point2) const
-                              {
+int TopoNavMap::getCMLineCost(const tf::Point &point1, const tf::Point &point2, bool global) const {
   int cell1_i, cell1_j, cell2_i, cell2_j;
-  if (mapPoint2costmapCell(point1, cell1_i, cell1_j) && mapPoint2costmapCell(point2, cell2_i, cell2_j))
-    return getCMLineCost(cell1_i, cell1_j, cell2_i, cell2_j);
+  if (mapPoint2costmapCell(point1, cell1_i, cell1_j, global) && mapPoint2costmapCell(point2, cell2_i, cell2_j, global))
+    return getCMLineCost(cell1_i, cell1_j, cell2_i, cell2_j, global);
   else
     return INT_MAX;
 }
 
 /** \brief getCMLineCost: Find the max. cost between two points */
-int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int &cell2_i, const int &cell2_j) const
-                              {
+int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int &cell2_i, const int &cell2_j, bool global) const {
+  // create aliases
+  const nav_msgs::OccupancyGrid *costmap;
+  if (global) {
+    costmap = &global_costmap_;
+  }
+  else {
+    costmap = &local_costmap_;
+  }
   // This code was largely based on the CostmapModel::lineCost function
   // Defined here: http://docs.ros.org/hydro/api/base_local_planner/html/costmap__model_8cpp_source.html
   int line_cost = 0.0;
   int point_cost = -1.0;
 
-  for (base_local_planner::LineIterator line(cell1_i, cell1_j, cell2_i, cell2_j); line.isValid(); line.advance())
-      {
-    point_cost = costmap_matrix_(line.getX(), line.getY()); //Score the current point
+  for (base_local_planner::LineIterator line(cell1_i, cell1_j, cell2_i, cell2_j); line.isValid(); line.advance()){
+    //point_cost = (*costmap_matrix)(line.getX(), line.getY()); //Score the current point
+    point_cost = costmap->data[MAP_IDX(costmap->info.width, line.getY(), line.getX())];
 
     if (point_cost < 0)
       return -1;
@@ -634,15 +663,45 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
     if (line_cost < point_cost)
       line_cost = point_cost;
   }
-
   return line_cost;
+}
+
+/*!
+ * \brief isInMap
+ */
+bool TopoNavMap::isInCostmap(TopoNavNode::NodeID nodeid, bool global) {
+  double x, y;
+  x = nodes_[nodeid]->getPoseInMap(tf_toponavmap2map_).getOrigin().getX();
+  y = nodes_[nodeid]->getPoseInMap(tf_toponavmap2map_).getOrigin().getY();
+  return isInCostmap(x, y, global);
+}
+bool TopoNavMap::isInCostmap(double x, double y, bool global) {
+  // create aliases
+  const nav_msgs::OccupancyGrid *costmap;
+  if (global) {
+    costmap = &global_costmap_;
+  }
+  else {
+    costmap = &local_costmap_;
+  }
+  // check if it is inside
+  double xmin, xmax, ymin, ymax;
+  bool is_inside = false;
+  xmin = costmap->info.origin.position.x;
+  ymin = costmap->info.origin.position.y;
+  xmax = costmap->info.origin.position.x + costmap->info.width * costmap->info.resolution;
+  ymax = costmap->info.origin.position.y + costmap->info.height * costmap->info.resolution;
+
+  if (x < xmax && x > xmin && y < ymax && y > ymin)
+    is_inside = true;
+  ROS_INFO("is_inside = %s",is_inside ? "true":"false");
+  return is_inside;
 }
 
 /*!
  * \brief edgeExists
  */
-const bool TopoNavMap::edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const
-                                  {
+const bool TopoNavMap::edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const {
   std::string edge_id;
   if (nodeid1 < nodeid2) {
     edge_id = boost::lexical_cast<std::string>(nodeid1) + "to" + boost::lexical_cast<std::string>(nodeid2);
@@ -656,8 +715,7 @@ const bool TopoNavMap::edgeExists(const TopoNavNode::NodeID &nodeid1, const Topo
 /*!
  * \brief checkIsNewDoor
  */
-bool TopoNavMap::checkIsNewDoor()
-{
+bool TopoNavMap::checkIsNewDoor() {
 // TODO - p3 - write this method
   ROS_WARN_ONCE(
                 "Detecting/creating Doors is not yet implemented. This message will only print once.");
@@ -773,35 +831,6 @@ void TopoNavMap::updateNodeBGLDetails(TopoNavNode::NodeID node_id)
   st_bgl::updateNodeDetails(nodes_, edges_, node_id, last_bgl_affecting_update_);
 }
 
-#if DEPRECATED
-void TopoNavMap::deleteNode_old(TopoNavNode &node)
-{
-
-  TopoNavEdge::EdgeMap connected_edges = connectedEdges(node);
-  for (TopoNavEdge::EdgeMap::iterator it = connected_edges.begin(); it != connected_edges.end(); it++)
-  {
-    deleteEdge((*it->second));
-  }
-  delete &node;
-}
-#endif
-
-#if DEPRECATED
-TopoNavEdge::EdgeMap TopoNavMap::connectedEdges(const TopoNavNode &node) const
-{ //TODO - p3 - scales poorly: all edges are checked!
-  TopoNavEdge::EdgeMap connected_edges;
-  for (TopoNavEdge::EdgeMap::const_iterator it = edges_.begin(); it != edges_.end(); it++)
-  {
-    if (it->second->getStartNode().getNodeID() == node.getNodeID()
-        || it->second->getEndNode().getNodeID() == node.getNodeID())
-    {
-      connected_edges[it->second->getEdgeID()] = (it->second);
-    }
-  }
-  return connected_edges;
-}
-#endif
-
 void TopoNavMap::nodeFromRosMsg(const st_topological_mapping::TopoNavNodeMsg &node_msg)
                                 {
   tf::Pose tfpose;
@@ -827,9 +856,9 @@ void TopoNavMap::edgeFromRosMsg(const st_topological_mapping::TopoNavEdgeMsg &ed
   *nodes_[edge_msg.start_node_id], //start_node
   *nodes_[edge_msg.end_node_id], //end_node
   edge_msg.type,
-  edges_, //edges std::map
-  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
-  );
+                  edges_, //edges std::map
+                  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
+                  );
 }
 st_topological_mapping::TopoNavEdgeMsg
 TopoNavMap::edgeToRosMsg(TopoNavEdge *edge)

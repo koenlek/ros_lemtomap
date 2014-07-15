@@ -2,7 +2,7 @@
 
 <launch>	
 	<!-- Set navigation parameters -->
-	<arg name="nav_allow_unknown" default="false" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
+	<arg name="nav_allow_unknown" default="true" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
 	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
@@ -50,6 +50,7 @@
 		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
 		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
+		<param name="max_edge_creation" value="false" /> <!-- default is true -->
 	</node>
 
 	<!-- Teleop -->

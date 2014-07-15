@@ -21,11 +21,11 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
 
   toponav_map_topic_ = "topological_navigation_mapper/topological_navigation_map";
   toponavmap_sub_ = nh_.subscribe(toponav_map_topic_, 1, &MoveBaseTopo::toponavmapCB, this);
-  asso_node_servcli_ = nh_.serviceClient<st_topological_mapping::GetAssociatedNode>("get_associated_node");
-  predecessor_map_servcli_ = nh_.serviceClient<st_topological_mapping::GetPredecessorMap>("get_predecessor_map");
+  asso_node_servcli_ = nh_.serviceClient<st_topological_mapping::GetAssociatedNode>("topological_navigation_mapper/get_associated_node");
+  predecessor_map_servcli_ = nh_.serviceClient<st_topological_mapping::GetPredecessorMap>("topological_navigation_mapper/get_predecessor_map");
 
 #if BENCHMARKING
-  move_base_global_plan_sub_ = nh_.subscribe("/move_base/GlobalPlanner/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
+  move_base_global_plan_sub_ = nh_.subscribe("move_base/GlobalPlanner/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
   benchmark_inprogress_ = false;
 #endif
 
