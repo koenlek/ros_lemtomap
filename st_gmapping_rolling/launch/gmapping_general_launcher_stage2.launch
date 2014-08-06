@@ -45,7 +45,7 @@
 		<param name="base_frame" value="base_footprint" />
 		<param name="odom_frame" value="odom" />
 		<param name="map_frame" value="map" />
-		<param name="map_update_interval" value="1" />
+		<param name="map_update_interval" value="5.0" />
 		<param name="maxUrange" value="5.5" /> <!-- (5.5 for Hokuyo, 6 for Kinect) Default is 80, this should not be necessary -->
 		<param name="maxRange" value="5.6" />
                 <!-- (Either comment out, or 5.6 for Hokuyo, 8 for Kinect) Official documentation: The maximum range 

@@ -1,0 +1,13 @@
+# Global costmap params optimized for using move_base with rolling window gmapping (st_gmapping_rolling) + topological mapping/navigation (st_topological_mapping & st_navigation)
+
+global_frame: /map
+update_frequency: 1.0
+publish_frequency: 0.5 #0.5
+#static_map: true #it seems that the static_map is not a param anymore for the new hydro layer implementation. It is superseeded by the static map layer I think...
+rolling_window: false #this should be false, even when using rolling window gmapping!
+transform_tolerance: 0.5
+resolution: 0.05 #default is 0.05
+plugins:
+- {name: static_map_layer, type: "costmap_2d::StaticLayer"} #http://wiki.ros.org/costmap_2d/hydro/staticmap
+- {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
+- {name: inflation_layer,   type: "costmap_2d::InflationLayer"}

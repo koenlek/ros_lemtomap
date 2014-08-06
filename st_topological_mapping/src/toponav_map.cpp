@@ -58,6 +58,8 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   predecessor_map_servserv_ = private_nh.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
 
   //update the map one time, at construction. This will create the first map node.
+  tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(10));
+  tf_listener_.waitForTransform("map", "odom", ros::Time(0), ros::Duration(10));
   updateMap();
   ROS_INFO("TopoNavMap object is initialized");
 

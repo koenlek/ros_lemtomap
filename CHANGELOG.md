@@ -1,4 +1,4 @@
-Changelog for metapackage semantic_turtle
+	Changelog for metapackage semantic_turtle
 =========================================
 
 -----------------------------------------
@@ -14,6 +14,7 @@ Changelog for metapackage semantic_turtle
 ### Known issues ###
 * It will likely not run well in real life experiments, as local transform relies on perfect odometry...
 * Apart from that none, a lot of experiments are on the way, which will likely reveal some issues/bugs.
+* When using a gazebo world with the willowgarage model, loads of errors will be thrown on exiting the related roslaunch using ctrl+c (first noticed since 2014-09-06)
 
 0.3.0 (2014-06-22)
 ------------------

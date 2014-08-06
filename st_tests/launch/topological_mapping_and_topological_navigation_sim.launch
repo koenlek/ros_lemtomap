@@ -23,8 +23,7 @@
 	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
 
 	<!-- RVIZ -->
-	<node name="rviz" pkg="rviz" type="rviz"
-		args="-d $(find st_tests)/rviz/mapping.rviz" />
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find st_tests)/rviz/mapping.rviz" />
 
 	<!-- Bringup simulated robot -->
 	<include
@@ -38,23 +37,12 @@
 	<!-- Gazebo -->
 	<include
 		file="$(find st_gazebo)/launch/turtlebot_gazebo_world.launch">
-		<arg name="world_name"
-			value="$(find st_gazebo)/worlds/$(arg world_name_short)" />
+		<arg name="world_name" value="$(find st_gazebo)/worlds/$(arg world_name_short)" />
 		<arg name="use_sim_time" value="$(arg use_sim_time)" />
 	</include>
 
-	<!-- Topological map builder --> 
-	<!-- rosrun st_topological_mapping topological_navigation_mapper scan_topic:=scan_hokuyo -->
-	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
-		name="topological_navigation_mapper" output="screen" clear_params="true">
-		<param name="scan_topic" value="$(arg scan_topic)" />
-		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-		<param name="max_edge_creation" value="true" /> <!-- default is true -->
-	</node>
-
 	<!-- Teleop -->
-	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 
 	<!-- Rolling Window Gmapping (timed) -->
 	<node pkg="st_tests" 
@@ -76,13 +64,23 @@
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>-->
 
-	<!-- Navigation components -->
-	<include file="$(find st_navigation)/launch/move_base.launch">
+	<!-- Topological map builder --> 
+	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
+		name="topological_navigation_mapper" output="screen" clear_params="true">
+		<param name="scan_topic" value="$(arg scan_topic)" />
+		<param name="load_map_directory" value="$(arg load_map_directory)" />
+		<param name="main_loop_frequency" value="1" /> <!-- default is 4hz currently -->
+		<param name="max_edge_creation" value="true" /> <!-- default is true -->
+		<param name="disable_visualizations" value="false" /> <!-- default is false -->
+	</node>
+
+	<!-- Metric navigation (rolling) -->
+	<include file="$(find st_navigation)/launch/move_base_rolling.launch">
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>
 	
-	<!-- Run Move Base Topo -->
+	<!-- Topological navigation -->
 	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
 		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
 	</node>
