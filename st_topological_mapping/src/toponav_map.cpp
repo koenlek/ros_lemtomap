@@ -139,10 +139,12 @@ void TopoNavMap::updateAssociatedNode() {
   for (int i = 0; i < candidate_nodes.size(); i++) {
     dist_metric_tmp = calcDistance(robot_pose_tf_, nodes_[candidate_nodes.at(i)]->getPoseInMap(tf_toponavmap2map_));
     if (dist_metric_tmp < dist_metric_min) {
+      //ROS_INFO("Node %d is %.4f m away from the robot",candidate_nodes.at(i),dist_metric_min);
       dist_metric_min = dist_metric_tmp;
       associated_node_new = candidate_nodes.at(i);
     }
   }
+  //ROS_INFO("Closest Node is %d, which is %.4f m away from the robot",associated_node_new,dist_metric_min);
   associated_node_ = associated_node_new;
 }
 
@@ -372,7 +374,7 @@ void TopoNavMap::updateMap() {
 
   updateToponavMapTransform();
 
-  if (!checkCreateNode()) {
+  if (!checkCreateNode()) { //creates Nodes and Edges
     updateAssociatedNode(); //updates are only needed if no new node was created...
   }
 
@@ -478,7 +480,8 @@ void TopoNavMap::checkCreateEdges() {
           continue;
         else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
           if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), true)) //only create if directNavigable.
-            addEdge(node, *nodes_[right_iter->second], 2);
+            if (calcDistance(node, *nodes_[right_iter->second]) < 4.0) //todo - p1 - This is unforatunately necessary as a solution to a limitation of the global planner. The max 4.5m limit is added here to make sure next nodes in a topological planning path cannot be outside of the sliding window (i.e. outside of the global costmap). 5m is used as the border of the window shifts if the laser scans get outside of the window, so with a max range of 5.6m for the scanner, 4.0 should be safe.
+              addEdge(node, *nodes_[right_iter->second], 2);
         }
         //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
       }

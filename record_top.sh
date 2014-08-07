@@ -23,10 +23,11 @@ CURRENT_DATE=$(date +%F_%R:%S)
 STORE_PATH=../../benchmarks/top_measurement_$CURRENT_DATE.txt
 
 PROCESSES=(
+#"slam_gmapping"
 "st_gmapping_rolling"
-"topological_navigation_mapper"
 "move_base"
 "move_base_topo"
+"topological_navigation_mapper"
 ) #max 20 processes! This is a limitation of top
 TIME_STEP=00.20
 

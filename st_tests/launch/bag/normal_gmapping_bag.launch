@@ -3,7 +3,7 @@
 <!-- 
 Play a bag file using  - -clock that plays these topics:
 /scan_hokuyo
-/tf
+/tf (make sure it does not have the /map frame!)
 (and these don't harm:
 /odom
 /mobile_base/sensors/bumper_pointcloud

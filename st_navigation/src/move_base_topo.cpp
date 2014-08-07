@@ -154,6 +154,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
         ROS_INFO("Diff is > %.2fm, resending goal!",update_dist);
         move_base_goal.target_pose=node_pose_in_map_now;
         move_base_client_.sendGoal(move_base_goal);
+        move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
       }
 
       // Print some debugging info and sleep for a while to avoid wasting processing power to executing useless loops

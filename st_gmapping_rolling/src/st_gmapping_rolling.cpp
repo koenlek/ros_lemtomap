@@ -799,6 +799,7 @@ void SlamGMappingRolling::updateMapDefault(const sensor_msgs::LaserScan& scan, G
         if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
           ROS_INFO("TNode is out of area, measurement is cleared");
           n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          n->reading->shrink_to_fit(); //to free the memory. Officially requires c++11 (seems to work with c++0x to however!)
           continue;
         }
       }
@@ -806,6 +807,7 @@ void SlamGMappingRolling::updateMapDefault(const sensor_msgs::LaserScan& scan, G
         if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
           ROS_INFO("TNode is out of area, measurement is cleared");
           n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          n->reading->shrink_to_fit(); //to free the memory. Officially requires c++11 (seems to work with c++0x to however!)
           continue;
         }
       }
@@ -874,15 +876,23 @@ void SlamGMappingRolling::updateMapRollingMode1(const sensor_msgs::LaserScan& sc
       continue;
     if (rolling_window_delete_mode_ == 1) {
       if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
-        ROS_INFO("TNode is out of area, measurement is cleared");
+        ROS_INFO("TNode is out of area, measurement is cleared (mode1)");
+        ROS_INFO("capacity before clear: %lu", n->reading->capacity());
+        ROS_INFO("sizeof before clear: %lu", sizeof(n->reading));
         n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+        ROS_INFO("capacity after clear: %lu", n->reading->capacity());
+        ROS_INFO("sizeof after clear: %lu", sizeof(n->reading));
+        n->reading->shrink_to_fit(); //to free the memory. Officially requires c++11 (seems to work with c++0x to however!)
+        ROS_INFO("capacity after shrink to fit: %lu", n->reading->capacity());
+        ROS_INFO("sizeof after shrink to fit: %lu", sizeof(n->reading));
         continue;
       }
     }
     if (rolling_window_delete_mode_ == 2) {
       if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
-        ROS_INFO("TNode is out of area, measurement is cleared");
+        ROS_INFO("TNode is out of area, measurement is cleared (mode2)");
         n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+        n->reading->shrink_to_fit(); //to free the memory. Officially requires c++11 (seems to work with c++0x to however!)
         continue;
       }
     }
@@ -949,15 +959,16 @@ void SlamGMappingRolling::updateMapRollingMode2(const sensor_msgs::LaserScan& sc
         continue;
       if (rolling_window_delete_mode_ == 1) {
         if (n->pose.x < xmin_ || n->pose.x > xmax_ || n->pose.y < ymin_ || n->pose.y > ymax_) {
-          ROS_INFO("TNode is out of area, measurement is cleared");
           n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          n->reading->shrink_to_fit(); //to free the memory. Officially requires c++11 (seems to work with c++0x to however!)
           continue;
         }
       }
       if (rolling_window_delete_mode_ == 2) {
         if (n->pose.x < xmin_ - maxUrange_ || n->pose.x > xmax_ + maxUrange_ || n->pose.y < ymin_ || n->pose.y > ymax_ + maxUrange_) {
-          ROS_INFO("TNode is out of area, measurement is cleared");
+          ROS_INFO("TNode is out of area, measurement is cleared (mode2)");
           n->reading->clear(); //KL: first had to make it r/w accessible, but now I can clear rangereading objects (vectors)
+          n->reading->shrink_to_fit();
           continue;
         }
       }
@@ -1003,6 +1014,7 @@ void SlamGMappingRolling::resizeAllSMaps(GMapping::ScanMatcherMap &smap, bool in
       xmax = windowsize_ / 2 + gsp_->getParticles().at(i).pose.x;
       ymax = windowsize_ / 2 + gsp_->getParticles().at(i).pose.y;
       gsp_->getParticlesRW().at(i).map.resize(xmin, ymin, xmax, ymax);
+      ROS_INFO("smap %d has size %lu bytes",i,sizeof(gsp_->getParticlesRW().at(i).map));
       //gsp_->getParticlesRW().at(i).map.setCenter(center);
     }
   }

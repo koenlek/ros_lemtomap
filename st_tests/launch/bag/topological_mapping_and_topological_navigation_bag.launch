@@ -3,7 +3,7 @@
 <!-- 
 Play a bag file using  - -clock that plays these topics:
 /scan_hokuyo
-/tf
+/tf (make sure it does not have the /map frame!)
 /odom
 /mobile_base/sensors/bumper_pointcloud
 -->
@@ -63,7 +63,7 @@ Play a bag file using  - -clock that plays these topics:
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="1" /> <!-- default is 4hz currently -->
+		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
 		<param name="max_edge_creation" value="true" /> <!-- default is true -->
 	</node>
 
@@ -75,7 +75,7 @@ Play a bag file using  - -clock that plays these topics:
 	
 	<!-- Topological navigation -->
 	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="1" /> <!-- default is 1hz currently -->
+		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
 	</node>
 </launch>
 

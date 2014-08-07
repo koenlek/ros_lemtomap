@@ -3,7 +3,7 @@
 <!-- 
 Play a bag file using  - -clock that plays these topics:
 /scan_hokuyo
-/tf
+/tf (make sure it does not have the /map frame! otherwise, you can get it out using tf_remap, see here: http://wiki.ros.org/tf#tf_remap and here: http://answers.ros.org/question/9106/rosbag-play-tf-static_transform_publisher/)
 (and these don't harm:
 /odom
 /mobile_base/sensors/bumper_pointcloud

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(st_gmapping_rolling)
 
+# for std::vector::shrink_to_fit
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 # Load the used catkin_make build type here, make available in c++ code for preprocessor.
 # This allows usage of #IF DEBUG in all code of this package. It retrieves the value from cmakes CMAKE_BUILD_TYPE. 
 # This can be switched using catkin_make -DCMAKE_BUILD_TYPE=Release , or catkin_make -DCMAKE_BUILD_TYPE=Debug
