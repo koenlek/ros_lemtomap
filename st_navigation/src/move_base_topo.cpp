@@ -23,6 +23,7 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
   toponavmap_sub_ = nh_.subscribe(toponav_map_topic_, 1, &MoveBaseTopo::toponavmapCB, this);
   asso_node_servcli_ = nh_.serviceClient<st_topological_mapping::GetAssociatedNode>("topological_navigation_mapper/get_associated_node");
   predecessor_map_servcli_ = nh_.serviceClient<st_topological_mapping::GetPredecessorMap>("topological_navigation_mapper/get_predecessor_map");
+  directnav_servcli_ = nh_.serviceClient<st_topological_mapping::IsDirectNavigable>("topological_navigation_mapper/is_direct_navigable");
 
 #if BENCHMARKING
   move_base_global_plan_sub_ = nh_.subscribe("move_base/GlobalPlanner/plan", 1, &MoveBaseTopo::moveBaseGlobalPlanCB, this);
@@ -37,14 +38,14 @@ MoveBaseTopo::MoveBaseTopo(std::string name) :
 }
 
 void MoveBaseTopo::toponavmapCB(const st_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map)
-{
+                                {
   ROS_DEBUG("Received map with %lu nodes and %lu edges", toponav_map->nodes.size(), toponav_map->edges.size());
   toponavmap_ = *toponav_map;
 }
 
 #if BENCHMARKING
 void MoveBaseTopo::moveBaseGlobalPlanCB(const nav_msgs::PathConstPtr& path)
-{
+                                        {
   if (path->poses.size() > 0 && benchmark_inprogress_)
       {
     ecl::TimeStamp time;
@@ -63,7 +64,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
   ecl::Duration duration;
   cpuwatch_.restart(); //sets current `lap` to zero.
   stopwatch_.restart(); //sets current `lap` to zero.
-  ROS_INFO_NAMED("Benchmarks","move_base_topo: Received Topo goal at %.4f", ros::WallTime::now().toSec());
+  ROS_INFO_NAMED("Benchmarks", "move_base_topo: Received Topo goal at %.4f", ros::WallTime::now().toSec());
 #endif
 
   // helper variables
@@ -71,7 +72,11 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
   std::vector<int> path_nodes;
   std::vector<std::string> path_edges;
   int start_node_id;
-  double dist_tolerance_intermediate = 1.5; // a intermediate node is regarded 'reached' when it is within this distance [m]. New goal will then be passed.
+
+  // an intermediate node is regarded 'reached' when it is within this distance [m]. New goal will then be passed.
+  // shouldnt be larger than 1.0, otherwise risk of passing goals already at the other side of the wall (it can travel up and down a wall a lot then, trying to reach nodes in the corridor alongside that same wall).
+  // alternatively: use directNavigable checking (see commented code at exectueCB), you can possibly even leave dist_tolerance_intermediate completely out then (e.g. set it to 99999).
+  double dist_tolerance_intermediate = 1.0;
 
   // Calculate the topological path
   start_node_id = getAssociatedNode();
@@ -101,7 +106,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 
     // Generate mapping to find nodes by node id from toponavmsg
     std::map<int, int> nodes_id2vecpos_map;
-    for (int i = 0; i < toponavmap_.nodes.size(); i++){
+    for (int i = 0; i < toponavmap_.nodes.size(); i++) {
       nodes_id2vecpos_map[toponavmap_.nodes.at(i).node_id] = i;
     }
 
@@ -122,19 +127,22 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
 
       // pass new goal node if within a certain distance of current goal node, or if it is the first goal. Only check for passing new goals if last is not passed already
       if ((i == 0 || calcDistance(node_pose.pose, getRobotPoseInTopoFrame()) < dist_tolerance_intermediate) && i != path_nodes.size()) {
-        ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1, path_nodes.at(i));
-        node_pose.pose.position = toponavmap_.nodes.at(nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
-        move_base_goal.target_pose=node_pose;
-        move_base_client_.sendGoal(move_base_goal); //move_base_client can handle goals sent in different frames, upon receiving, it is once transformed (but not updated if transform between frames changes later).
-        move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
+        //KL: commented directNavigable check out, not needed if dist_tolerance_intermediate<=1.
+        //if (i == 0 || directNavigable(node_pose.pose.position, getRobotPoseInTopoFrame().getOrigin(), true)) {
+          ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1, path_nodes.at(i));
+          node_pose.pose.position = toponavmap_.nodes.at(nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
+          move_base_goal.target_pose = node_pose;
+          move_base_client_.sendGoal(move_base_goal); //move_base_client can handle goals sent in different frames, upon receiving, it is once transformed (but not updated if transform between frames changes later).
+          move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
 
-        #if BENCHMARKING
+#if BENCHMARKING
           duration = cpuwatch_.elapsed();
           ROS_INFO_STREAM("Cpuwatch took " << duration <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
           ROS_INFO_STREAM("Stopwatch took " << stopwatch_.elapsed() <<"[s] from initial move_base_topo goal until the current move_base goal was sent to move_base");
-        #endif
+#endif
 
-        i++; // current i is always +1 compared to the current goal node vector position in path_nodes
+          i++; // current i is always +1 compared to the current goal node vector position in path_nodes
+        //} //closes directNav if
       }
 
       // handle the occasion that move_base is aborted: e.g. if the robot is stuck even after /move_base recovery behavior.
@@ -150,9 +158,9 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
       // If the transform between map and toponav_map has changed significantly, resend the goal
       double update_dist = 0.5;
       node_pose_in_map_now = poseTopNavMap2Map(node_pose);
-      if(calcDistance(move_base_goal_pose_as_sent.pose,node_pose_in_map_now.pose) > update_dist && move_base_client_.getState() != actionlib::SimpleClientGoalState::PREEMPTED){ // check for preemted: otherwise, there is a change that a normal move_base goal (e.g. 2D Nav Goal RVIZ) is launched, and shortly after that overruled again by this...
-        ROS_INFO("Diff is > %.2fm, resending goal!",update_dist);
-        move_base_goal.target_pose=node_pose_in_map_now;
+      if (calcDistance(move_base_goal_pose_as_sent.pose, node_pose_in_map_now.pose) > update_dist && move_base_client_.getState() != actionlib::SimpleClientGoalState::PREEMPTED) { // check for preemted: otherwise, there is a change that a normal move_base goal (e.g. 2D Nav Goal RVIZ) is launched, and shortly after that overruled again by this...
+        ROS_INFO("Diff is > %.2fm, resending goal!", update_dist);
+        move_base_goal.target_pose = node_pose_in_map_now;
         move_base_client_.sendGoal(move_base_goal);
         move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
       }
@@ -177,7 +185,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
         success = true;
         ROS_INFO("Hooray: the final topological goal has been reached");
 #if BENCHMARKING
-        ROS_INFO_NAMED("Benchmarks","move_base_topo: Reached Topo goal at %.4f", ros::WallTime::now().toSec());
+        ROS_INFO_NAMED("Benchmarks", "move_base_topo: Reached Topo goal at %.4f", ros::WallTime::now().toSec());
 #endif
       }
     }
@@ -208,7 +216,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
  * \brief getCurrentPose
  */
 bool MoveBaseTopo::getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes)
-{
+                                   {
   // request Predecessor map through service
   st_topological_mapping::GetPredecessorMap srv;
   srv.request.source_node_id = start_node_id;
@@ -281,7 +289,7 @@ int MoveBaseTopo::getAssociatedNode()
 }
 
 std::vector<std::string> MoveBaseTopo::nodesPathToEdgesPath(const std::vector<int>& path_nodes)
-{
+                                                            {
   std::vector<std::string> path_edges;
 
   for (int i = 0; i < path_nodes.size() - 1; i++)
@@ -299,7 +307,7 @@ std::vector<std::string> MoveBaseTopo::nodesPathToEdgesPath(const std::vector<in
 }
 
 geometry_msgs::PoseStamped MoveBaseTopo::poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map)
-{
+                                                           {
   geometry_msgs::PoseStamped pose_in_map;
   try
   {
@@ -313,12 +321,46 @@ geometry_msgs::PoseStamped MoveBaseTopo::poseTopNavMap2Map(const geometry_msgs::
   return pose_in_map;
 }
 
+const bool MoveBaseTopo::directNavigable(const geometry_msgs::Point &point1, const geometry_msgs::Point &point2, bool global) {
+  // request Predecessor map through service
+  st_topological_mapping::IsDirectNavigable srv;
+  int max_allowable_cost = 99;
+
+  srv.request.start_point = point1;
+  srv.request.end_point = point2;
+  srv.request.global = global;
+  srv.request.max_allowable_cost = max_allowable_cost;
+
+  if (!directnav_servcli_.call(srv)) {
+    ROS_INFO("Did not receive a valid response from is_direct_navigable service");
+    return false;
+  }
+
+  ROS_DEBUG("Direct Navigable (service from move base topo) = %s", srv.response.direct_navigable ? "true" : "false");
+
+  return srv.response.direct_navigable;
+}
+
+const bool MoveBaseTopo::directNavigable(const geometry_msgs::Point &point1, const tf::Point &point2, bool global) {
+  geometry_msgs::Point point2_gm;
+  pointTFToMsg(point2, point2_gm);
+
+  return directNavigable(point1, point2_gm, global);
+}
+
+const bool MoveBaseTopo::directNavigable(const tf::Point &point1, const tf::Point &point2, bool global){
+  geometry_msgs::Point point1_gm, point2_gm;
+  pointTFToMsg(point1, point1_gm);
+  pointTFToMsg(point2, point2_gm);
+
+  return directNavigable(point1_gm, point2_gm, global);
+}
 
 /*!
  * \brief Main
  */
 int main(int argc, char** argv)
-{
+         {
   ros::init(argc, argv, "move_base_topo");
   ros::NodeHandle n;
   ros::NodeHandle private_nh("~");

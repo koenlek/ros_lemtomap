@@ -39,6 +39,8 @@
 #include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
 #include "st_topological_mapping/GetAssociatedNode.h"  //Service
 #include "st_topological_mapping/GetPredecessorMap.h"  //Service
+#include "st_topological_mapping/IsDirectNavigable.h"  //Service
+
 
 class MoveBaseTopo
 {
@@ -58,6 +60,7 @@ protected:
   ros::Subscriber toponavmap_sub_;
   ros::ServiceClient asso_node_servcli_;
   ros::ServiceClient predecessor_map_servcli_;
+  ros::ServiceClient directnav_servcli_;
 
   std::string toponav_map_topic_;
   std::string goal_frame_id_;
@@ -82,6 +85,10 @@ private:
   std::vector<std::string> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
   bool getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes);
   geometry_msgs::PoseStamped poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map);
+  const bool directNavigable(const tf::Point &point1, const tf::Point &point2, bool global);
+  const bool directNavigable(const geometry_msgs::Point &point1, const geometry_msgs::Point &point2, bool global);
+  const bool directNavigable(const geometry_msgs::Point &point1, const tf::Point &point2, bool global);
+
 
 };
 

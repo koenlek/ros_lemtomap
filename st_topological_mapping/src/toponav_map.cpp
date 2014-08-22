@@ -56,6 +56,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   toponav_map_pub_ = private_nh.advertise<st_topological_mapping::TopologicalNavigationMap>("topological_navigation_map", 1, true);
   asso_node_servserv_ = private_nh.advertiseService("get_associated_node", &TopoNavMap::associatedNodeSrvCB, this);
   predecessor_map_servserv_ = private_nh.advertiseService("get_predecessor_map", &TopoNavMap::predecessorMapSrvCB, this);
+  directnav_servserv_ = private_nh.advertiseService("is_direct_navigable", &TopoNavMap::isDirectNavigableSrvCB, this);
 
   //update the map one time, at construction. This will create the first map node.
   tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(10));
@@ -122,6 +123,25 @@ bool TopoNavMap::predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::
     res.nodes.push_back(it->first);
     res.predecessors.push_back(it->second);
   }
+
+  return true;
+}
+
+/*!
+ * \brief Check if something Is Direct Navigable...
+ */
+bool TopoNavMap::isDirectNavigableSrvCB(st_topological_mapping::IsDirectNavigable::Request &req,
+                         st_topological_mapping::IsDirectNavigable::Response &res){
+  // if bool global in request is not defined, it is perceived as false...
+
+  tf::Point start_point, end_point;
+  pointMsgToTF(req.start_point,start_point);
+  pointMsgToTF(req.end_point,end_point);
+
+  if (req.max_allowable_cost != 0)
+    res.direct_navigable = directNavigable(start_point, end_point, req.global, req.max_allowable_cost);
+  else
+    res.direct_navigable = directNavigable(start_point, end_point, req.global);
 
   return true;
 }
@@ -449,7 +469,7 @@ bool TopoNavMap::checkCreateNode() {
     addNode(robot_pose_tf_, is_door, area_id);
     checkCreateEdges(); // try to create additional edges!
     associated_node_ = nodes_.rbegin()->second->getNodeID(); //update associated node...
-    updateNodeBGLDetails(associated_node_);
+    updateNodeBGLDetails(associated_node_); //this is maybe not necessary?
     return true;
   }
   else {
@@ -468,7 +488,7 @@ void TopoNavMap::checkCreateEdges() {
 
   addEdge(node, *nodes_[associated_node_], 1);  //create at least edge between the new and (previous) associated_node one!
 
-  updateNodeBGLDetails(node.getNodeID());
+  updateNodeBGLDetails(node.getNodeID()); // this is needed as distance map is needed to check for loop_closure_max_topo_dist_
   TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
   if (max_edge_creation_) {
@@ -478,7 +498,7 @@ void TopoNavMap::checkCreateEdges() {
           continue;
         else if (!isInCostmap(right_iter->second, true)) //dont check if the node is outside of the area covered by de occupancy grid map
           continue;
-        else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
+        else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists (otherwise edge to prev. asso. node will be double created...)
           if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), true)) //only create if directNavigable.
             if (calcDistance(node, *nodes_[right_iter->second]) < 4.0) //todo - p1 - This is unforatunately necessary as a solution to a limitation of the global planner. The max 4.5m limit is added here to make sure next nodes in a topological planning path cannot be outside of the sliding window (i.e. outside of the global costmap). 5m is used as the border of the window shifts if the laser scans get outside of the window, so with a max range of 5.6m for the scanner, 4.0 should be safe.
               addEdge(node, *nodes_[right_iter->second], 2);
@@ -563,11 +583,8 @@ bool TopoNavMap::fakePathLength(const tf::Pose &pose1, const tf::Pose &pose2, do
 /*!
  * \brief directNavigable
  */
-const bool TopoNavMap::directNavigable(const tf::Point &point1, const tf::Point &point2, bool global) {
+const bool TopoNavMap::directNavigable(const tf::Point &point1, const tf::Point &point2, bool global, int max_allowable_cost) {
   bool navigable = false;
-
-  //Check if the local_costmap has changed since last run, if so, update it
-  //updateCostmapMatrix(global);
 
   int line_cost;
   line_cost = getCMLineCost(point1, point2, global);
@@ -580,8 +597,11 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1, const tf::Point 
   // 100 is LETHAL (obstacle), 99 is INSCRIBED (will hit due to robot footprint), -1 is unknown.
   // See: http://wiki.ros.org/costmap_2d
   // See the cost_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
-  if (line_cost < 90 && line_cost >= 0)
+  // max_allowable_cost is set to 90 by default in the prototype definition
+  if (line_cost <= max_allowable_cost && line_cost >= 0)
     navigable = true;
+
+  //ROS_INFO ("Used max allowable cost of %d",max_allowable_cost);
 
   return navigable;
 }

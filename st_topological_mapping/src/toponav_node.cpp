@@ -26,7 +26,7 @@ TopoNavNode::TopoNavNode(
 {
   if (node_id_ >= UIDGenerator_)
     UIDGenerator_ = node_id_ + 1;
-  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
   nodes_[node_id_] = this;
 }
 
@@ -45,7 +45,7 @@ TopoNavNode::TopoNavNode(
   node_id_ = UIDGenerator_++;
   last_updated_ = ros::Time::now();
   last_pose_update_ = last_updated_;
-  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
   ROS_DEBUG("TopoNavNode created. id= %d, pose x=%f, y=%f, theta=%f, updated at %f",
             node_id_,
             pose_.getOrigin().x(),
@@ -58,7 +58,7 @@ TopoNavNode::TopoNavNode(
 TopoNavNode::~TopoNavNode()
 {
   nodes_.erase(node_id_);
-  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now(); //TODO: actually not needed, no new/removed node without a new/removed edge!
   ROS_INFO("Node with ID %d is destructed", node_id_); //does not print on node shutdown! therefor: std::cerr is added...
 #if DEBUG
   std::cerr << "~TopoNavNode: Deleting node with ID: " << node_id_ << std::endl;

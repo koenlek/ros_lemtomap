@@ -1,0 +1,8 @@
+# Check if the line between start_point and end_point is direct navigable. The z coordinates will be neglected and thus do not have to be set.
+geometry_msgs/Point start_point
+geometry_msgs/Point end_point
+bool global #global or local costmap
+int64 max_allowable_cost #if not specified, default value (90) will be used
+---
+# returns if it is direct navigable. If the points are invalid (outside of the costmap), it will always return false and an error will be printed in the console.
+bool direct_navigable

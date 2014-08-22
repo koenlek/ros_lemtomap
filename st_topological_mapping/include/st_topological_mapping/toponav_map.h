@@ -55,6 +55,7 @@
 #include "st_topological_mapping/TopoNavNodeMsg.h"  //Message
 #include "st_topological_mapping/GetAssociatedNode.h"  //Service
 #include "st_topological_mapping/GetPredecessorMap.h"  //Service
+#include "st_topological_mapping/IsDirectNavigable.h"  //Service
 
 /*
  * @file toponav_map
@@ -106,6 +107,7 @@ private:
   ros::Publisher toponav_map_pub_;
   ros::ServiceServer asso_node_servserv_;
   ros::ServiceServer predecessor_map_servserv_;
+  ros::ServiceServer directnav_servserv_;
 
   /*
    * Note on max_edge_length_;
@@ -147,6 +149,8 @@ private:
                            st_topological_mapping::GetAssociatedNode::Response &res);
   bool predecessorMapSrvCB(st_topological_mapping::GetPredecessorMap::Request &req,
                            st_topological_mapping::GetPredecessorMap::Response &res);
+  bool isDirectNavigableSrvCB(st_topological_mapping::IsDirectNavigable::Request &req,
+                           st_topological_mapping::IsDirectNavigable::Response &res);
 
   void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
@@ -172,7 +176,7 @@ private:
   bool checkCreateNode(); //Checks if a new nodes should be created and creates it when needed. Also checks for doors to add new doors nodes and creates edges for the new node when possible.
   void checkCreateEdges(); //Checks if an edge can be created between node n and any other nodes. Creates it when possible.
   bool checkIsNewDoor(); //Checks if a there is a new door
-  const bool directNavigable(const tf::Point &point1, const tf::Point &point2, bool global); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
+  const bool directNavigable(const tf::Point &point1, const tf::Point &point2, bool global, int max_allowable_cost = 90); //This method checks whether there is nothing (objects/walls) blocking the direct route between point1 and point2
 
   const bool edgeExists(const TopoNavNode::NodeID &nodeid1, const TopoNavNode::NodeID &nodeid2) const;
   bool isInCostmap(TopoNavNode::NodeID nodeid, bool global);

@@ -43,6 +43,7 @@ add_service_files(
   FILES
   GetAssociatedNode.srv
   GetPredecessorMap.srv
+  IsDirectNavigable.srv
 )
 
 generate_messages(   
