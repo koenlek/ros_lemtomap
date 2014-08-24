@@ -9,35 +9,67 @@
 /*!
  * StMapLoader constructor
  */
+
 StMapLoader::StMapLoader(const std::string& map_fullpath) :
-		map_fullpath_(map_fullpath), finished_loading_(false) {
-	ros::NodeHandle n;
-	toponav_map_topic_ =
-			"topological_navigation_mapper/topological_navigation_map";
+    map_fullpath_(map_fullpath), finished_loading_(false) {
+  ros::NodeHandle n;
+  toponav_map_topic_ = "topological_navigation_mapper/topological_navigation_map";
 
-	if(*(map_fullpath_.end() - 1)=='/') //remove any trailing slash
-		map_fullpath_.erase(map_fullpath_.end() -1);
+  if (*(map_fullpath_.end() - 1) == '/') //remove any trailing slash
+    map_fullpath_.erase(map_fullpath_.end() - 1);
 
-	std::string path_to_bagfile = map_fullpath_ + "/toponav_map.bag";
-	path_to_bagfile = boost::filesystem::absolute(path_to_bagfile).c_str();
-	if(!boost::filesystem::exists(boost::filesystem::path(path_to_bagfile)))
-		ROS_FATAL("Could not find the .bag file at:\n\t%s\nPlease verify the supplied path foldername, which was:\n\t%s",path_to_bagfile.c_str(),map_fullpath.c_str());
+  loadBag();
+  loadYAML();
 
-	/* read TopologicalNavigationMap message from .bag file */
-	rosbag::Bag bagread;
-	bagread.open(path_to_bagfile, rosbag::bagmode::Read);
-	rosbag::View view(bagread, rosbag::TopicQuery(toponav_map_topic_));
-
-	BOOST_FOREACH(rosbag::MessageInstance const m, view){
-	toponav_map_readmsg_ =*(m.instantiate<st_topological_mapping::TopologicalNavigationMap>());
-	}
-
-	ROS_INFO("Received map with %lu nodes and %lu edges",
-			toponav_map_readmsg_.nodes.size(),
-			toponav_map_readmsg_.edges.size());
-
-	bagread.close();
-
-	ROS_INFO("Done loading\n");
-	finished_loading_ = true;
+  ROS_INFO("Done loading\n");
+  finished_loading_ = true;
 }
+
+void StMapLoader::loadBag() {
+  /* read TopologicalNavigationMap message from .bag file */
+  std::string path_to_bagfile = map_fullpath_ + "/toponav_map.bag";
+  path_to_bagfile = boost::filesystem::absolute(path_to_bagfile).c_str();
+  if (!boost::filesystem::exists(boost::filesystem::path(path_to_bagfile)))
+    ROS_FATAL("Could not find the .bag file at:\n\t%s\nPlease verify the supplied path foldername, which was:\n\t%s", path_to_bagfile.c_str(), map_fullpath_.c_str());
+
+  rosbag::Bag bagread;
+  bagread.open(path_to_bagfile, rosbag::bagmode::Read);
+  rosbag::View view(bagread, rosbag::TopicQuery(toponav_map_topic_));
+
+  BOOST_FOREACH(rosbag::MessageInstance const m, view){
+  toponav_map_readmsg_ =*(m.instantiate<st_topological_mapping::TopologicalNavigationMap>());
+}
+
+  ROS_INFO("Received map with %lu nodes and %lu edges",
+           toponav_map_readmsg_.nodes.size(),
+           toponav_map_readmsg_.edges.size());
+
+  bagread.close();
+}
+
+void StMapLoader::loadYAML() {
+  std::string path_to_yamlfile = map_fullpath_ + "/toponav_map_metadata.yaml";
+  std::ifstream fin(path_to_yamlfile.c_str());
+  YAML::Parser parser(fin);
+  YAML::Node doc;
+  parser.GetNextDocument(doc);
+
+  doc[0]["associated_node"] >> associated_node_;
+  doc[1]["pose"] >> robot_pose_;
+
+  //ROS_INFO_STREAM("associated_node = " << associated_node_);
+  //ROS_INFO_STREAM("robot_pose_.position.x = " << robot_pose_.position.x);
+
+  // todo - p3 - also load map save time (either sim time or real time, plus a way to make clear if it was a sim or real time experiment).
+}
+
+void operator >> (const YAML::Node& node, geometry_msgs::Pose& robot_pose) {
+   node["position"]["x"] >> robot_pose.position.x;
+   node["position"]["y"] >> robot_pose.position.y;
+   node["position"]["z"] >> robot_pose.position.z;
+   node["orientation"]["x"] >> robot_pose.orientation.x;
+   node["orientation"]["y"] >> robot_pose.orientation.y;
+   node["orientation"]["z"] >> robot_pose.orientation.z;
+   node["orientation"]["w"] >> robot_pose.orientation.w;
+}
+

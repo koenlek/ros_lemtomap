@@ -6,6 +6,9 @@
 #include <cstdio>
 #include "boost/foreach.hpp"
 #include <boost/filesystem.hpp>
+#include "yaml-cpp/yaml.h"
+#include <iostream>
+#include <fstream>
 
 // ROS includes
 #include "ros/ros.h"
@@ -32,13 +35,20 @@ public:
   std::string toponav_map_topic_;
   bool finished_loading_;
 
+  st_topological_mapping::TopologicalNavigationMap toponav_map_readmsg_;
+  int associated_node_;
+  geometry_msgs::Pose robot_pose_;
   /**
-   * Public Methods
+   * Methods
    */
-  st_topological_mapping::TopologicalNavigationMap getTopologicalNavigationMapMsg() const { return toponav_map_readmsg_; }
+
+  void loadBag();
+  void loadYAML();
 
 private:
-  st_topological_mapping::TopologicalNavigationMap toponav_map_readmsg_;
+
 };
+
+void operator >> (const YAML::Node& node, geometry_msgs::Pose& robot_pose);
 
 #endif

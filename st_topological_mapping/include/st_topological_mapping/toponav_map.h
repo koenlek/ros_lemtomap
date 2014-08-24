@@ -9,10 +9,6 @@
 #define BENCHMARKING 0
 #endif
 
-#ifndef LTF_PERFECTODOM //local transform -> use perfect odom assumption
-#define LTF_PERFECTODOM 1
-#endif
-
 // General includes
 #include "string"
 #include <math.h> //floor
@@ -34,6 +30,7 @@
 #include <nav_msgs/MapMetaData.h>
 #endif
 #include "nav_msgs/OccupancyGrid.h"
+#include "gazebo_msgs/SetModelState.h"
 
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -196,7 +193,7 @@ public:
    */
   // updateMap is the method that generates and maintains the topological navigation map and should be called in a (main) loop
   void updateMap();
-  void loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
+  void loadSavedMap(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg, const int& associated_node, const geometry_msgs::Pose& robot_pose); //should only be used to pre-load a map at the start of this ROS nodes lifetime.
 
   // these are the preferred functions to add/delete nodes/edges: do not try to add/delete them in another way!
   void addEdge(const TopoNavNode &start_node, const TopoNavNode &end_node, int type);
@@ -205,10 +202,6 @@ public:
   void deleteEdge(TopoNavEdge &edge);
   void deleteNode(TopoNavNode::NodeID node_id);
   void deleteNode(TopoNavNode &node);
-
-  #if LTF_PERFECTODOM
-    std::map<TopoNavNode::NodeID,tf::Transform> node_odom_at_creation_map_;
-  #endif
 
   //Get methods
   const TopoNavNode::NodeMap& getNodes() const

@@ -10,9 +10,11 @@
 
   <build_depend>roscpp</build_depend>
   <build_depend>rosbag</build_depend>
-  <build_depend>st_topological_mapping</build_depend>  
+  <build_depend>st_topological_mapping</build_depend> 
+  <build_depend>tf</build_depend>  
 
   <run_depend>roscpp</run_depend>
   <run_depend>rosbag</run_depend>
   <run_depend>st_topological_mapping</run_depend>
+  <run_depend>tf</run_depend>
 </package>

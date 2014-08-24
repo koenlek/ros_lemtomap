@@ -30,21 +30,15 @@ int main(int argc, char** argv)
 
   TopoNavMap topo_nav_map(n);
 
-  /*#if LTF_PERFECTODOM
-    if (load_map_path != ""){
-    ROS_ERROR("Loading map while using 'LTF_PERFECTODOM 1' is impossible, skipping map loading...");
-    load_map_path="";
-    }
-  #endif*/
-
   if (load_map_path != "") {
     ROS_INFO("Map will be loaded from: %s", load_map_path.c_str());
     StMapLoader map_loader(load_map_path);
     while (!map_loader.finished_loading_) {
       ros::spinOnce();
     }
-    topo_nav_map.loadMapFromMsg(
-                                map_loader.getTopologicalNavigationMapMsg());
+    topo_nav_map.loadSavedMap(map_loader.toponav_map_readmsg_,
+                              map_loader.associated_node_,
+                              map_loader.robot_pose_);
   }
 
   if (!disable_visualizations)

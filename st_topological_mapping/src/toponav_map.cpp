@@ -173,28 +173,6 @@ void TopoNavMap::updateAssociatedNode() {
  */
 void TopoNavMap::updateToponavMapTransform() {
 
-  /*#if DEBUG
-   if (ros::Time::now().toSec() > counter_*5){
-   tf_toponavmap2map_.setOrigin(tf::Vector3(0.03 * ros::Time::now().toSec(), -0.05 * ros::Time::now().toSec(), 0.0));
-   tf::Quaternion q;
-   q.setRPY(0, 0, 0.05 * ros::Time::now().toSec());
-   tf_toponavmap2map_.setRotation(q);
-   counter_++;
-   }
-   #endif*/
-
-  /*
-   tf_toponavmap2map_.setOrigin(tf::Vector3(1.0, -2, 0.0));
-   tf::Quaternion q;
-   q.setRPY(0, 0, 0);
-   tf_toponavmap2map_.setRotation(q);
-   */
-
-  /*#if LTF_PERFECTODOM
-   if (associated_node_ > 0 && node_odom_at_creation_map_.size() > 0)
-   tf_toponavmap2map_ = node_odom_at_creation_map_.at(associated_node_);
-   #endif*/
-
   tf::StampedTransform tf_toponavmap2map_stamped;
 
   try
@@ -332,11 +310,20 @@ void TopoNavMap::publishTopoNavMap() {
 }
 
 /*!
- * \brief getCurrentPose
+ * \brief updateRobotPose
  */
 void TopoNavMap::updateRobotPose() {
   try
   {
+    /*
+     * The /map frame is used to check the pose of the robot. The name /map is a bit confusing here.
+     * /map can be regarded an improved version of /odom: the origin of /odom is the place where the
+     * robot started according to the robots odometry, the origin of /map is the place where the
+     * (rolling window) gmapping thinks the robot originally started, hence it can be regarded an
+     * improved version of /odom. We kept the name /map, as it is the common frame to use for gmapping
+     * and many other packages, and it is sometimes hardcoded. However, /odom_improved or something
+     * like that would possibly make more sense.
+     */
     tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(2));
     tf_listener_.lookupTransform("map", "base_link", ros::Time(0), robot_transform_tf_);
   }
@@ -354,14 +341,40 @@ void TopoNavMap::updateRobotPose() {
 }
 
 /*!
- * \brief loadMapFromMsg
+ * \brief loadSavedMap
  */
-void TopoNavMap::loadMapFromMsg(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg) {
+void TopoNavMap::loadSavedMap(const st_topological_mapping::TopologicalNavigationMap &toponavmap_msg, const int& associated_node, const geometry_msgs::Pose& robot_pose) {
+  // todo - p2 - time shift in simulation should be fixed, asso node and pose loading can be added
+
+  ROS_WARN("Loading Saved Map: Loading saved associated node and robot pose is not yet supported, will default to node 1 and (x,y,theta) = (0,0,0)");
+
+  /*
+  // set associated node
+  associated_node_ = associated_node;
+
+  // set robot pose compared to topological graph
+  // this is not yet implemented. This should make sure that the robot has the right position compared to the nodes of the graph...
+
+  // set robot pose in Gazebo (should be only used if it is a simulated experiment)
+  ros::ServiceClient gazebo_setmodelstate_servcli =  n_.serviceClient<gazebo_msgs::SetModelState>("gazebo/set_model_state");
+
+  gazebo_msgs::SetModelState srv;
+  srv.request.model_state.model_name = "mobile_base";
+  srv.request.model_state.pose.position = robot_pose.position;
+  srv.request.model_state.pose.orientation = robot_pose.orientation;
+
+  if (gazebo_setmodelstate_servcli.call(srv)) {
+    ROS_DEBUG("Robot pose is updated through /gazebo/set_model_state service ");
+  }
+  else {
+    ROS_ERROR("Failed to call service /gazebo/set_model_state");
+  }*/
+
+  // load nodes and edges from toponavmap_msg
   nodes_.clear();
   edges_.clear();
 
-  //TODO - p2 - set associated node as well!
-  ROS_WARN("Load map: Associated Node is currently not set properly, however, usually NodeID 1 is good, so no problems are caused");
+  ROS_WARN("Loading Saved Map: When loading topo map from msg for a simulation, node and edge update times should be shifted such that they are all before the current ros::Time::now() (OR ros::Time::now() should be shifted backwards). NOTE: in the current implementation, this should not yet cause issues, as the update times aren't used yet. BGL update times are all initialized as 0, as they all need to be updated (topo map msg does not containt BGL info)");
 
   for (int i = 0; i < toponavmap_msg.nodes.size(); i++)
       {
@@ -796,22 +809,6 @@ void TopoNavMap::addEdge(const TopoNavNode &start_node,
  */
 void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
   new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
-#if LTF_PERFECTODOM
-  tf::StampedTransform perfectodom_correction_stamped;
-  tf::Transform perfectodom_correction;
-  try
-  {
-    tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(2));
-    tf_listener_.lookupTransform("odom", "map", ros::Time(0), perfectodom_correction_stamped);
-  }
-  catch (tf::TransformException &ex)
-  {
-    ROS_ERROR("Error looking up transformation\n%s", ex.what());
-  }
-  perfectodom_correction = perfectodom_correction_stamped;
-
-  node_odom_at_creation_map_[nodes_.rbegin()->second->getNodeID()] = perfectodom_correction;
-#endif
 }
 
 /*!
@@ -839,9 +836,6 @@ void TopoNavMap::deleteNode(TopoNavNode &node) {
       {
     deleteEdge((*edges_[connected_edges.at(i)]));
   }
-#if LTF_PERFECTODOM
-  node_odom_at_creation_map_.erase(node.getNodeID());
-#endif
   delete &node;
 }
 
