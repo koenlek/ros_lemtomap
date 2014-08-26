@@ -20,8 +20,7 @@
 
 #include "st_gmapping_rolling.h"
 
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "st_gmapping_rolling");
 

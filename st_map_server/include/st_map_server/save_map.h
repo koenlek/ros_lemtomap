@@ -41,6 +41,8 @@ public:
   tf::TransformListener tf_listener_;
   ros::ServiceClient asso_node_servcli_;
 
+  bool no_associated_node_and_no_pose_;
+
   geometry_msgs::Pose getRobotPose();
   int getAssociatedNode();
   /**

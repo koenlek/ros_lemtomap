@@ -70,10 +70,10 @@
 		<param name="resampleThreshold" value="0.5" /> <!-- 0.5 means: resample if Neff < 0.5*N. See gmapping article grisetti2007, formula 20. -->
 		<param name="particles" value="$(arg particles)" /> <!-- default 30, turtlebot default 80 -->
 
-		<param name="xmin" value="-30.0" />
-		<param name="ymin" value="-30.0" />
-		<param name="xmax" value="30.0" />
-		<param name="ymax" value="30.0" />
+		<param name="xmin" value="-10.0" />
+		<param name="ymin" value="-10.0" />
+		<param name="xmax" value="10.0" />
+		<param name="ymax" value="10.0" />
 
 		<param name="delta" value="0.05" /> <!-- Processing parameters (resolution of the map)  -->
 		<param name="llsamplerange" value="0.01" /> <!-- ? -->

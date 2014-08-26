@@ -149,93 +149,93 @@ SlamGMappingRolling::SlamGMappingRolling() :
   got_first_scan_ = false;
   got_map_ = false;
 
-  ros::NodeHandle private_nh_("~");
+  ros::NodeHandle private_nh("~");
 
   // Parameters used by our GMapping wrapper
-  if (!private_nh_.getParam("throttle_scans", throttle_scans_))
+  if (!private_nh.getParam("throttle_scans", throttle_scans_))
     throttle_scans_ = 1;
-  if (!private_nh_.getParam("base_frame", base_frame_))
+  if (!private_nh.getParam("base_frame", base_frame_))
     base_frame_ = "base_link";
-  if (!private_nh_.getParam("map_frame", map_frame_))
+  if (!private_nh.getParam("map_frame", map_frame_))
     map_frame_ = "map";
-  if (!private_nh_.getParam("odom_frame", odom_frame_))
+  if (!private_nh.getParam("odom_frame", odom_frame_))
     odom_frame_ = "odom";
 
   double transform_publish_period;
-  private_nh_.param("transform_publish_period", transform_publish_period, 0.05);
+  private_nh.param("transform_publish_period", transform_publish_period, 0.05);
 
   double tmp;
-  if (!private_nh_.getParam("map_update_interval", tmp))
+  if (!private_nh.getParam("map_update_interval", tmp))
     tmp = 5.0;
   map_update_interval_.fromSec(tmp);
 
   // Parameters used by GMapping itself
   maxUrange_ = 0.0;
   maxRange_ = 0.0; // preliminary default, will be set in initMapper()
-  if (!private_nh_.getParam("sigma", sigma_))
+  if (!private_nh.getParam("sigma", sigma_))
     sigma_ = 0.05;
-  if (!private_nh_.getParam("kernelSize", kernelSize_))
+  if (!private_nh.getParam("kernelSize", kernelSize_))
     kernelSize_ = 1;
-  if (!private_nh_.getParam("lstep", lstep_))
+  if (!private_nh.getParam("lstep", lstep_))
     lstep_ = 0.05;
-  if (!private_nh_.getParam("astep", astep_))
+  if (!private_nh.getParam("astep", astep_))
     astep_ = 0.05;
-  if (!private_nh_.getParam("iterations", iterations_))
+  if (!private_nh.getParam("iterations", iterations_))
     iterations_ = 5;
-  if (!private_nh_.getParam("lsigma", lsigma_))
+  if (!private_nh.getParam("lsigma", lsigma_))
     lsigma_ = 0.075;
-  if (!private_nh_.getParam("ogain", ogain_))
+  if (!private_nh.getParam("ogain", ogain_))
     ogain_ = 3.0;
-  if (!private_nh_.getParam("lskip", lskip_))
+  if (!private_nh.getParam("lskip", lskip_))
     lskip_ = 0;
-  if (!private_nh_.getParam("srr", srr_))
+  if (!private_nh.getParam("srr", srr_))
     srr_ = 0.1;
-  if (!private_nh_.getParam("srt", srt_))
+  if (!private_nh.getParam("srt", srt_))
     srt_ = 0.2;
-  if (!private_nh_.getParam("str", str_))
+  if (!private_nh.getParam("str", str_))
     str_ = 0.1;
-  if (!private_nh_.getParam("stt", stt_))
+  if (!private_nh.getParam("stt", stt_))
     stt_ = 0.2;
-  if (!private_nh_.getParam("linearUpdate", linearUpdate_))
+  if (!private_nh.getParam("linearUpdate", linearUpdate_))
     linearUpdate_ = 1.0;
-  if (!private_nh_.getParam("angularUpdate", angularUpdate_))
+  if (!private_nh.getParam("angularUpdate", angularUpdate_))
     angularUpdate_ = 0.5;
-  if (!private_nh_.getParam("temporalUpdate", temporalUpdate_))
+  if (!private_nh.getParam("temporalUpdate", temporalUpdate_))
     temporalUpdate_ = -1.0;
-  if (!private_nh_.getParam("resampleThreshold", resampleThreshold_))
+  if (!private_nh.getParam("resampleThreshold", resampleThreshold_))
     resampleThreshold_ = 0.5;
-  if (!private_nh_.getParam("particles", particles_))
+  if (!private_nh.getParam("particles", particles_))
     particles_ = 30;
-  if (!private_nh_.getParam("xmin", xmin_))
+  if (!private_nh.getParam("xmin", xmin_))
     xmin_ = -100.0;
-  if (!private_nh_.getParam("ymin", ymin_))
+  if (!private_nh.getParam("ymin", ymin_))
     ymin_ = -100.0;
-  if (!private_nh_.getParam("xmax", xmax_))
+  if (!private_nh.getParam("xmax", xmax_))
     xmax_ = 100.0;
-  if (!private_nh_.getParam("ymax", ymax_))
+  if (!private_nh.getParam("ymax", ymax_))
     ymax_ = 100.0;
-  if (!private_nh_.getParam("delta", delta_))
+  if (!private_nh.getParam("delta", delta_))
     delta_ = 0.05;
-  if (!private_nh_.getParam("occ_thresh", occ_thresh_))
+  if (!private_nh.getParam("occ_thresh", occ_thresh_))
     occ_thresh_ = 0.25;
-  if (!private_nh_.getParam("llsamplerange", llsamplerange_))
+  if (!private_nh.getParam("llsamplerange", llsamplerange_))
     llsamplerange_ = 0.01;
-  if (!private_nh_.getParam("llsamplestep", llsamplestep_))
+  if (!private_nh.getParam("llsamplestep", llsamplestep_))
     llsamplestep_ = 0.01;
-  if (!private_nh_.getParam("lasamplerange", lasamplerange_))
+  if (!private_nh.getParam("lasamplerange", lasamplerange_))
     lasamplerange_ = 0.005;
-  if (!private_nh_.getParam("lasamplestep", lasamplestep_))
+  if (!private_nh.getParam("lasamplestep", lasamplestep_))
     lasamplestep_ = 0.005;
-  if (!private_nh_.getParam("minimumScore", minimum_score_))
+  if (!private_nh.getParam("minimumScore", minimum_score_))
     minimum_score_ = 0;
 
-  if (!private_nh_.getParam("rolling_window_mode", rolling_window_mode_)) {
+  if (!private_nh.getParam("rolling_window_mode", rolling_window_mode_)) {
     rolling_window_mode_ = 1;
   }
-  if (!private_nh_.getParam("rolling_window_delete_mode", rolling_window_delete_mode_)) {
+  if (!private_nh.getParam("rolling_window_delete_mode", rolling_window_delete_mode_)) {
     rolling_window_delete_mode_ = 1;
   }
-  if (!private_nh_.getParam("windowsize", windowsize_)) {
+  if (!private_nh.getParam("windowsize", windowsize_)) {
     windowsize_ = 0;
     rolling_ = false;
     rolling_window_mode_ = 0;
@@ -249,17 +249,17 @@ SlamGMappingRolling::SlamGMappingRolling() :
     ymax_ = windowsize_ / 2.0;
   }
 
-  if (!private_nh_.getParam("tf_delay", tf_delay_))
+  if (!private_nh.getParam("tf_delay", tf_delay_))
     tf_delay_ = transform_publish_period;
 
   //KL Visualize and store all paths / maps
-  if (!private_nh_.getParam("publishAllPaths", publish_all_paths_))
+  if (!private_nh.getParam("publishAllPaths", publish_all_paths_))
     publish_all_paths_ = false;
-  if (!private_nh_.getParam("publishCurrentPath", publish_current_path_))
+  if (!private_nh.getParam("publishCurrentPath", publish_current_path_))
     publish_current_path_ = false;
-  if (!private_nh_.getParam("publishSpecificMap", publish_specific_map_))
+  if (!private_nh.getParam("publishSpecificMap", publish_specific_map_))
     publish_specific_map_ = -1;
-  if (!private_nh_.getParam("visualizeRobotCentric", visualize_robot_centric_))
+  if (!private_nh.getParam("visualizeRobotCentric", visualize_robot_centric_))
     visualize_robot_centric_ = true;
 
   if (publish_specific_map_ > particles_ + 1 || publish_specific_map_ < -1) {
@@ -273,13 +273,13 @@ SlamGMappingRolling::SlamGMappingRolling() :
     ROS_INFO("Will publish specific smap for particle %d", publish_specific_map_);
   }
 
-  entropy_publisher_ = private_nh_.advertise<std_msgs::Float64>("entropy", 1, true);
+  entropy_publisher_ = private_nh.advertise<std_msgs::Float64>("entropy", 1, true);
   sst_ = node_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
   sstm_ = node_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
 
   // KL Visualize and store all paths / maps
   if (publish_all_paths_) {
-    paths_publisher_ = private_nh_.advertise<visualization_msgs::MarkerArray>("all_paths", 1, true);
+    paths_publisher_ = private_nh.advertise<visualization_msgs::MarkerArray>("all_paths", 1, true);
     path_m_.header.frame_id = tf_.resolve(map_frame_);
     path_m_.header.stamp = ros::Time();
     path_m_.action = visualization_msgs::Marker::ADD;
@@ -291,7 +291,7 @@ SlamGMappingRolling::SlamGMappingRolling() :
     path_m_.color.a = 0.5;
   }
   if (publish_current_path_) {
-    current_path_publisher_ = private_nh_.advertise<nav_msgs::Path>("current_path", 1, true);
+    current_path_publisher_ = private_nh.advertise<nav_msgs::Path>("current_path", 1, true);
   }
   if (publish_current_path_ || publish_all_paths_) {
     all_paths_.resize(particles_);
@@ -301,8 +301,8 @@ SlamGMappingRolling::SlamGMappingRolling() :
   }
   if (publish_specific_map_ >= 0) {
     got_map_px_ = false;
-    map_px_publisher_ = private_nh_.advertise<nav_msgs::OccupancyGrid>("map_px", 1, true);
-    map_px_info_publisher_ = private_nh_.advertise<nav_msgs::MapMetaData>("map_px_metadata", 1, true);
+    map_px_publisher_ = private_nh.advertise<nav_msgs::OccupancyGrid>("map_px", 1, true);
+    map_px_info_publisher_ = private_nh.advertise<nav_msgs::MapMetaData>("map_px_metadata", 1, true);
   }
 #if DEBUG
   tests_performed_ = 0;
@@ -440,10 +440,10 @@ SlamGMappingRolling::initMapper(const sensor_msgs::LaserScan& scan)
   GMapping::OrientedPoint gmap_pose(0, 0, 0);
 
   // setting maxRange and maxUrange here so we can set a reasonable default
-  ros::NodeHandle private_nh_("~");
-  if (!private_nh_.getParam("maxRange", maxRange_))
+  ros::NodeHandle private_nh("~");
+  if (!private_nh.getParam("maxRange", maxRange_))
     maxRange_ = scan.range_max - 0.01;
-  if (!private_nh_.getParam("maxUrange", maxUrange_))
+  if (!private_nh.getParam("maxUrange", maxUrange_))
     maxUrange_ = maxRange_;
 
   // The laser must be called "FLASER".

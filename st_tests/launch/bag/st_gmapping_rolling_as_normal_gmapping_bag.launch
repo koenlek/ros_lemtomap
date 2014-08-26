@@ -14,7 +14,7 @@ Play a bag file using  - -clock that plays these topics:
 	
 	<!-- Set some Rolling Window Gmapping parameters -->
 	<arg name="scan_topic" default="scan_hokuyo" />
-	<arg name="rolling" default="true" /> <!-- true/false: use rolling window gmapping or not -->
+	<arg name="rolling" default="false" /> <!-- true/false: use rolling window gmapping or not -->
 	<arg name="windowsize" default="20" /> <!-- double, size in meters for rolling window, will be neglected if rolling is false -->
 	<arg name="perfect_odometry" default="false" /> <!-- true/false: for simulations, perfect odometry can be used -->
 	<arg name="suppress_console" default="true" /> <!-- true/false. This will suppress stderr output of gmapping -->
@@ -51,30 +51,6 @@ Play a bag file using  - -clock that plays these topics:
 			publishAllPaths:=$(arg publishAllPaths)
 			publishSpecificMap:=$(arg publishSpecificMap)" 
               name="timed_roslaunch" output="screen">
-	</node>
-	<!-- Normal Gmapping -->
-	<!--<include file="$(find st_gmapping_rolling)/launch/normal_gmapping.launch">
-		<arg name="scan_topic" value="$(arg scan_topic)" />
-	</include>-->
-
-	<!-- Topological map builder --> 
-	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
-		name="topological_navigation_mapper" output="screen" clear_params="true">
-		<param name="scan_topic" value="$(arg scan_topic)" />
-		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-		<param name="max_edge_creation" value="true" /> <!-- default is true -->
-	</node>
-
-	<!-- Metric navigation (rolling) -->
-	<include file="$(find st_navigation)/launch/move_base_rolling.launch">
-		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
-		<arg name="scan_topic" value="$(arg scan_topic)" />
-	</include>
-	
-	<!-- Topological navigation -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
 	</node>
 </launch>
 
