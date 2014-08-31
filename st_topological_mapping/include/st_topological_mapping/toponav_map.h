@@ -54,7 +54,7 @@
 #include "st_topological_mapping/GetPredecessorMap.h"  //Service
 #include "st_topological_mapping/IsDirectNavigable.h"  //Service
 
-/*
+/**
  * @file toponav_map
  * @brief This class will take care of creation and maintenance of the Topological Navigation Map.
  * @author Koen Lekkerkerker

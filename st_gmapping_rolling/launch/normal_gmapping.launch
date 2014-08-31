@@ -1,6 +1,7 @@
 <!-- based on turtlebot_navivation/launch/inludes/gmapping.launch.xml -->
 <launch>
 	<arg name="scan_topic" default="scan" />
+	<arg name="particles" default="80"/>
 
 	<node pkg="gmapping" type="slam_gmapping" name="slam_gmapping"
 		output="screen" clear_params="true">
@@ -29,7 +30,7 @@
 		<param name="angularUpdate" value="0.436" />
 		<param name="temporalUpdate" value="-1.0" />
 		<param name="resampleThreshold" value="0.5" />
-		<param name="particles" value="80" />
+		<param name="particles" value="$(arg particles)" />
 
 		<param name="xmin" value="-10.0" />
 		<param name="ymin" value="-10.0" />

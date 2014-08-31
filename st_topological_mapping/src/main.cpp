@@ -23,7 +23,7 @@ int main(int argc, char** argv)
   ShowTopoNavMap* show_topo_nav_map;
 
   private_nh.param("load_map_directory", load_map_path, std::string("")); //requires a full path to the top level directory, ~ and other env. vars are not accepted
-  private_nh.param("main_loop_frequency", frequency, double(4.0)); //requires a full path to the top level directory, ~ and other env. vars are not accepted
+  private_nh.param("main_loop_frequency", frequency, double(4.0));
   private_nh.param("disable_visualizations", disable_visualizations, bool(false)); //disables all visualizations
 
   ros::Rate r(frequency);

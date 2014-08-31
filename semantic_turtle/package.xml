@@ -18,6 +18,7 @@
   <run_depend>st_navigation</run_depend>
   <run_depend>st_tests</run_depend>
   <run_depend>st_topological_mapping</run_depend>
+  <run_depend>st_tools</run_depend>
 
   <export>
     <metapackage/>

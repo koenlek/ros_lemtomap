@@ -368,9 +368,7 @@ Visualization Manager:
       Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        edges_near_neighbour: true
-        edges_odom: true
-        nodes: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Group
@@ -429,11 +427,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 20.8607
+      Scale: 16.873
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 7.7804
-      Y: 0.226175
+      X: 3.22922
+      Y: 4.42949
     Saved: ~
 Window Geometry:
   Displays:
@@ -453,5 +451,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1871
-  X: 49
+  X: 42
   Y: 24
