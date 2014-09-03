@@ -4,7 +4,8 @@
 	<arg name="scan_topic" default="scan" />
 	<arg name="rolling" default="false"/>
 	<arg name="windowsize" default="20"/>
-	<arg name="perfect_odometry" default="false"/> <!-- leave empty to assume normal odo, fill anything to activate perfect odometry utilization -->
+	<arg name="perfect_odometry" default="false"/> 
+
 	<arg name="particles" default="80"/>
 	<arg name="minimum_score" default="0"/>
 	

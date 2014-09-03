@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
+    <!-- Define arguments -->
+    <arg name="scan_topic" default="scan_hokuyo" />
 
     <machine name="turtlebot" address="localhost" env-loader="/opt/ros/hydro/env.sh" default="true" />
     <!--  <machine name="workstation" user="turtlebot" password="xxx" address="turtlebot-koenlek.local" env-loader="/opt/ros/hydro/env.sh"/>  -->
@@ -27,7 +29,6 @@
 	<!-- Maybe sheck out this: http://wiki.ros.org/roslaunch/XML/machine -->
 	
 	<!-- RVIZ -->
-	<node machine="turtlebot" name="rviz" pkg="rviz" type="rviz"
-		args="-d $(find st_tests)/rviz/mapping.rviz" /> <!-- machine=workstation, should be added later -->
+	<node machine="turtlebot" name="rviz" pkg="rviz" type="rviz" args="-d $(find st_tests)/rviz/mapping.rviz" /> <!-- machine=workstation, should be added later -->
 
 </launch>

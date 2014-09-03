@@ -2,7 +2,7 @@
 
 <launch>
 	<arg name="urdf_file"
-		default="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle.urdf.xacro'" />
+		default="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle_no_kinect.urdf.xacro'" /> <!--semantic_turtle_no_kinect.urdf.xacro or semantic_turtle.urdf.xacro -->
 	<arg name="x_robot" default="0" />
 	<arg name="y_robot" default="0" />
 	<arg name="z_robot" default="0" />

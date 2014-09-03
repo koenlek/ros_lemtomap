@@ -35,6 +35,8 @@ Example:
 
 `roslaunch st_gazebo_perfect_map_generator generate_map.launch map_name:=willowgarage_perfect save_folder:=$(rospack find st_gazebo_perfect_map_generator)/maps xmin:=-25 xmax:=45 ymin:=-30 ymax:=45 scan_height:=10 resolution:=0.05`
 
+Tip: xmin is left and ymin is bottom in the resulting image, so use that to finetune the border values.
+
 ### Load generated map
 
 Example:

@@ -21,10 +21,10 @@ http://wiki.ros.org/urg_node
     
     <!-- Set the port to connect to here -->
     <param name="serial_port" type="string" value="/dev/ttyACM0"/> 
-  
     <param name="publish_intensity" type="bool" value="false"/>
-
     <param name="frame_id" value="hokuyo_laser_sensor_link"/>
+    <param name="angle_min" value="-1.570796"/><!-- for us: -pi/2 (-90deg), as it otherwise sees its own poles. node default: -pi -->
+    <param name="angle_max" value="1.570796"/><!-- for us: pi/2 (90deg), as it otherwise sees its own poles. node default: pi -->
     <remap from="scan" to="$(arg scan_topic)"/>
   </node>  
 </launch>
