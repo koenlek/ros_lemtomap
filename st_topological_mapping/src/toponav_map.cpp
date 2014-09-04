@@ -31,11 +31,12 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(100));
 
   // Set initial transform between map and toponav_map
-  tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+  /*tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
   tf::Quaternion q;
   q.setRPY(0, 0, 0);
   tf_toponavmap2map_.setRotation(q);
   br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), tf_listener_.resolve("map"), tf_listener_.resolve("toponav_map")));
+  */
 
   //Create subscribers/publishers
   local_costmap_sub_ = n_.subscribe(local_costmap_topic_, 1, &TopoNavMap::lcostmapCB, this);
@@ -157,7 +158,7 @@ void TopoNavMap::updateAssociatedNode() {
   double dist_metric_tmp;
   double dist_metric_min = DBL_MAX;
   for (int i = 0; i < candidate_nodes.size(); i++) {
-    dist_metric_tmp = calcDistance(robot_pose_tf_, nodes_[candidate_nodes.at(i)]->getPoseInMap(tf_toponavmap2map_));
+    dist_metric_tmp = calcDistance(robot_pose_tf_, nodes_[candidate_nodes.at(i)]->getPoseInMap());
     if (dist_metric_tmp < dist_metric_min) {
       //ROS_INFO("Node %d is %.4f m away from the robot",candidate_nodes.at(i),dist_metric_min);
       dist_metric_min = dist_metric_tmp;
@@ -171,7 +172,7 @@ void TopoNavMap::updateAssociatedNode() {
 /*!
  * \brief ToponavMapTransform()
  */
-void TopoNavMap::updateToponavMapTransform() {
+/*void TopoNavMap::updateToponavMapTransform() {
 
   tf::StampedTransform tf_toponavmap2map_stamped;
 
@@ -184,10 +185,10 @@ void TopoNavMap::updateToponavMapTransform() {
   {
     ROS_ERROR("Error looking up transformation\n%s", ex.what());
   }
-  tf_toponavmap2map_ = tf_toponavmap2map_stamped;
+  //tf_toponavmap2map_ = tf_toponavmap2map_stamped;
 
-  br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), "map", "toponav_map"));
-}
+  //br_.sendTransform(tf::StampedTransform(tf_toponavmap2map_, ros::Time::now(), "map", "toponav_map"));
+}*/
 
 /*!
  * \brief Local Costmap Callback.
@@ -295,7 +296,7 @@ void TopoNavMap::publishTopoNavMap() {
   st_topological_mapping::TopologicalNavigationMap msg_map;
 
   msg_map.header.stamp = ros::Time::now();
-  msg_map.header.frame_id = "toponav_map";
+  msg_map.header.frame_id = "odom";
 
   for (TopoNavNode::NodeMap::iterator it = nodes_.begin(); it != nodes_.end(); it++)
       {
@@ -405,7 +406,7 @@ void TopoNavMap::updateMap() {
 
   updateRobotPose();
 
-  updateToponavMapTransform();
+  //updateToponavMapTransform();
 
   if (!checkCreateNode()) { //creates Nodes and Edges
     updateAssociatedNode(); //updates are only needed if no new node was created...
@@ -468,7 +469,7 @@ bool TopoNavMap::checkCreateNode() {
     return true;
   }
 
-  double asso_node_dist = calcDistance(robot_pose_tf_, nodes_[associated_node_]->getPoseInMap(tf_toponavmap2map_));
+  double asso_node_dist = calcDistance(robot_pose_tf_, nodes_[associated_node_]->getPoseInMap());
 
   if (checkIsNewDoor()) {
     //TODO - p3 - later, maybe door nodes should not influence other nodes. Maybe they should not be regular nodes at all. Check SAS10 for comparison.
@@ -512,7 +513,7 @@ void TopoNavMap::checkCreateEdges() {
         else if (!isInCostmap(right_iter->second, true)) //dont check if the node is outside of the area covered by de occupancy grid map
           continue;
         else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists (otherwise edge to prev. asso. node will be double created...)
-          if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), true)) //only create if directNavigable.
+          if (directNavigable(node.getPoseInMap().getOrigin(), nodes_[right_iter->second]->getPoseInMap().getOrigin(), true)) //only create if directNavigable.
             if (calcDistance(node, *nodes_[right_iter->second]) < 4.0) //todo - p1 - This is unforatunately necessary as a solution to a limitation of the global planner. The max 4.5m limit is added here to make sure next nodes in a topological planning path cannot be outside of the sliding window (i.e. outside of the global costmap). 5m is used as the border of the window shifts if the laser scans get outside of the window, so with a max range of 5.6m for the scanner, 4.0 should be safe.
               addEdge(node, *nodes_[right_iter->second], 2);
         }
@@ -530,7 +531,7 @@ void TopoNavMap::checkCreateEdges() {
         else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
           continue;
         else if (!edgeExists(node.getNodeID(), right_iter->second)) { //not check if already exists
-          if (directNavigable(node.getPoseInMap(tf_toponavmap2map_).getOrigin(), nodes_[right_iter->second]->getPoseInMap(tf_toponavmap2map_).getOrigin(), false)) //only create if directNavigable.
+          if (directNavigable(node.getPoseInMap().getOrigin(), nodes_[right_iter->second]->getPoseInMap().getOrigin(), false)) //only create if directNavigable.
             addEdge(node, *nodes_[right_iter->second], 2);
         }
         //ROS_INFO("NodeID %d, has dist %.4f", right_iter->second, right_iter->first);
@@ -711,8 +712,8 @@ int TopoNavMap::getCMLineCost(const int &cell1_i, const int &cell1_j, const int 
  */
 bool TopoNavMap::isInCostmap(TopoNavNode::NodeID nodeid, bool global) {
   double x, y;
-  x = nodes_[nodeid]->getPoseInMap(tf_toponavmap2map_).getOrigin().getX();
-  y = nodes_[nodeid]->getPoseInMap(tf_toponavmap2map_).getOrigin().getY();
+  x = nodes_[nodeid]->getPoseInMap().getOrigin().getX();
+  y = nodes_[nodeid]->getPoseInMap().getOrigin().getY();
   return isInCostmap(x, y, global);
 }
 bool TopoNavMap::isInCostmap(double x, double y, bool global) {
@@ -776,7 +777,7 @@ double TopoNavMap::distanceToClosestNode() {
   {
     for (TopoNavNode::NodeMap::iterator it = nodes_.begin(); it != nodes_.end(); it++)
         {
-      dist = calcDistance(it->second->getPoseInMap(tf_toponavmap2map_), robot_pose_tf_);
+      dist = calcDistance(it->second->getPoseInMap(), robot_pose_tf_);
 
       ROS_DEBUG("Distance between Robot and Node_ID %d = %f",
                 it->second->getNodeID(),
@@ -807,8 +808,26 @@ void TopoNavMap::addEdge(const TopoNavNode &start_node,
 /*!
  * \brief addNode
  */
-void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
-  new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+void TopoNavMap::addNode(const tf::Pose &pose_in_map, bool is_door, int area_id) {
+  geometry_msgs::PoseStamped pose_in_map_gm;
+  geometry_msgs::PoseStamped pose_in_odom_gm;
+  tf::Pose pose_in_odom;
+
+  pose_in_map_gm.header.frame_id="map";
+  poseTFToMsg(pose_in_map,pose_in_map_gm.pose);
+
+  try
+  {
+    tf_listener_.waitForTransform("map", "odom", ros::Time(0), ros::Duration(10));
+    tf_listener_.transformPose("odom", pose_in_map_gm, pose_in_odom_gm);
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_ERROR("Error looking up transformation\n%s", ex.what());
+  }
+  poseMsgToTF(pose_in_odom_gm.pose,pose_in_odom);
+
+  new TopoNavNode(pose_in_odom, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!

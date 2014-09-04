@@ -261,8 +261,8 @@ tf::Pose MoveBaseTopo::getRobotPoseInTopoFrame()
 
   try
   {
-    tf_listener_.waitForTransform("toponav_map", "base_link", ros::Time(0), ros::Duration(10));
-    tf_listener_.lookupTransform("toponav_map", "base_link", ros::Time(0), robot_transform_tf);
+    tf_listener_.waitForTransform("odom", "base_link", ros::Time(0), ros::Duration(10));
+    tf_listener_.lookupTransform("odom", "base_link", ros::Time(0), robot_transform_tf);
   }
   catch (tf::TransformException &ex)
   {
@@ -311,7 +311,7 @@ geometry_msgs::PoseStamped MoveBaseTopo::poseTopNavMap2Map(const geometry_msgs::
   geometry_msgs::PoseStamped pose_in_map;
   try
   {
-    tf_listener_.waitForTransform("toponav_map", "map", ros::Time(0), ros::Duration(10));
+    tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(10));
     tf_listener_.transformPose("map", pose_in_toponav_map, pose_in_map);
   }
   catch (tf::TransformException &ex)

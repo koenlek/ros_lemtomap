@@ -21,7 +21,7 @@ ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &n
   markers_pub_ = private_nh.advertise<visualization_msgs::MarkerArray>("toponavmap_markerarray", 1, true);
 
   // Set all general marker properties to a marker
-  nodes_marker_template_.header.frame_id = "toponav_map";
+  nodes_marker_template_.header.frame_id = "odom";
   nodes_marker_template_.header.stamp = ros::Time(); //From http://wiki.ros.org/rviz/DisplayTypes/Marker: Note that the timestamp attached to the marker message above is ros::Time(), which is time Zero (0). This is treated differently by RViz than any other time. If you use ros::Time::now() or any other non-zero value, rviz will only display the marker if that time is close enough to the current time, where "close enough" depends on TF. With time 0 however, the marker will be displayed regardless of the current time.
   nodes_marker_template_.action = visualization_msgs::Marker::ADD;
   //nodes_marker_template_.pose.orientation.w;

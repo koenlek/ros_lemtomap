@@ -120,7 +120,7 @@ private:
 
   tf::TransformBroadcaster br_;
   tf::TransformListener tf_listener_;
-  tf::Transform tf_toponavmap2map_;
+  //tf::Transform tf_toponavmap2map_;
   bool max_edge_creation_; //if true, global costmap subscription will fire and cause maximum edges being created (which can cause some extra load). if false, the var max_edge_length_ will be used.
 
   #if DEBUG
@@ -152,7 +152,7 @@ private:
   void updateRobotPose(); // update robot pose to its current pose;
   void publishTopoNavMap(); //publish the full map to a msg
 
-  void updateToponavMapTransform();
+  //void updateToponavMapTransform();
   void updateAssociatedNode(); // return the node_id where the robot is currently at.
 
 #if DEPRECATED
