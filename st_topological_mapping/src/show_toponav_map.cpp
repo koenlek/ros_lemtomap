@@ -40,7 +40,7 @@ ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &n
   nodes_marker_template_.color.a = 0.5;
   nodes_marker_template_.scale.x = 0.5;
   nodes_marker_template_.scale.y = 0.5;
-  nodes_marker_template_.scale.z = 0.001;
+  nodes_marker_template_.scale.z = 0.05;
 
   doors_marker_template_.ns = "doors";
   doors_marker_template_.type = visualization_msgs::Marker::CYLINDER;
@@ -50,7 +50,7 @@ ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &n
   doors_marker_template_.color.a = 1;
   doors_marker_template_.scale.x = 0.2;
   doors_marker_template_.scale.y = 0.2;
-  doors_marker_template_.scale.z = 0.001;
+  doors_marker_template_.scale.z = 0.05;
 
   edges_marker_template_.ns = "edges";
   edges_marker_template_.type = visualization_msgs::Marker::LINE_STRIP;

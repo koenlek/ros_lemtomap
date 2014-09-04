@@ -41,3 +41,7 @@ add_executable(cmd_vel_logger src/cmd_vel_logger.cpp)
 target_link_libraries(cmd_vel_logger ${catkin_LIBRARIES})
 add_dependencies(cmd_vel_logger ${catkin_EXPORTED_TARGETS})
 
+add_executable(time_logger src/time_logger.cpp)
+target_link_libraries(time_logger ${catkin_LIBRARIES})
+add_dependencies(time_logger ${catkin_EXPORTED_TARGETS})
+
