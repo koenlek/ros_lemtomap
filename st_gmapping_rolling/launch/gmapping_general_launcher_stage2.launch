@@ -1,5 +1,5 @@
 <!-- General launcher to launch all kind of variations of gmapping -->
-<!-- gmapping parameters were mostly based on turtlebot_navivation/launch/inludes/gmapping.launch.xml -->
+<!-- rw-gmapping parameters were mostly based on turtlebot_navivation/launch/inludes/gmapping.launch.xml -->
 <launch>
 	<arg name="scan_topic" default="scan" />
 	<arg name="rolling" default="false"/>
