@@ -72,26 +72,9 @@ public:
   {
     return pose_;
   }
-  const tf::Pose getPoseInMap() const //in map fram
+  const tf::Pose getPoseInMap(tf::Transform toponavmap2map) const //in map fram
   {
-    geometry_msgs::PoseStamped pose_in_map;
-    geometry_msgs::PoseStamped pose_in_odom;
-
-    pose_in_odom.header.frame_id="odom";
-    poseTFToMsg(pose_,pose_in_odom.pose);
-
-    try
-    {
-      tf_listener_.waitForTransform("odom", "map", ros::Time(0), ros::Duration(10));
-      tf_listener_.transformPose("map", pose_in_odom, pose_in_map);
-    }
-    catch (tf::TransformException &ex)
-    {
-      ROS_ERROR("Error looking up transformation\n%s", ex.what());
-    }
-    tf:: Pose pose_in_map_tf;
-    poseMsgToTF(pose_in_map.pose,pose_in_map_tf);
-    return pose_in_map_tf;
+    return toponavmap2map * pose_;
   }
 
   const bool getIsDoor() const
