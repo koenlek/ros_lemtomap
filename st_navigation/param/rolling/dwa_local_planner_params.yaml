@@ -16,7 +16,7 @@ DWAPlannerROS:
   acc_lim_y: 0.0
   acc_lim_th: 1.0
 
-  yaw_goal_tolerance: 0.3 #0.3 seems good, maybe try 99 to make yaw of no importance at all?
+  yaw_goal_tolerance: 99 #0.3 seems good, maybe try 99 to make yaw of no importance at all?
   xy_goal_tolerance: 0.15
   
   latch_xy_goal_tolerance: true #If goal tolerance is latched, if the robot ever reaches the goal xy location it will simply rotate in place, even if it ends up outside the goal tolerance while it is doing so. 

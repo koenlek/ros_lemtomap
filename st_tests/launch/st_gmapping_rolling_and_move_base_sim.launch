@@ -1,13 +1,5 @@
 <?xml version="1.0"?>
 
-<!-- 
-Play a bag file using  - -clock that plays these topics:
-/scan_hokuyo
-/tf (make sure it does not have the /map frame!)
-/odom
-/mobile_base/sensors/bumper_pointcloud
--->
-
 <launch>	
 	<!-- Set navigation parameters -->
 	<arg name="nav_allow_unknown" default="true" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
@@ -27,16 +19,29 @@ Play a bag file using  - -clock that plays these topics:
 
 	<!-- Set other parameters -->
 	<arg name="use_sim_time" default="true" />
-	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
-	<arg name="loop_closure_max_topo_dist" default="100"/>
-
-	<!-- set use_sim_time flag -->
-	<group if="$(arg use_sim_time)">
-	  <param name="/use_sim_time" value="true" />
-	</group>
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage willowgarage_large -->
 
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find st_tests)/rviz/mapping.rviz" />
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find st_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+		<arg name="y_robot" value="-16" />
+		<arg name="z_robot" value="0" />
+		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle_no_kinect.urdf.xacro'" /> <!--semantic_turtle_no_kinect.urdf.xacro or semantic_turtle.urdf.xacro -->
+	</include>
+
+	<!-- Gazebo -->
+	<include
+		file="$(find st_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name" value="$(find st_gazebo)/worlds/$(arg world_name_short)" />
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 
 	<!-- Rolling Window Gmapping (timed) -->
 	<node pkg="st_tests" 
@@ -58,25 +63,11 @@ Play a bag file using  - -clock that plays these topics:
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>-->
 
-	<!-- Topological map builder --> 
-	<node pkg="st_topological_mapping" type="topological_navigation_mapper"
-		name="topological_navigation_mapper" output="screen" clear_params="true">
-		<param name="scan_topic" value="$(arg scan_topic)" />
-		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
-		<param name="max_edge_creation" value="true" /> <!-- default is true -->
-		<param name="loop_closure_max_topo_dist" value="$(arg loop_closure_max_topo_dist)" />                           
-	</node>
-
 	<!-- Metric navigation (rolling) -->
 	<include file="$(find st_navigation)/launch/move_base_rolling.launch">
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>
 	
-	<!-- Topological navigation -->
-	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
-	</node>
 </launch>
 

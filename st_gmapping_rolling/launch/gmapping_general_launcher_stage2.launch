@@ -41,9 +41,6 @@
 	<arg     if="$(arg perfect_odometry)" name="stt" value="0.0"/> <!-- assume perfect odom -->
 	<arg unless="$(arg perfect_odometry)" name="stt" value="0.02"/>
 
-	<arg     if="$(arg rolling)" name="windowsize_param" value="$(arg windowsize)"/>
-	<arg unless="$(arg rolling)" name="windowsize_param" value=""/>
-
 	<node pkg="st_gmapping_rolling" type="st_gmapping_rolling" name="st_gmapping_rolling"
 		output="screen" clear_params="true">
 		<param name="base_frame" value="base_footprint" />
@@ -74,10 +71,11 @@
 		<param name="resampleThreshold" value="0.5" /> <!-- 0.5 means: resample if Neff < 0.5*N. See gmapping article grisetti2007, formula 20. -->
 		<param name="particles" value="$(arg particles)" /> <!-- default 30, turtlebot default 80 -->
 
-		<param name="xmin" value="-10.0" />
-		<param name="ymin" value="-10.0" />
-		<param name="xmax" value="10.0" />
-		<param name="ymax" value="10.0" />
+		<!-- These are now only set through 'windowsize'		
+		<param name="xmin" value="-10" />
+		<param name="ymin" value="-10" />
+		<param name="xmax" value="10" />
+		<param name="ymax" value="10" />-->
 
 		<param name="delta" value="0.05" /> <!-- Processing parameters (resolution of the map)  -->
 		<param name="llsamplerange" value="0.01" /> <!-- ? -->
@@ -88,7 +86,8 @@
 		<param name="minimumScore" value="$(arg minimum_score_param)" /> <!-- I added this feature myself, default was 0, but setting to e.g. 50 makes it neglect poor scan_matching... (zero means it only neglects failed scan-matching) -->
 
 		<!-- Sliding window options -->
-		<param name="windowsize" value="$(arg windowsize_param)" />
+		<param name="rolling" value="$(arg rolling)" />		
+		<param name="windowsize" value="$(arg windowsize)" />
 		<param name="publishCurrentPath" value="$(arg publishCurrentPath)" />
 		<param name="publishAllPaths" value="$(arg publishAllPaths)" />
 		<param name="publishSpecificMap" value="$(arg publishSpecificMap)" />

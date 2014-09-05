@@ -102,6 +102,7 @@
  - @b "~/delta" @b [double] size of one pixel [m]
 
  Rolling window:
+ - @b "~/rolling" @b [bool] enable rolling window mode or not?
  - @b "~/windowsize" @b [double] size of the rolling window [m] (will overrule xmin, ymin, xmax, and ymax)
 
  Extra:
@@ -235,18 +236,24 @@ SlamGMappingRolling::SlamGMappingRolling() :
   if (!private_nh.getParam("rolling_window_delete_mode", rolling_window_delete_mode_)) {
     rolling_window_delete_mode_ = 1;
   }
-  if (!private_nh.getParam("windowsize", windowsize_)) {
-    windowsize_ = 0;
-    rolling_ = false;
-    rolling_window_mode_ = 0;
-    rolling_window_delete_mode_ = 0;
-  }
-  else {
+
+  if (!private_nh.getParam("rolling", rolling_)) {
     rolling_ = true;
+  }
+
+  if (!private_nh.getParam("windowsize", windowsize_)) {
+    windowsize_ = 20;
+  }
+  else{
     xmin_ = -windowsize_ / 2.0;
     ymin_ = -windowsize_ / 2.0;
     xmax_ = windowsize_ / 2.0;
     ymax_ = windowsize_ / 2.0;
+  }
+
+  if (!rolling_){
+    rolling_window_mode_ = 0;
+    rolling_window_delete_mode_ = 0;
   }
 
   if (!private_nh.getParam("tf_delay", tf_delay_))
