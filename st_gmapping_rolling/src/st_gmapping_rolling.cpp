@@ -20,7 +20,7 @@
 
 /**
 
- @mainpage slam_gmapping
+ @mainpage slam_rw_gmapping
 
  @htmlinclude manifest.html
 
@@ -129,6 +129,7 @@
 // compute linear index for given map coords
 #define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
 
+
 SlamGMappingRolling::SlamGMappingRolling() :
     map_to_odom_(tf::Transform(tf::createQuaternionFromRPY(0, 0, 0), tf::Point(0, 0, 0))),
     laser_count_(0), transform_thread_(NULL)
@@ -136,8 +137,8 @@ SlamGMappingRolling::SlamGMappingRolling() :
   // log4cxx::Logger::getLogger(ROSCONSOLE_DEFAULT_NAME)->setLevel(ros::console::g_level_lookup[ros::console::levels::Debug]);
 
   // The library is pretty chatty
-  //gsp_ = new GMapping::GridSlamProcessor(std::cerr);
   gsp_ = new GMapping::GridSlamProcessor(std::cerr);
+
   ROS_ASSERT(gsp_);
 
   tfB_ = new tf::TransformBroadcaster();

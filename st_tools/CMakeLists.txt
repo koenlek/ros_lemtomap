@@ -22,6 +22,7 @@ catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   geometry_msgs
+  tf
 )
 
 catkin_package(

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>semantic_turtle</name>
+  <name>lemtomap</name>
   <version>0.4.0</version>
-  <description>The semantic_turtle metapackage</description>
+  <description>The LEMTOMap metapackage</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>GPL</license>
 

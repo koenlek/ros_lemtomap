@@ -1,4 +1,4 @@
-	Changelog for metapackage semantic_turtle
+Changelog for metapackage lemtomap
 =========================================
 
 -----------------------------------------

@@ -1,4 +1,4 @@
-ROS Semantic Turtle
+ROS LEMTOMap
 ===================
 
 Installation
@@ -14,13 +14,13 @@ cd ~/catkin_ws/
 catkin_make 
 source devel/setup.bash  //add to .bashrc for convenience
 ```
-- Add and compile the Semantic Turtle Metapackage
+- Add and compile the LEMTOMap Metapackage
 ```
 roscd
 cd ../src
 wstool init
-wstool set semantic_turtle_meta --git git://github.com/koenlek/ros_semantic_turtle.git
-wstool update semantic_turtle_meta
+wstool set lemtomap_meta --git git://github.com/koenlek/ros_lemtomap.git
+wstool update lemtomap_meta
 rosdep install --from-paths . -i -y
 cd ..
 catkin_make
@@ -32,7 +32,7 @@ Use `catkin_make -DCMAKE_BUILD_TYPE=Release` for (faster) release build, `catkin
 ```
 roscd
 cd ../src
-wstool update semantic_turtle_meta
+wstool update lemtomap_meta
 rosdep install --from-paths . -i -y
 cd ..
 catkin_make
