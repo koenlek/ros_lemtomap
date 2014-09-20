@@ -17,23 +17,34 @@
 	<arg name="rolling_window_delete_mode" default="1" />
 	<arg name="visualizeRobotCentric" default="true" />
 
-	<arg     if="$(arg perfect_odometry)" name="kernelSize" value="0.01"/> <!-- assume perfect odom -->
-	<arg unless="$(arg perfect_odometry)" name="kernelSize" value="1"/>
+	<arg     if="$(arg perfect_odometry)" name="sigma" value="0.00"/>
+	<arg unless="$(arg perfect_odometry)" name="sigma" value="0.05"/>
 
-	<arg     if="$(arg perfect_odometry)" name="srr" value="0.000000001"/> <!-- assume perfect odom -->
+	<arg     if="$(arg perfect_odometry)" name="linearUpdate" value="1000000"/> <!-- never trigger update -->
+	<arg unless="$(arg perfect_odometry)" name="linearUpdate" value="0.5"/>
+
+	<arg     if="$(arg perfect_odometry)" name="angularUpdate" value="1000000"/> <!-- never trigger update -->
+	<arg unless="$(arg perfect_odometry)" name="angularUpdate" value="0.436"/>
+
+	<arg     if="$(arg perfect_odometry)" name="srr" value="0.0"/> <!-- assume perfect odom -->
 	<arg unless="$(arg perfect_odometry)" name="srr" value="0.01"/>
 
-	<arg     if="$(arg perfect_odometry)" name="srt" value="0.000000001"/> <!-- assume perfect odom -->
+	<arg     if="$(arg perfect_odometry)" name="srt" value="0.0"/> <!-- assume perfect odom -->
 	<arg unless="$(arg perfect_odometry)" name="srt" value="0.02"/>
 
-	<arg     if="$(arg perfect_odometry)" name="str" value="0.000000001"/> <!-- assume perfect odom -->
+	<arg     if="$(arg perfect_odometry)" name="str" value="0.0"/> <!-- assume perfect odom -->
 	<arg unless="$(arg perfect_odometry)" name="str" value="0.01"/>
 
-	<arg     if="$(arg perfect_odometry)" name="stt" value="0.000000001"/> <!-- assume perfect odom -->
+	<arg     if="$(arg perfect_odometry)" name="minimum_score_param" value="10000000"/> <!-- assume perfect odom -->
+	<arg unless="$(arg perfect_odometry)" name="minimum_score_param" value="$(arg minimum_score)"/>
+
+	<arg     if="$(arg perfect_odometry)" name="stt" value="0.0"/> <!-- assume perfect odom -->
 	<arg unless="$(arg perfect_odometry)" name="stt" value="0.02"/>
 
-	<node pkg="st_gmapping_rolling" type="st_gmapping_rolling" name="st_gmapping_rolling"
-		output="screen" clear_params="true">
+	<arg     if="$(arg rolling)" name="windowsize_param" value="$(arg windowsize)"/>
+	<arg unless="$(arg rolling)" name="windowsize_param" value=""/>
+
+	<node pkg="st_gmapping_rolling" type="st_gmapping_rolling" name="st_gmapping_rolling" output="screen" clear_params="true">
 		<param name="base_frame" value="base_footprint" />
 		<param name="odom_frame" value="odom" />
 		<param name="map_frame" value="map" />
@@ -44,8 +55,8 @@
 			of the sensor. If regions with no obstacles within the range of the sensor 
 			should appear as free space in the map, set maxUrange < maximum range of 
 			the real sensor <= maxRange. -->
-		<param name="sigma" value="0.05" />
-		<param name="kernelSize" value="$(arg kernelSize)" /> <!--does this define the size of the region searched for scan-matching? seems related to convulition, i.e. correlation-->
+		<param name="sigma" value="$(arg sigma)" />
+		<param name="kernelSize" value="1" /> <!--does this define the size of the region searched for scan-matching? seems related to convulition, i.e. correlation-->
 		<param name="lstep" value="0.05" /> <!--?-->
 		<param name="astep" value="0.05" /> <!--?-->
 		<param name="iterations" value="5" />
@@ -56,17 +67,16 @@
 		<param name="srt" value="$(arg srt)" /> <!-- seems to define the noise matrix for the EKF for map updates -->
 		<param name="str" value="$(arg str)" /> <!-- seems to define the noise matrix for the EKF for map updates -->
 		<param name="stt" value="$(arg stt)" /> <!-- seems to define the noise matrix for the EKF for map updates -->
-		<param name="linearUpdate" value="0.5" /> <!-- default is 1m, turtlebot 0.5m, gmapping orig article 0.5m -->
-		<param name="angularUpdate" value="0.436" /> <!-- default is 0.5rad(28.6deg), turtlebot 0.436rad(25deg), gmapping orig article 0.436rad(25deg) -->
+		<param name="linearUpdate" value="$(arg linearUpdate)" /> <!-- default is 1m, turtlebot 0.5m, gmapping orig article 0.5m -->
+		<param name="angularUpdate" value="$(arg angularUpdate)" /> <!-- default is 0.5rad(28.6deg), turtlebot 0.436rad(25deg), gmapping orig article 0.436rad(25deg) -->
 		<param name="temporalUpdate" value="-1.0" />
 		<param name="resampleThreshold" value="0.5" /> <!-- 0.5 means: resample if Neff < 0.5*N. See gmapping article grisetti2007, formula 20. -->
 		<param name="particles" value="$(arg particles)" /> <!-- default 30, turtlebot default 80 -->
 
-		<!-- These are now only set through 'windowsize'		
-		<param name="xmin" value="-10" />
-		<param name="ymin" value="-10" />
-		<param name="xmax" value="10" />
-		<param name="ymax" value="10" />-->
+		<param name="xmin" value="-10.0" />
+		<param name="ymin" value="-10.0" />
+		<param name="xmax" value="10.0" />
+		<param name="ymax" value="10.0" />
 
 		<param name="delta" value="0.05" /> <!-- Processing parameters (resolution of the map)  -->
 		<param name="llsamplerange" value="0.01" /> <!-- ? -->
@@ -74,11 +84,11 @@
 		<param name="lasamplerange" value="0.005" /> <!-- ? -->
 		<param name="lasamplestep" value="0.005" /> <!-- ? -->
 
-		<param name="minimumScore" value="$(arg minimum_score)" />
+		<param name="minimumScore" value="$(arg minimum_score_param)" /> <!-- I added this feature myself, default was 0, but setting to e.g. 50 makes it neglect poor scan_matching... (zero means it only neglects failed scan-matching) -->
 
 		<!-- Sliding window options -->
-		<param name="rolling" value="$(arg rolling)" />		
-		<param name="windowsize" value="$(arg windowsize)" />
+                <param name="rolling" value="$(arg rolling)" />	
+		<param name="windowsize" value="$(arg windowsize_param)" />
 		<param name="publishCurrentPath" value="$(arg publishCurrentPath)" />
 		<param name="publishAllPaths" value="$(arg publishAllPaths)" />
 		<param name="publishSpecificMap" value="$(arg publishSpecificMap)" />

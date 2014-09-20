@@ -73,10 +73,6 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
   std::vector<std::string> path_edges;
   int start_node_id;
 
-  // an intermediate node is regarded 'reached' when it is within this distance [m]. New goal will then be passed.
-  // shouldnt be larger than 1.0, otherwise risk of passing goals already at the other side of the wall (it can travel up and down a wall a lot then, trying to reach nodes in the corridor alongside that same wall).
-  // alternatively: use directNavigable checking (see commented code at exectueCB), you can possibly even leave dist_tolerance_intermediate completely out then (e.g. set it to 99999).
-  double dist_tolerance_intermediate = 1.0;
 
   // Calculate the topological path
   start_node_id = getAssociatedNode();
@@ -126,7 +122,7 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
       }
 
       // pass new goal node if within a certain distance of current goal node, or if it is the first goal. Only check for passing new goals if last is not passed already
-      if ((i == 0 || calcDistance(node_pose.pose, getRobotPoseInTopoFrame()) < dist_tolerance_intermediate) && i != path_nodes.size()) {
+      if (i == 0 || getAssociatedNode() == path_nodes.at(i) ) {
         //KL: commented directNavigable check out, not needed if dist_tolerance_intermediate<=1.
         //if (i == 0 || directNavigable(node_pose.pose.position, getRobotPoseInTopoFrame().getOrigin(), true)) {
           ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1, path_nodes.at(i));

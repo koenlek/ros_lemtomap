@@ -517,6 +517,8 @@ Visualization Manager:
       Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
+        edges_near_neighbour: true
+        edges_odom: true
         nodes: true
       Queue Size: 100
       Value: true
@@ -600,5 +602,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1317
-  X: 42
+  X: 49
   Y: 24
