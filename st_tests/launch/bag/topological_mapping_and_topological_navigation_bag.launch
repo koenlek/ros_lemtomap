@@ -76,7 +76,7 @@ Play a bag file using  - -clock that plays these topics:
 	
 	<!-- Topological navigation -->
 	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
-		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
+		<param name="main_loop_frequency" value="4" /> <!-- default is 1hz currently -->
 	</node>
 </launch>
 

@@ -38,7 +38,7 @@ Play a bag file using  - -clock that plays these topics:
 	</node>
 
 	<!-- Metric navigation (normal) -->
-	<include file="$(find st_navigation)/launch/move_base_normal.launch">
+	<include file="$(find st_navigation)/launch/move_base_rolling.launch"> <!-- rolling works fine for normal -->
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
 	</include>

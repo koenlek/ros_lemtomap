@@ -1,44 +1,52 @@
-# DWA local planner params optimized for using move_base with rolling window gmapping (st_gmapping_rolling) + topological mapping/navigation (st_topological_mapping & st_navigation)
-
-#see http://ros.org/wiki/dwa_local_planner for param description
+# from turtlebot indigo defaults: https://raw.githubusercontent.com/turtlebot/turtlebot_apps/indigo/turtlebot_navigation/param/dwa_local_planner_params.yaml
 DWAPlannerROS:
-  max_vel_x: 0.5 #default 0.55; for real-life 0.3 should be the max 
-  min_vel_x: 0.0 #defaul 0.0; for real-life 0.1 should be the max. Higher than 0.1 might get the robot 'stuck' in a slow translational movement along a corridor.
-  trans_stopped_vel: 0.1 #seems undocumented, so is maybe unused, I based it on this: see https://github.com/turtlebot/turtlebot_apps/blob/indigo/turtlebot_navigation/param/dwa_local_planner_params.yaml
+
+# Robot Configuration Parameters - Kobuki
+  max_vel_x: 0.5  # 0.55
+  min_vel_x: 0.0 
+
+  max_vel_y: 0.0  # diff drive robot
+  min_vel_y: 0.0  # diff drive robot
+
+  max_trans_vel: 0.5 # choose slightly less than the base's capability
+  min_trans_vel: 0.1  # this is the min trans velocity when there is negligible rotational velocity
+  trans_stopped_vel: 0.1
+
+  # Warning!
+  #   do not set min_trans_vel to 0.0 otherwise dwa will always think translational velocities
+  #   are non-negligible and small in place rotational velocities will be created.
+
+  max_rot_vel: 5.0  # choose slightly less than the base's capability
+  min_rot_vel: 0.4  # this is the min angular velocity when there is negligible translational velocity
+  rot_stopped_vel: 0.4
   
-  min_vel_y: 0.0
-  max_vel_y: 0.0
-  max_rot_vel: 5.0
-  min_rot_vel: 0.4
-  rot_stopped_vel: 0.4 #seems undocumented, so is maybe unused, I based it on this: see https://github.com/turtlebot/turtlebot_apps/blob/indigo/turtlebot_navigation/param/dwa_local_planner_params.yaml
-  
-  acc_lim_x: 0.5
-  acc_lim_y: 0.0
-  acc_lim_th: 1.0
+  acc_lim_x: 1.0 # maximum is theoretically 2.0, but we 
+  acc_lim_theta: 2.0
+  acc_lim_y: 0.0      # diff drive robot
 
-  yaw_goal_tolerance: 99 #0.3 seems good, maybe try 99 to make yaw of no importance at all?
-  xy_goal_tolerance: 0.15
-  
-  latch_xy_goal_tolerance: true #If goal tolerance is latched, if the robot ever reaches the goal xy location it will simply rotate in place, even if it ends up outside the goal tolerance while it is doing so. 
- 
-  sim_time: 1.0  #default 1.7, tbi1 (turtlebot indigo)
-  vx_samples: 6  #default 3, tbi6
-  vy_samples: 1  #default 10, tbi1
-  vtheta_samples: 20 #default 20, tbi20
+# Goal Tolerance Parameters
+  yaw_goal_tolerance: 0.3  # 0.05
+  xy_goal_tolerance: 0.15  # 0.10
+  # latch_xy_goal_tolerance: false
 
-  #The cost function used to score each trajectory is in the following form: 
-  #cost =  path_distance_bias * (distance to path from the endpoint of the trajectory in meters)  + goal_distance_bias * (distance to local goal from the endpoint of the trajectory in meters)  + occdist_scale * (maximum obstacle cost along the trajectory in obstacle cost (0-254))
+# Forward Simulation Parameters
+  sim_time: 1.0       # 1.7
+  vx_samples: 6       # 3
+  vy_samples: 1       # diff drive robot, there is only one sample
+  vtheta_samples: 20  # 20
 
-  # Some notes on path_distance_bias and goal_distance_bias. 
-  #  - Setting them too low: higher seems to make sure that robot does not get stuck and gives up (e.g. in a doorway stuck because too close too obstacles or so). 
-  #  - Setting them too high: it can sometimes get 'stuck' in a translational motion: it cannot succeed to make a turn or so. This can happen in a corridor or along a wall it seems... E.g.: if you send it somewhere north of the corridor it can sometimes keep on going south as if it cannot make the turn in the corridor... Running into an obstacles will usually automatically 'reset' the robot from this erratic behavior. This 'stuck' behaviour might also be caused by a non-zero min_vel_x
-  # Please note that the above notes are presumptions: I am not sure yet...
-  path_distance_bias: 32.0 #default:32, strands: 5.0
-  goal_distance_bias: 24.0 #default:24, strands: 9.0
+# Trajectory Scoring Parameters
+  path_distance_bias: 64.0      # 32.0   - weighting for how much it should stick to the global path plan
+  goal_distance_bias: 24.0      # 24.0   - wighting for how much it should attempt to reach its goal
+  occdist_scale: 0.50           # 0.01   - weighting for how much the controller should avoid obstacles
+  forward_point_distance: 0.325 # 0.325  - how far along to place an additional scoring point
+  stop_time_buffer: 0.2         # 0.2    - amount of time a robot must stop in before colliding for a valid traj.
+  scaling_speed: 0.25           # 0.25   - absolute velocity at which to start scaling the robot's footprint
+  max_scaling_factor: 0.2       # 0.2    - how much to scale the robot's footprint when at speed.
 
-  occdist_scale: 0.01 #default:0.01
-  oscillation_reset_dist: 0.05
-  prune_plan: true
+# Oscillation Prevention Parameters
+  oscillation_reset_dist: 0.05  # 0.05   - how far to travel before resetting oscillation flags
 
-  holonomic_robot: false
+# Differential-drive robot configuration - necessary?
+#  holonomic_robot: false
 
