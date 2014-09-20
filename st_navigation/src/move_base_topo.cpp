@@ -122,7 +122,9 @@ void MoveBaseTopo::executeCB(const st_navigation::GotoNodeGoalConstPtr& goal) //
       }
 
       // pass new goal node if within a certain distance of current goal node, or if it is the first goal. Only check for passing new goals if last is not passed already
-      if (i == 0 || getAssociatedNode() == path_nodes.at(i) ) {
+      //ROS_INFO("getAssociatedNode()=%d, i=%d, path_nodes.at(i)=%d",getAssociatedNode(), i, path_nodes.at(i));
+      if ((i == 0 || calcDistance(node_pose.pose, getRobotPoseInTopoFrame()) < 1.0) && i != path_nodes.size()) {
+      	//if (i == 0 || getAssociatedNode() == path_nodes.at(i) ) {
         //KL: commented directNavigable check out, not needed if dist_tolerance_intermediate<=1.
         //if (i == 0 || directNavigable(node_pose.pose.position, getRobotPoseInTopoFrame().getOrigin(), true)) {
           ROS_DEBUG("Navigating to goal node #%d, with NodeID %d", i + 1, path_nodes.at(i));

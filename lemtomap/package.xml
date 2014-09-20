@@ -12,7 +12,6 @@
   <run_depend>st_description</run_depend>
   <run_depend>st_gazebo</run_depend>
   <run_depend>st_gazebo</run_depend>
-  <run_depend>st_gazebo_perfect_map_generator</run_depend>
   <run_depend>st_gmapping_rolling</run_depend>
   <run_depend>st_map_server</run_depend>
   <run_depend>st_navigation</run_depend>

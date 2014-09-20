@@ -49,12 +49,10 @@ void StMapLoader::loadBag() {
 
 void StMapLoader::loadYAML() {
   std::string path_to_yamlfile = map_fullpath_ + "/toponav_map_metadata.yaml";
-  std::ifstream fin(path_to_yamlfile.c_str());
-  YAML::Parser parser(fin);
-  YAML::Node doc;
-  parser.GetNextDocument(doc);
 
-  doc[0]["associated_node"] >> associated_node_;
+  YAML::Node doc = YAML::LoadFile(path_to_yamlfile.c_str());
+
+  associated_node_ = doc[0]["associated_node"].as<int>();
   doc[1]["pose"] >> robot_pose_;
 
   //ROS_INFO_STREAM("associated_node = " << associated_node_);
@@ -64,12 +62,12 @@ void StMapLoader::loadYAML() {
 }
 
 void operator >> (const YAML::Node& node, geometry_msgs::Pose& robot_pose) {
-   node["position"]["x"] >> robot_pose.position.x;
-   node["position"]["y"] >> robot_pose.position.y;
-   node["position"]["z"] >> robot_pose.position.z;
-   node["orientation"]["x"] >> robot_pose.orientation.x;
-   node["orientation"]["y"] >> robot_pose.orientation.y;
-   node["orientation"]["z"] >> robot_pose.orientation.z;
-   node["orientation"]["w"] >> robot_pose.orientation.w;
+   robot_pose.position.x = node["position"]["x"].as<double>();
+   robot_pose.position.y = node["position"]["y"].as<double>();
+   robot_pose.position.z = node["position"]["z"].as<double>();
+   robot_pose.orientation.x = node["orientation"]["x"].as<double>();
+   robot_pose.orientation.y = node["orientation"]["y"].as<double>();
+   robot_pose.orientation.z = node["orientation"]["z"].as<double>();
+   robot_pose.orientation.w = node["orientation"]["w"].as<double>();
 }
 

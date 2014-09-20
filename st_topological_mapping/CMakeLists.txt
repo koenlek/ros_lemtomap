@@ -27,6 +27,7 @@ catkin REQUIRED COMPONENTS
   tf
   rosbag #for loading previous maps
   ecl_time
+  cmake_modules #Indigo compatibility
 )
 find_package(Eigen REQUIRED)
 
