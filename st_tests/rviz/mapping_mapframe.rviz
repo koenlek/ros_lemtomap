@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Map1/Status1
         - /TF1/Tree1
         - /Sensors1/LaserScan Hokuyo1
         - /Nav1
@@ -517,7 +518,7 @@ Visualization Manager:
       Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
       Name: TopoNavMap MarkerArray
       Namespaces:
-        nodes: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Group
@@ -551,7 +552,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 240; 240; 240
-    Fixed Frame: odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -576,11 +577,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 13.4147
+      Scale: 14.9433
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: -3.70347
-      Y: 4.13131
+      X: 34.0529
+      Y: 12.9216
     Saved: ~
 Window Geometry:
   Displays:

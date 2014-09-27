@@ -38,9 +38,6 @@
 #include <base_local_planner/line_iterator.h> //Use this to find the cost of a line. Although it is meant to be used in a base_local_planner context, it is also suitable to check if an edge should be created
 #include <nav_msgs/GetPlan.h> //service
 
-#include <ecl/time/cpuwatch.hpp>
-#include <ecl/time/time_data.hpp>
-
 // Local includes
 #include "st_topological_mapping/toponav_node.h"
 #include "st_topological_mapping/toponav_edge.h"
@@ -122,6 +119,8 @@ private:
   tf::TransformListener tf_listener_;
   tf::Transform tf_toponavmap2map_;
   bool max_edge_creation_; //if true, global costmap subscription will fire and cause maximum edges being created (which can cause some extra load). if false, the var max_edge_length_ will be used.
+
+  std::string odom_frame_;
 
   #if DEBUG
     int test_executed_;

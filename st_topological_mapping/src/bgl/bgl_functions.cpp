@@ -38,13 +38,6 @@ void updateNodeDetails(
   TopoNavNode::AdjacentNodes adjacent_nodeids_vector; //output, vector with adjacent nodes
   TopoNavNode::AdjacentEdges adjacent_edgeids_vector; //output, vector with adjecent edges
 
-  #if BENCHMARKING
-      ecl::StopWatch stopwatch;
-      ecl::CpuWatch cpuwatch;
-      stopwatch.split();
-      cpuwatch.split();
-  #endif
-
   /*
    * The code below is to turn the map into a format that Boost Graph can solve using Dijkstra's algorithm.
    * And to eventually turn the result into a form that can be returned to ROS again...
@@ -136,10 +129,6 @@ void updateNodeDetails(
       ROS_DEBUG("\tAdjacent EgdeID:%s",edges_boost.right.at(*ei).c_str());
       adjacent_edgeids_vector.push_back(edges_boost.right.at(*ei));
   }
-
-  #if BENCHMARKING
-    ROS_DEBUG_NAMED("Benchmarks","Executing of st_bgl::findNodeDetails() took %.5f[s](normal time) and %.5f[s](cpu time)",double(stopwatch.split()),double(cpuwatch.split()));
-  #endif
 
   //setBGLNodeDetails updates the Node its last_bgl_update, so next, make last_toponavmap_bgl_affecting_update equal to this.
   nodes[node_id]->setBGLNodeDetails(predecessor_map, distance_map, adjacent_nodeids_vector, adjacent_edgeids_vector);

@@ -25,12 +25,6 @@
 #include "st_topological_mapping/toponav_node.h"
 #include "st_topological_mapping/toponav_edge.h"
 
-#if BENCHMARKING
-#include <ecl/time/stopwatch.hpp>
-#include <ecl/time/cpuwatch.hpp>
-#include <ecl/time/time_data.hpp>
-#endif
-
 /**
  * @file bgl_functions
  * @brief Find details about the topological map using the boost graph library

@@ -1,13 +1,5 @@
 <?xml version="1.0"?>
 
-<!-- 
-Play a bag file using  - -clock that plays these topics:
-/scan_hokuyo
-/tf (make sure it does not have the /map frame!)
-/odom
-/mobile_base/sensors/bumper_pointcloud
--->
-
 <launch>	
 	<!-- Set navigation parameters -->
 	<arg name="nav_allow_unknown" default="true" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
@@ -27,22 +19,39 @@ Play a bag file using  - -clock that plays these topics:
 
 	<!-- Set other parameters -->
 	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage willowgarage_large -->
 	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
 	<arg name="loop_closure_max_topo_dist" default="100"/>
 	<arg name="move_base_topo_frequency" default="2" />
 	<arg name="topo_mapper_frequency" default="4" /> <!-- 2 is minimum, 4 is best: otherwise nodes can get too far from each other... -->
 
-	<!-- set use_sim_time flag -->
-	<group if="$(arg use_sim_time)">
-	  <param name="/use_sim_time" value="true" />
-	</group>
+        <arg name="x_robot" default="6" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+	<arg name="y_robot" default="-16" />	
 
-	<!-- RVIZ -->
+        <!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find st_tests)/rviz/mapping.rviz" />
 
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find st_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="$(arg x_robot)" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+		<arg name="y_robot" value="$(arg y_robot)" />
+		<arg name="z_robot" value="0" />
+		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find st_description)/robots/semantic_turtle_no_kinect.urdf.xacro'" /> <!--semantic_turtle_no_kinect.urdf.xacro or semantic_turtle.urdf.xacro -->
+	</include>
+
+	<!-- Gazebo -->
+	<include
+		file="$(find st_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name" value="$(find st_gazebo)/worlds/$(arg world_name_short)" />
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
+
 	<!-- Rolling Window Gmapping (timed) -->
-	<node pkg="st_tests" 
-              type="timed_roslaunch.sh" args="5 st_gmapping_rolling gmapping_general_launcher.launch 
+	<node pkg="st_tests" type="timed_roslaunch.sh" args="5 st_gmapping_rolling gmapping_general_launcher.launch 
 			scan_topic:=$(arg scan_topic) 
 			rolling:=$(arg rolling) 
 			windowsize:=$(arg windowsize) 
@@ -66,8 +75,10 @@ Play a bag file using  - -clock that plays these topics:
 		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
 		<param name="max_edge_creation" value="true" /> <!-- default is true -->
-		<param name="loop_closure_max_topo_dist" value="$(arg loop_closure_max_topo_dist)" />  
-		<param name="main_loop_frequency" value="$(arg topo_mapper_frequency)" /> <!-- default is 4hz currently -->                         
+		<param name="disable_visualizations" value="false" /> <!-- default is false -->
+		<param name="loop_closure_max_topo_dist" value="$(arg loop_closure_max_topo_dist)" />
+		<param name="main_loop_frequency" value="$(arg topo_mapper_frequency)" /> <!-- default is 4hz currently -->
+		<param name="odom_frame" value="odom_ground_truth" />                             
 	</node>
 
 	<!-- Metric navigation (rolling) -->
@@ -79,6 +90,12 @@ Play a bag file using  - -clock that plays these topics:
 	<!-- Topological navigation -->
 	<node pkg="st_navigation" type="move_base_topo" name="move_base_topo" output="screen">
 		<param name="main_loop_frequency" value="$(arg move_base_topo_frequency)" /> <!-- default is 1hz currently -->
+	</node>
+
+	<!-- Perfect odom frame broadcaster -->
+	<node pkg="st_tools" type="publish_perfect_odom_frame" name="publish_perfect_odom_frame" output="screen">
+		<param name="x_robot" value="$(arg x_robot)" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+		<param name="y_robot" value="$(arg y_robot)" />
 	</node>
 </launch>
 

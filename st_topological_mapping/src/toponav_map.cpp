@@ -29,6 +29,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   private_nh.param("local_costmap_topic", local_costmap_topic_, std::string("move_base/local_costmap/costmap"));
   private_nh.param("global_costmap_topic", global_costmap_topic_, std::string("move_base/global_costmap/costmap"));
   private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(100));
+  private_nh.param("odom_frame", odom_frame_, std::string("odom"));
 
   // Set initial transform between map and toponav_map
   tf_toponavmap2map_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
@@ -60,7 +61,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
 
   //update the map one time, at construction. This will create the first map node.
   tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(10));
-  tf_listener_.waitForTransform("map", "odom", ros::Time(0), ros::Duration(10));
+  tf_listener_.waitForTransform("map", odom_frame_, ros::Time(0), ros::Duration(10));
   updateMap();
   ROS_INFO("TopoNavMap object is initialized");
 
@@ -177,8 +178,8 @@ void TopoNavMap::updateToponavMapTransform() {
 
   try
   {
-    tf_listener_.waitForTransform("map", "odom", ros::Time(0), ros::Duration(2));
-    tf_listener_.lookupTransform("map", "odom", ros::Time(0), tf_toponavmap2map_stamped);
+    tf_listener_.waitForTransform("map", odom_frame_, ros::Time(0), ros::Duration(2));
+    tf_listener_.lookupTransform("map", odom_frame_, ros::Time(0), tf_toponavmap2map_stamped);
   }
   catch (tf::TransformException &ex)
   {

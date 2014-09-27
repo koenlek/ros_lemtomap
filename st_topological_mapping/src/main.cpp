@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   }
 
   if (!disable_visualizations)
-    show_topo_nav_map = new ShowTopoNavMap(n, topo_nav_map.getNodes(), topo_nav_map.getEdges(), topo_nav_map.getAssociatedNode());
+    show_topo_nav_map = new ShowTopoNavMap(n, topo_nav_map.getNodes(), topo_nav_map.getEdges(), topo_nav_map.getAssociatedNode(),frequency);
 
 #ifdef CMAKE_BUILD_TYPE_DEF
 #include <boost/preprocessor/stringize.hpp>

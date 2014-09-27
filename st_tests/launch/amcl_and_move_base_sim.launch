@@ -17,7 +17,7 @@
 
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz"
-		args="-d $(find st_tests)/rviz/mapping.rviz" />
+		args="-d $(find st_tests)/rviz/mapping_mapframe.rviz" />
 
 	<!-- Bringup simulated robot -->
 	<include

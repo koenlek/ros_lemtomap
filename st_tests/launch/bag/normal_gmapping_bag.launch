@@ -16,7 +16,6 @@ Play a bag file using  - -clock that plays these topics:
 	
 	<!-- Set other paramters -->
 	<arg name="use_sim_time" default="true" />
-	<arg name="world_name_short" default="willowgarage.world" /> <!-- playground,empty,ball,willowgarage -->
 
 	<!-- set use_sim_time flag -->
 	<group if="$(arg use_sim_time)">

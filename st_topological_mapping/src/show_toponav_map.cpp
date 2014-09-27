@@ -8,7 +8,7 @@
 
 ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes,
                                const TopoNavEdge::EdgeMap &edges,
-                               const TopoNavNode::NodeID &associated_node) :
+                               const TopoNavNode::NodeID &associated_node, const double frequency) :
     n_(n), // this way, ShowTopoNavMapis aware of the NodeHandle of this ROS node, just as TopoNavMap...
     nodes_(nodes), edges_(edges), associated_node_(associated_node)
 {
@@ -25,7 +25,8 @@ ShowTopoNavMap::ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &n
   nodes_marker_template_.header.stamp = ros::Time(); //From http://wiki.ros.org/rviz/DisplayTypes/Marker: Note that the timestamp attached to the marker message above is ros::Time(), which is time Zero (0). This is treated differently by RViz than any other time. If you use ros::Time::now() or any other non-zero value, rviz will only display the marker if that time is close enough to the current time, where "close enough" depends on TF. With time 0 however, the marker will be displayed regardless of the current time.
   nodes_marker_template_.action = visualization_msgs::Marker::ADD;
   //nodes_marker_template_.pose.orientation.w;
-  nodes_marker_template_.lifetime = ros::Duration(1.5); //it will take up to this much time until deleted markers will disappear...
+  nodes_marker_template_.lifetime = ros::Duration(1/frequency+0.5); //it will take up to this much time until deleted markers will disappear...
+  ROS_INFO("Duration is now %.2f",1/frequency+0.5);
 
   // Equal other markers with this 'template' marker.
   edges_marker_template_ = nodes_marker_template_;

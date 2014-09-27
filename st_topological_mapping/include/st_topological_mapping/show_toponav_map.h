@@ -28,7 +28,7 @@ class ShowTopoNavMap
 {
 
 public:
-  ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes, const TopoNavEdge::EdgeMap &edges, const TopoNavNode::NodeID &associated_node); //Constructor
+  ShowTopoNavMap(ros::NodeHandle &n, const TopoNavNode::NodeMap &nodes, const TopoNavEdge::EdgeMap &edges, const TopoNavNode::NodeID &associated_node, const double frequency); //fixme: passing nodehandles around is probably not necessary (should be fixed in some other cases in LEMTOMap as well)  //Constructor
   /**
    * Public Methods
    */
