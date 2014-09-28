@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+  The complete turtlebot library of xacros for easy reference
+ -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- General -->
+  <xacro:include filename="$(find lemto_description)/urdf/common_properties.urdf.xacro"/>
+  <xacro:include filename="$(find lemto_description)/urdf/lemto_turtle_properties.urdf.xacro"/>
+  <!-- Base -->
+  <xacro:include filename="$(find kobuki_description)/urdf/kobuki.urdf.xacro" />
+  <!-- Stack -->
+  <xacro:include filename="$(find lemto_description)/urdf/hexagons.urdf.xacro"/>
+  <!-- Sensors -->
+  <xacro:include filename="$(find lemto_description)/urdf/kinect.urdf.xacro"/>
+  <xacro:include filename="$(find lemto_description)/urdf/hokuyo.urdf.xacro"/>
+</robot>

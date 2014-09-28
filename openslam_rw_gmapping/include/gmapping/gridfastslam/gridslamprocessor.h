@@ -254,7 +254,7 @@ namespace GMapping {
  
     /**the laser beams*/
     unsigned int m_beams;
-    double last_update_time_;
+    double lalemto_update_time_;
     double period_;
     
     /**the particles*/

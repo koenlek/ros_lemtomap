@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>lemto_map_server</name>
+  <version>0.4.1</version>
+  <description>The lemto_map_server package</description>
+  <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
+  <license>GPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rosbag</build_depend>
+  <build_depend>lemto_topological_mapping</build_depend> 
+  <build_depend>tf</build_depend>  
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>rosbag</run_depend>
+  <run_depend>lemto_topological_mapping</run_depend>
+  <run_depend>tf</run_depend>
+</package>

@@ -1,6 +1,6 @@
 <package>
   <name>openslam_rw_gmapping</name>
-  <version>0.1.0</version>
+  <version>0.4.1</version>
   <description>Rolling Window-ified, ROS-ified version of gmapping SLAM. Needed by Rolling Window GMapping (RW-GMapping). Forked from openslam_gmapping: https://github.com/ros-perception/openslam_gmapping</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>BSD</license>

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<launch>	
+	<arg name="load_map_directory" default=""/>
+	<arg name="scan_topic" default="scan_hokuyo" />
+
+	<include file="$(find lemto_launchers)/launch/includes/topological_mapping_normalnav_sim1.launch.xml">
+		<arg name="load_map_directory" value="$(arg load_map_directory)"/>
+	</include>
+
+	<!-- Load empty map (all unknown) for /map -->
+	<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find lemto_map_server)/maps/emptymap.yaml"/>
+	
+	<!-- As much relies on the /map frame, make it fixed to /odom -->
+ 	<node pkg="tf" type="static_transform_publisher" name="map_frame_publisher" args="0 0 0 0 0 0 /odom /map 100"/>
+
+	<!-- Navigation components -->
+	<include file="$(find lemto_navigation)/launch/move_base_dwa_local.launch">
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
+	<!-- Choose from:
+		move_base_dwa_local		
+		move_base_dwa_local_glob_eq_loc
+		move_base_dwa_local_empty_global
+	-->
+
+	<!-- Run Move Base Topo -->
+	<node pkg="lemto_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="5" /> <!-- default is 1hz currently -->
+	</node>
+
+</launch>
+

@@ -54,12 +54,12 @@ int CarmenWrapper::registerLocalizationMessages(){
   /* register globalpos message */
   err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_LOCALIZE_GLOBALPOS_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_GLOBALPOS_NAME);
+  carmen_telemto_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_GLOBALPOS_NAME);
 
   /* register robot particle message */
   err = IPC_defineMsg(CARMEN_LOCALIZE_PARTICLE_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_LOCALIZE_PARTICLE_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_PARTICLE_NAME);
+  carmen_telemto_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_PARTICLE_NAME);
 
 /*
   carmen_localize_subscribe_initialize_placename_message(NULL, 
@@ -70,16 +70,16 @@ int CarmenWrapper::registerLocalizationMessages(){
   // register map request message 
   err = IPC_defineMsg(CARMEN_LOCALIZE_MAP_QUERY_NAME, IPC_VARIABLE_LENGTH,
 		      CARMEN_LOCALIZE_MAP_QUERY_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
+  carmen_telemto_ipc_exit(err, "Could not define", 
 		       CARMEN_LOCALIZE_MAP_QUERY_NAME);
 
   err = IPC_defineMsg(CARMEN_LOCALIZE_MAP_NAME, IPC_VARIABLE_LENGTH,
 		      CARMEN_LOCALIZE_MAP_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_MAP_NAME);
+  carmen_telemto_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_MAP_NAME);
 
   // subscribe to map request message 
   err = IPC_subscribe(CARMEN_LOCALIZE_MAP_QUERY_NAME, map_query_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_MAP_QUERY_NAME);
+  carmen_telemto_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_MAP_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_LOCALIZE_MAP_QUERY_NAME, 1);
 
 
@@ -87,13 +87,13 @@ int CarmenWrapper::registerLocalizationMessages(){
   err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 
 		      IPC_VARIABLE_LENGTH,
 		      CARMEN_DEFAULT_MESSAGE_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
+  carmen_telemto_ipc_exit(err, "Could not define", 
 		       CARMEN_LOCALIZE_MAP_QUERY_NAME);
 
   // subscribe to globalpos request message 
   err = IPC_subscribe(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 
 		      globalpos_query_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", 
+  carmen_telemto_ipc(err, "Could not subscribe", 
 		  CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 1);
 */
@@ -111,12 +111,12 @@ bool CarmenWrapper::start(const char* name){
 	IPC_RETURN_TYPE err;
 
 	err = IPC_subscribe(CARMEN_NAVIGATOR_GO_NAME, navigator_go_handler,  NULL);
-	carmen_test_ipc_exit(err, "Could not subscribe", 
+	carmen_telemto_ipc_exit(err, "Could not subscribe", 
 			     CARMEN_NAVIGATOR_GO_NAME);
 	IPC_setMsgQueueLength(CARMEN_NAVIGATOR_GO_NAME, 1);
 
 	err = IPC_subscribe(CARMEN_NAVIGATOR_STOP_NAME, navigator_stop_handler,  NULL);
-	carmen_test_ipc_exit(err, "Could not subscribe", 
+	carmen_telemto_ipc_exit(err, "Could not subscribe", 
 			     CARMEN_NAVIGATOR_STOP_NAME);
 	IPC_setMsgQueueLength(CARMEN_NAVIGATOR_STOP_NAME, 1);
 
@@ -272,7 +272,7 @@ void CarmenWrapper:: navigator_go_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callDa
 			   sizeof(carmen_navigator_go_message));  
   IPC_freeByteArray(callData);
 
-  carmen_test_ipc_return
+  carmen_telemto_ipc_return
     (err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
   cerr<<"go"<<endl;
   stopped=false;
@@ -289,7 +289,7 @@ void CarmenWrapper:: navigator_stop_handler(MSG_INSTANCE msgRef, BYTE_ARRAY call
 			   sizeof(carmen_navigator_stop_message));  
   IPC_freeByteArray(callData);
 
-  carmen_test_ipc_return
+  carmen_telemto_ipc_return
     (err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
   cerr<<"stop"<<endl;
   stopped=true;
@@ -377,7 +377,7 @@ void CarmenWrapper::publish_globalpos(carmen_localize_summary_p summary)
   globalpos.odometrypos = summary->odometry_pos;
   globalpos.converged = summary->converged;
   err = IPC_publishData(CARMEN_LOCALIZE_GLOBALPOS_NAME, &globalpos);
-  carmen_test_ipc_exit(err, "Could not publish", 
+  carmen_telemto_ipc_exit(err, "Could not publish", 
 		       CARMEN_LOCALIZE_GLOBALPOS_NAME);  
   unlock();
 }
@@ -398,7 +398,7 @@ void CarmenWrapper::publish_particles(carmen_localize_particle_filter_p filter,
   pmsg.num_particles = filter->param->num_particles;
   pmsg.particles = (carmen_localize_particle_ipc_p)filter->particles;
   err = IPC_publishData(CARMEN_LOCALIZE_PARTICLE_NAME, &pmsg);
-  carmen_test_ipc_exit(err, "Could not publish", 
+  carmen_telemto_ipc_exit(err, "Could not publish", 
 		       CARMEN_LOCALIZE_PARTICLE_NAME);  
   fprintf(stderr, "P");
   unlock();

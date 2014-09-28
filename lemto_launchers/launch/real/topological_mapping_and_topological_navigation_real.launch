@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+
+<launch>	
+	<!-- Set navigation parameters -->
+	<arg name="nav_allow_unknown" default="true" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
+	
+	<!-- Set some Rolling Window Gmapping parameters -->
+	<arg name="scan_topic" default="scan_hokuyo" />
+	<arg name="rolling" default="true" /> <!-- true/false: use rolling window gmapping or not -->
+	<arg name="windowsize" default="20" /> <!-- double, size in meters for rolling window, will be neglected if rolling is false -->
+	<arg name="perfect_odometry" default="false" /> <!-- true/false: for simulations, perfect odometry can be used -->
+	<arg name="suppress_console" default="true" /> <!-- true/false. This will suppress stderr output of gmapping -->
+	<arg name="particles" default="80"/>
+	<arg name="minimum_score" default="400"/> <!-- 250 seems good-->
+	<arg name="publishCurrentPath" default="false" />
+	<arg name="publishAllPaths" default="false" />
+	<arg name="publishSpecificMap" default="-1" /> <!-- -1, $(arg particles), or particles+1 (calc manually) -->
+		<!-- -1 is disable, 0 is first particle, 'particles-1' is last particle, 'particles' is best particle  -->
+
+	<!-- Set other parameters -->
+	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage willowgarage_large -->
+	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
+
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
+
+	<!-- Bringup robot + sensors -->
+	<include file="$(find lemto_bringup)/launch/minimal.launch" />
+	<include file="$(find lemto_bringup)/launch/3dsensor.launch">
+		<arg name="depth_registration" value="false" />
+	</include>
+	<include file="$(find lemto_bringup)/launch/hokuyo.launch" />
+	
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
+
+	<!-- Rolling Window Gmapping (timed) -->
+	<node pkg="lemto_launchers" 
+              type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
+			scan_topic:=$(arg scan_topic) 
+			rolling:=$(arg rolling) 
+			windowsize:=$(arg windowsize) 
+			perfect_odometry:=$(arg perfect_odometry) 
+			suppress_console:=$(arg suppress_console) 
+			particles:=$(arg particles) 
+			minimum_score:=$(arg minimum_score)
+			publishCurrentPath:=$(arg publishCurrentPath)
+			publishAllPaths:=$(arg publishAllPaths)
+			publishSpecificMap:=$(arg publishSpecificMap)" 
+              name="timed_roslaunch" output="screen">
+	</node>
+	<!-- Normal Gmapping -->
+	<!--<include file="$(find lemto_rw_gmapping)/launch/normal_gmapping.launch">
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>-->
+
+	<!-- Topological map builder --> 
+	<node pkg="lemto_topological_mapping" type="topological_navigation_mapper"
+		name="topological_navigation_mapper" output="screen" clear_params="true">
+		<param name="scan_topic" value="$(arg scan_topic)" />
+		<param name="load_map_directory" value="$(arg load_map_directory)" />
+		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
+		<param name="max_edge_creation" value="true" /> <!-- default is true -->
+		<param name="disable_visualizations" value="false" /> <!-- default is false -->
+	</node>
+
+	<!-- Metric navigation (rolling) -->
+	<include file="$(find lemto_navigation)/launch/move_base_rolling.launch">
+		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
+	
+	<!-- Topological navigation -->
+	<node pkg="lemto_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
+	</node>
+</launch>
+

@@ -3,7 +3,8 @@ ROS LEMTOMap
 
 Installation
 ------------
-This was tested on Hydro.
+This was tested on Indigo.
+(as of this writing, Turtlebot packages aren't officially released as .debs for Indigo, if these packages are still not available, follow the instructions in INSTALL-pre-turtlebot-indigo-release.md to build those packages yourself)
 
 - Create a catkin ws (or use your existing catkin ws):
 ```
@@ -43,7 +44,7 @@ Usage
 
 ### Create and navigate a topological map ###
 
-`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch`
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch`
 
 Tip: You can experiment by setting:
 rolling:=true (default is false)
@@ -51,7 +52,7 @@ windowsize:=20 (default is 20, is neglected if rolling is false)
 perfect_odometry:=true (default is false)
 
 For example:
-`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch rolling:=true`
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch rolling:=true`
 
 #### Drive around manually ####
 
@@ -66,7 +67,7 @@ Just use the RVIV '2D Nav Goal' tool on any unknown space (should be within the 
 You can send it to any topological node using this command. The RVIZ select tool can be used to choose a proper target_node_id. 
 
 ```
-rostopic pub /move_base_topo/goal st_navigation/GotoNodeActionGoal "header:
+rostopic pub /move_base_topo/goal lemto_navigation/GotoNodeActionGoal "header:
   seq: 0
   stamp:
     secs: 0
@@ -84,14 +85,14 @@ goal:
 
 ### Load and Store topological maps (under development) ###
 
-save a map (execute for example from ~/catkin_ws/src/st_map_server/maps):
+save a map (execute for example from ~/catkin_ws/src/lemto_map_server/maps):
 
-`rosrun st_map_server save_map -f my_toponav_map`
+`rosrun lemto_map_server save_map -f my_toponav_map`
 
 load a map:
 
-`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch load_map_directory:=$(rospack find st_map_server)/maps/my_toponav_map`
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:=$(rospack find lemto_map_server)/maps/my_toponav_map`
 
 OR e.g.:
-`roslaunch st_tests topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map" //$(pwd) expands to current directory, i.e. "./my_toponav_map"`
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map" //$(pwd) expands to current directory, i.e. "./my_toponav_map"`
 

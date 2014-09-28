@@ -1,0 +1,31 @@
+<!-- With this script, you can easily start gmapping with out without output (setting output="log" does not fully work for gmapping otherwise) -->
+<launch>
+	<arg name="scan_topic" default="scan" />
+	<arg name="rolling" default="false"/>
+	<arg name="windowsize" default="20"/>
+	<arg name="perfect_odometry" default="false"/>
+	<arg name="suppress_console" default="true" /> <!-- set to false to not suppress! -->
+	<arg name="particles" default="80"/>
+	<arg name="minimum_score" default="0"/>
+
+	<arg name="publishCurrentPath" default="false" />
+	<arg name="publishAllPaths" default="false" />
+	<arg name="publishSpecificMap" default="-1" />
+
+	<arg     if="$(arg suppress_console)" name="suppress_int" value="1"/>
+	<arg unless="$(arg suppress_console)" name="suppress_int" value="0"/>
+
+	<node pkg="lemto_rw_gmapping" type="gmapping_nostderr.sh" name="gmapping_nostderr" output="screen" args="
+	$(arg suppress_int) 
+	gmapping_general_launcher_stage2.launch 
+	scan_topic:=$(arg scan_topic) 
+	windowsize:=$(arg windowsize) 
+	perfect_odometry:=$(arg perfect_odometry) 
+	rolling:=$(arg rolling) 
+	particles:=$(arg particles) 
+	minimum_score:=$(arg minimum_score)
+	publishCurrentPath:=$(arg publishCurrentPath)
+	publishAllPaths:=$(arg publishAllPaths)
+	publishSpecificMap:=$(arg publishSpecificMap)"/>
+
+</launch>

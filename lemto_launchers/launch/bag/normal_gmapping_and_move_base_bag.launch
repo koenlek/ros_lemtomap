@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<!-- 
+Play a bag file using  - -clock that plays these topics:
+/scan_hokuyo
+/tf (make sure it does not have the /map frame! otherwise, you can get it out using tf_remap, see here: http://wiki.ros.org/tf#tf_remap and here: http://answers.ros.org/question/9106/rosbag-play-tf-static_transform_publisher/)
+(and these don't harm:
+/odom
+/mobile_base/sensors/bumper_pointcloud
+)
+-->
+
+<launch>
+	<!-- Set navigation parameters -->
+	<arg name="nav_allow_unknown" default="true" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
+	
+	<!-- Set some Gmapping parameters -->
+	<arg name="scan_topic" default="scan_hokuyo" />
+	
+	<!-- Set other paramters -->
+	<arg name="use_sim_time" default="true" />
+
+	<!-- set use_sim_time flag -->
+	<group if="$(arg use_sim_time)">
+	  <param name="/use_sim_time" value="true" />
+	</group>
+
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz"
+		args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
+
+	<!-- Gmapping (timed) -->
+	<node pkg="lemto_launchers" 
+              type="timed_roslaunch.sh" args="5 lemto_rw_gmapping normal_gmapping.launch 
+			scan_topic:=$(arg scan_topic)" 
+              name="timed_roslaunch" output="screen">
+	</node>
+
+	<!-- Metric navigation (normal) -->
+	<include file="$(find lemto_navigation)/launch/move_base_rolling.launch"> <!-- rolling works fine for normal -->
+		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
+</launch>

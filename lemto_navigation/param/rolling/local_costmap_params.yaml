@@ -1,0 +1,13 @@
+# Local costmap params optimized for using move_base with rolling window gmapping (lemto_rw_gmapping) + topological mapping/navigation (lemto_topological_mapping & lemto_navigation)
+
+global_frame: odom #some use /odom, others plainly use /map here...
+update_frequency: 5.0
+publish_frequency: 2.0
+rolling_window: true
+width: 4.0
+height: 4.0
+resolution: 0.05 #default 0.05
+#transform_tolerance: 0.5
+plugins:
+- {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
+- {name: inflation_layer,   type: "costmap_2d::InflationLayer"}

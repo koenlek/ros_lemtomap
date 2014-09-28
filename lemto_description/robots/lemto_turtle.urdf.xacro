@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+    - LEMTO Turtle, as adapted by Koen Lekkerkerker
+-->    
+<robot name="lemto_turtle" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find lemto_description)/urdf/lemto_turtle_library.urdf.xacro" />
+  
+  <kobuki/>
+  <stack_hexagons parent="base_link"/>
+  <sensor_kinect  parent="base_link"/>
+  <sensor_hokuyo  parent="base_link"/>
+</robot>

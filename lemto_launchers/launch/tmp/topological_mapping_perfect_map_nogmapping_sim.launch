@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+
+<launch>	
+	<arg name="scan_topic" default="scan_hokuyo" />	
+	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- empty,ball,willowgarage -->
+	<arg name="load_map_directory" default=""/> <!-- experimental: for loading a topological map -->
+	<arg name="load_occ_map" default="$(find lemto_map_server)/maps/highres/willowgarage_perfect_otherpose.yaml"/> <!--e.g. "" or "$(rospack find lemto_map_server)/maps/willowgarage_perfect.yaml" -->
+
+	<!-- Load map -->
+	<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(arg load_occ_map)"/>
+	<!-- As much relies on the /map frame, make it fixed to /odom -->
+ 	<node pkg="tf" type="static_transform_publisher" name="map_frame_publisher" args="0 0 0 0 0 0 /odom /map 100"/>
+
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz"
+		args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find lemto_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
+		<arg name="y_robot" value="-16" />
+		<arg name="z_robot" value="0" />
+	</include>
+
+	<!-- Gazebo -->
+	<include
+		file="$(find lemto_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name"
+			value="$(find lemto_gazebo)/worlds/$(arg world_name_short)" />
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Topological map builder -->
+	<node pkg="lemto_topological_mapping" type="topological_navigation_mapper"
+		name="topological_navigation_mapper" output="screen" clear_params="true">
+		<param name="scan_topic" value="$(arg scan_topic)" />
+		<param name="load_map_directory" value="$(arg load_map_directory)" />
+		<param name="main_loop_frequency" value="4" /> <!-- default is 4hz currently -->
+	</node>
+
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
+
+	<!-- Navigation components (timed -> it seems that otherwise it crashes!) -->
+	<node pkg="lemto_launchers" 
+              type="timed_roslaunch.sh" args="8 lemto_navigation move_base_dwa_local.launch scan_topic:=$(arg scan_topic)" 
+              name="timed_roslaunch" output="screen">
+	</node>
+	
+	<!-- Run Move Base Topo -->
+	<node pkg="lemto_navigation" type="move_base_topo" name="move_base_topo" output="screen">
+		<param name="main_loop_frequency" value="2" /> <!-- default is 1hz currently -->
+	</node>
+
+</launch>
+

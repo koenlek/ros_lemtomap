@@ -228,7 +228,7 @@ GridSlamProcessorThread::GridSlamProcessorThread(): GridSlamProcessor(cerr){
 	
 	pthread_mutex_init(&hp_mutex,0);
 	pthread_mutex_init(&ind_mutex,0);
-	pthread_mutex_init(&hist_mutex,0);
+	pthread_mutex_init(&hilemto_mutex,0);
 	running=false;
 	eventBufferLength=0;
 	mapUpdateTime=5;
@@ -268,7 +268,7 @@ GridSlamProcessorThread::GridSlamProcessorThread(): GridSlamProcessor(cerr){
 GridSlamProcessorThread::~GridSlamProcessorThread(){
 	pthread_mutex_destroy(&hp_mutex);
 	pthread_mutex_destroy(&ind_mutex);
-	pthread_mutex_destroy(&hist_mutex);
+	pthread_mutex_destroy(&hilemto_mutex);
 	
 	for (deque<Event*>::const_iterator it=eventBuffer.begin(); it!=eventBuffer.end(); it++)
 		delete *it;
@@ -603,21 +603,21 @@ void GridSlamProcessorThread::syncScanmatchUpdate(){
 }
 
 void GridSlamProcessorThread::addEvent(GridSlamProcessorThread::Event * e){
-	pthread_mutex_lock(&hist_mutex);
+	pthread_mutex_lock(&hilemto_mutex);
 	while (eventBuffer.size()>eventBufferLength){
 		Event* event=eventBuffer.front();
 		delete event;
 		eventBuffer.pop_front();
 	}
 	eventBuffer.push_back(e);
-	pthread_mutex_unlock(&hist_mutex);
+	pthread_mutex_unlock(&hilemto_mutex);
 }
 
 GridSlamProcessorThread::EventDeque GridSlamProcessorThread::getEvents(){
-	pthread_mutex_lock(&hist_mutex);
+	pthread_mutex_lock(&hilemto_mutex);
 	EventDeque copy(eventBuffer);
 	eventBuffer.clear();
-	pthread_mutex_unlock(&hist_mutex);
+	pthread_mutex_unlock(&hilemto_mutex);
 	return copy;
 }
 

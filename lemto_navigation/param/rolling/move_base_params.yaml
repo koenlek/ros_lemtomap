@@ -1,0 +1,21 @@
+# Move base params optimized for using move_base with rolling window gmapping (lemto_rw_gmapping) + topological mapping/navigation (lemto_topological_mapping & lemto_navigation)
+
+# Move base node parameters. For full documentation of the parameters in this file, please see
+#
+#  http://www.ros.org/wiki/move_base
+#
+shutdown_costmaps: false #default:false
+
+controller_frequency: 5.0 # tbi5.0 (turtlebot indigo)
+controller_patience: 3.0 # was 8.0, 15.0 is default. tbi3.0 (turtlebot indigo)
+
+planner_frequency: 1.0 # tbi1.0, 2.0 for turtlebot normally (hydro), 0.0 cannot be used if the map is also explored! newly detected walls/objects will result in the robot trying to drive through it!
+  # The rate in Hz at which to run the global planning loop. 
+  # If the frequency is set to 0.0, the global planner will only run when a new goal 
+  # is received or the local planner reports that its path is blocked. New in navigation 1.6.0
+planner_patience: 5.0 #default is 5.0
+
+oscillation_timeout: 10.0
+oscillation_distance: 0.2
+
+clearing_rotation_allowed: true #setting this to false blocks the annoying rotating behaviour. But setting it to false can also sometimes make it become stuck against a wall...

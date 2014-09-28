@@ -8,7 +8,7 @@
 	In particular in the suite the following packages are provided:
 	1)a scanmatcher based on gradient descent
 	2)a (simple) implementation for landmark based FastSLAM
-	3)a (very cool) grid_fast_slam algorithm 
+	3)a (very cool) grid_falemto_slam algorithm 
 	4)a map builder for sonar data, based on forward model.
 
 **REQUIREMENTS:

@@ -1,0 +1,10 @@
+<!--
+  The mobile platform base.
+  
+  Selector for the base.
+ -->
+<launch>
+  <arg name="base"/>
+  <include file="$(find lemto_bringup)/launch/includes/$(arg base)/mobile_base.launch.xml"/>
+</launch>
+

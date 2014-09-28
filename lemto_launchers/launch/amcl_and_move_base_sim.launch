@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!-- Set navigation parameters -->
+	<arg name="nav_allow_unknown" default="false" /> <!-- for the global planner, by defualt, it is true (NOTE: does not work currently, probably due to a bug in the offical navigation stack -->
+	
+	<!-- Set other paramters -->
+	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage.world" /> <!-- playground,empty,ball,willowgarage -->
+	<arg name="scan_topic" default="scan_hokuyo" />
+
+	<!-- AMCL -->
+  	<arg name="map_file" default="$(find turtlebot_navigation)/maps/willow-2010-02-18-0.10.yaml"/>
+        <arg name="initial_pose_x" default="0.0"/> <!-- Use 17.0 for willow's map in simulation -->
+        <arg name="initial_pose_y" default="0.0"/> <!-- Use 17.0 for willow's map in simulation -->
+        <arg name="initial_pose_a" default="0.0"/>
+
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz"
+		args="-d $(find lemto_launchers)/rviz/mapping_mapframe.rviz" />
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find lemto_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
+		<arg name="y_robot" value="-16" />
+		<arg name="z_robot" value="0" />
+		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find lemto_description)/robots/lemto_turtle_no_kinect.urdf.xacro'" /> <!--lemto_turtle_no_kinect.urdf.xacro or lemto_turtle.urdf.xacro -->
+	</include>
+
+	<!-- Gazebo -->
+	<include
+		file="$(find lemto_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name" value="$(find lemto_gazebo)/worlds/$(arg world_name_short)"/>
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
+
+	<!-- Map server -->
+  	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+        <!-- AMCL -->
+        <include file="$(find turtlebot_navigation)/launch/includes/amcl.launch.xml">
+        	<arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+        	<arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+        	<arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+        </include>
+
+	<!-- Metric navigation (normal) -->
+	<include file="$(find lemto_navigation)/launch/move_base_rolling.launch"> <!-- rolling works fine for normal -->
+		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
+</launch>

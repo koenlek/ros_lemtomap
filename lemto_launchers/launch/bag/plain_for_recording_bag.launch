@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<!-- 
+Use this file to record these topics:
+/scan_hokuyo
+/tf
+/odom
+/mobile_base/sensors/bumper_pointcloud
+-->
+
+<launch>
+	<!-- Set other paramters -->
+	<arg name="use_sim_time" default="true" />
+	<arg name="world_name_short" default="willowgarage_large.world" /> <!-- empty,ball,willowgarage,willowgarage_large -->
+
+	<!-- Bringup simulated robot -->
+	<include
+		file="$(find lemto_gazebo)/launch/bringup_simulated.launch">
+		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
+		<arg name="y_robot" value="-16" />
+		<arg name="z_robot" value="0" />
+		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find lemto_description)/robots/lemto_turtle_no_kinect.urdf.xacro'" /> <!--lemto_turtle_no_kinect.urdf.xacro or lemto_turtle.urdf.xacro -->
+	</include>
+
+	<!-- Gazebo -->
+	<include
+		file="$(find lemto_gazebo)/launch/turtlebot_gazebo_world.launch">
+		<arg name="world_name" value="$(find lemto_gazebo)/worlds/$(arg world_name_short)"/>
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+	</include>
+
+	<!-- Teleop -->
+	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
+
+</launch>

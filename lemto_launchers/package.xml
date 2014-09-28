@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>lemto_launchers</name>
+  <version>0.4.1</version>
+  <description>The lemto_launchers package</description>
+  <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
+  <license>GPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>std_msgs</build_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>turtlebot_navigation</run_depend>
+  <run_depend>turtlebot_teleop</run_depend>
+  <run_depend>amcl</run_depend>
+
+</package>

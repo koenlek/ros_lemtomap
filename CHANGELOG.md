@@ -3,6 +3,10 @@ Changelog for metapackage lemtomap
 
 -----------------------------------------
 
+0.4.1 (2014-09-28)
+------------------
+* Renamed all to LEMTOMap (Large Environment Metric TOpological Mapping system)
+
 0.4.0 (2014-07-16)
 ------------------
 * Topological mapping now by default creates as much edges as allowed based on if the edge is navigable in the global costmap (adherring the max topological distance limit to limit the risky of faulty topological loop closures).
@@ -18,9 +22,9 @@ Changelog for metapackage lemtomap
 
 0.3.0 (2014-06-22)
 ------------------
-* `st_gmapping_rolling` now supports setting the `minimumScore` to more than 0, limiting chattering/jumping of gmapping pose estimates in large open spaces.
-* `st_topological_mapping` now supplies and updates node details such as adjacent nodes, distance maps, and predessor maps when requested
-* `st_navigation` updated to use `st_topological_mapping` for graph/node details
+* `lemto_rw_gmapping` now supports setting the `minimumScore` to more than 0, limiting chattering/jumping of gmapping pose estimates in large open spaces.
+* `lemto_topological_mapping` now supplies and updates node details such as adjacent nodes, distance maps, and predessor maps when requested
+* `lemto_navigation` updated to use `lemto_topological_mapping` for graph/node details
 
 ### Main features ###
 * Topological mapping and navigation

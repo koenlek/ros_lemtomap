@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!-- Part of the sensors (like odometry) are already described in kobuki_gazebo.urdf.xacro in kobuki_gazebo -->
+<robot name="lemto_gazebo"
+	xmlns:xacro="http://ros.org/wiki/xacro">
+	<!-- Microsoft Kinect / ASUS Xtion PRO Live for simulation -->
+	<xacro:macro name="turtlebot_sim_3dsensor">
+		<gazebo reference="camera_sensormiddle_frame">
+			<!-- note that currently rgb+depth is used from here, which is incorrect-->
+			<sensor type="depth" name="camera">
+				<always_on>true</always_on>
+				<update_rate>20.0</update_rate>
+				<camera>
+					<horizontal_fov>${60.0*M_PI/180.0}</horizontal_fov>
+					<image>
+						<format>R8G8B8</format>
+						<width>640</width>
+						<height>480</height>
+					</image>
+					<clip>
+						<near>0.05</near>
+						<far>8.0</far>
+					</clip>
+				</camera>
+				<plugin name="kinect_camera_controller" filename="libgazebo_ros_openni_kinect.so">
+					<cameraName>camera</cameraName>
+					<alwaysOn>true</alwaysOn>
+					<updateRate>10</updateRate>
+					<imageTopicName>rgb/image_raw</imageTopicName>
+					<depthImageTopicName>depth/image_raw</depthImageTopicName>
+					<pointCloudTopicName>depth/points</pointCloudTopicName>
+					<cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+					<depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+					<frameName>camera_depth_optical_frame</frameName>
+					<baseline>0.1</baseline>
+					<distortion_k1>0.0</distortion_k1>
+					<distortion_k2>0.0</distortion_k2>
+					<distortion_k3>0.0</distortion_k3>
+					<distortion_t1>0.0</distortion_t1>
+					<distortion_t2>0.0</distortion_t2>
+					<pointCloudCutoff>0.4</pointCloudCutoff>
+				</plugin>
+			</sensor>
+		</gazebo>
+	</xacro:macro>
+	<!-- hokuyo -->
+	<xacro:macro name="turtlebot_sim_hokuyo">
+		<gazebo reference="hokuyo_laser_sensor_link">
+			<!-- some specs are tuned based on: http://www.hokuyo-aut.jp/02sensor/07scanner/urg_04lx_ug01.html
+				-->
+			<sensor type="gpu_ray" name="head_hokuyo_sensor">
+				<pose>0 0 0 0 0 0</pose>
+				<visualize>true</visualize>
+				<!-- shows a semi translucent visualization of the scan -->
+				<update_rate>40</update_rate>
+				<!-- ? -->
+				<ray>
+					<scan>
+						<horizontal>
+							<samples>720</samples>
+							<!-- ? -->
+							<resolution>1</resolution>
+							<!-- ? -->
+							<min_angle>${-90.0*M_PI/180.0}</min_angle>
+							<!-- KL: should be -120deg  -->
+							<max_angle>${90.0*M_PI/180.0}</max_angle>
+							<!-- KL: should be +120deg, but I'll probably configure it to cut off to +90 in real
+								life too, as it otherwise looks at a pole... -->
+						</horizontal>
+					</scan>
+					<range>
+						<min>0.1</min>
+						<!-- 20mm, use 0.1m (100mm) for non-gpu variants, otherwise sight is blocked for some reason: i.e. ray instead of gpu_ray and libgazebo_ros_laser.so instead of libgazebo_ros_gpu_laser.so-->
+						<max>5.6</max><!-- 5.6 for Hokuyo URG-04LX, 30 for Hokuyo UTM-30LX -->
+						<!--  5600mm -->
+						<resolution>0.01</resolution>
+						<!-- ? -->
+					</range>W
+					<noise>
+						<type>gaussian</type>
+						<!-- Noise parameters based on published spec for Hokuyo laser achieving "+-30mm"
+							accuracy at range < 10m. A mean of 0.0m and stddev of 0.01m will put 99.7%
+							of samples within 0.03m of the true reading. -->
+						<mean>0.0</mean>
+						<!-- ? -->
+						<stddev>0.01</stddev>
+						<!-- ? -->
+					</noise>
+				</ray>
+				<plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">
+					<topicName>scan_hokuyo</topicName>
+					<frameName>hokuyo_laser_sensor_link</frameName>
+				</plugin>
+			</sensor>
+		</gazebo>
+	</xacro:macro>
+</robot>

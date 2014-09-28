@@ -1,6 +1,6 @@
 #!/bin/bash          
 #
-# Script to update all package versions (in package.xml) for the semantic turtle stack
+# Script to update all package versions (in package.xml) for the lemtomap metapackage
 #
 # Koen Lekkerkerker
 # Created: 	8 Jul 2014 
@@ -28,7 +28,7 @@ NEW="<version>$1</version>"
 OLD="${OLD//\//\\/}" #substitue any slashes
 NEW="${NEW//\//\\/}"
 
-for f in $(find . -name 'package.xml') #store an array of all paths to a package.xml, that can be found from the parent folder of the semantic turtle metapackage 
+for f in $(find . -name 'package.xml') #store an array of all paths to a package.xml, that can be found from the parent folder of the lemtomap metapackage
 	do
 	  echo "Updating $f to version $1"
 	  sed "s/${OLD}/${NEW}/g" "$f" > "$f.bak" && mv "$f.bak" "$f"

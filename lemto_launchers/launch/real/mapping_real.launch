@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- Define arguments -->
+    <arg name="scan_topic" default="scan_hokuyo" />
+
+    <machine name="turtlebot" address="localhost" env-loader="/opt/ros/hydro/env.sh" default="true" />
+    <!--  <machine name="workstation" user="turtlebot" password="xxx" address="turtlebot-koenlek.local" env-loader="/opt/ros/hydro/env.sh"/>  -->
+        
+	<!-- !!!!! The part below should be run on the Turtlebot computer !!!!! -->
+
+	<!-- Bringup robot + sensors -->
+	<include file="$(find lemto_bringup)/launch/minimal.launch" />
+	<include file="$(find lemto_bringup)/launch/3dsensor.launch">
+		<arg name="depth_registration" value="false" />
+	</include>
+	<include file="$(find lemto_bringup)/launch/hokuyo.launch" />
+
+	<!-- Gmapping -->
+	<include file="$(find lemto_rw_gmapping)/launch/normal_gmapping.launch">
+		<arg name="scan_topic" value="$(arg scan_topic)" />
+	</include>
+
+	<!-- Teleop -->
+	<include file="$(find turtlebot_teleop)/launch/keyboard_teleop.launch" /> <!-- u to . for move. q/z inc/decr max speeds. w/x same for only lin. e/c 
+		same for only angular. space or k: force stop. anything else, stop smoothly -->
+
+	<!-- !!!!! The part below should be run on the WS computer !!!!! -->
+	<!-- Maybe sheck out this: http://wiki.ros.org/roslaunch/XML/machine -->
+	
+	<!-- RVIZ -->
+	<node machine="turtlebot" name="rviz" pkg="rviz" type="rviz" args="-d $(find lemto_launchers)/rviz/mapping.rviz" /> <!-- machine=workstation, should be added later -->
+
+</launch>
