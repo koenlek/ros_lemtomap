@@ -27,7 +27,7 @@ DWAPlannerROS:
   vtheta_samples: 20 #default 20, tbi20
 
   #The cost function used to score each trajectory is in the following form: 
-  #cost =  path_distance_bias * (distance to path from the endpoint of the trajectory in meters)  + goal_distance_bias * (distance to local goal from the endpoint of the trajectory in meters)  + occdilemto_scale * (maximum obstacle cost along the trajectory in obstacle cost (0-254))
+  #cost =  path_distance_bias * (distance to path from the endpoint of the trajectory in meters)  + goal_distance_bias * (distance to local goal from the endpoint of the trajectory in meters)  + occdist_scale * (maximum obstacle cost along the trajectory in obstacle cost (0-254))
 
   # Some notes on path_distance_bias and goal_distance_bias. 
   #  - Setting them too low: higher seems to make sure that robot does not get stuck and gives up (e.g. in a doorway stuck because too close too obstacles or so). 
@@ -36,7 +36,7 @@ DWAPlannerROS:
   path_distance_bias: 32.0 #default:32, strands: 5.0
   goal_distance_bias: 24.0 #default:24, strands: 9.0
 
-  occdilemto_scale: 0.01 #default:0.01
+  occdist_scale: 0.01 #default:0.01
   oscillation_reset_dist: 0.05
   prune_plan: true
 

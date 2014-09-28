@@ -33,7 +33,7 @@ CmdVelLogger::CmdVelLogger() {
     ROS_ERROR("Couldn't save cmd vel topic data to:\n\t%s\nShutting down logger node now", full_path.c_str());
     n.shutdown();
   }
-  fprintf(logger_csv_, "time_msg_processed, wall_time_msg_processed, twilemto_x, twilemto_theta\n");
+  fprintf(logger_csv_, "time_msg_processed, wall_time_msg_processed, twist_x, twist_theta\n");
 
 }
 

@@ -27,17 +27,17 @@ public:
   typedef std::vector<TopoNavNode::NodeID> AdjacentNodes;
   typedef std::vector<std::string> AdjacentEdges; //TODO you cannot use TopoNavEdge::EdgeID here, because class TopoNavEdge is not included here, which is done as otherwise circular dependency issues arise
 
-  //lalemto_toponavmap_bgl_affecting_update needs to be in the constructors: as it is a reference to the main variable in toponav_map!
-  TopoNavNode(tf::Pose pose, bool is_door, int area_id, NodeMap &nodes, ros::WallTime &lalemto_toponavmap_bgl_affecting_update);
+  //last_toponavmap_bgl_affecting_update needs to be in the constructors: as it is a reference to the main variable in toponav_map!
+  TopoNavNode(tf::Pose pose, bool is_door, int area_id, NodeMap &nodes, ros::WallTime &last_toponavmap_bgl_affecting_update);
   TopoNavNode(NodeID node_id,
-              ros::Time lalemto_updated,
-              ros::Time lalemto_pose_update,
-              ros::WallTime lalemto_bgl_update,
+              ros::Time last_updated,
+              ros::Time last_pose_update,
+              ros::WallTime last_bgl_update,
               tf::Pose pose,
               bool is_door,
               int area_id,
               NodeMap &nodes,
-              ros::WallTime &lalemto_toponavmap_bgl_affecting_update
+              ros::WallTime &last_toponavmap_bgl_affecting_update
               ); // only to be used when loading map from message!
 
   ~TopoNavNode();
@@ -53,15 +53,15 @@ public:
   }
   const ros::Time getLastUpdatedTime() const
   {
-    return lalemto_updated_;
+    return last_updated_;
   }
   const ros::Time getLastPoseUpdateTime() const
   {
-    return lalemto_pose_update_;
+    return last_pose_update_;
   }
   const ros::WallTime getLastBGLUpdateTime() const
   {
-    return lalemto_bgl_update_;
+    return last_bgl_update_;
   }
 
   const int getAreaID() const
@@ -84,25 +84,25 @@ public:
 
   const PredecessorMapNodeID getPredecessorMap() const
   {
-    if (lalemto_bgl_update_ < lalemto_toponavmap_bgl_affecting_update_)
+    if (last_bgl_update_ < last_toponavmap_bgl_affecting_update_)
       ROS_ERROR("Watch out: nodes_[%d].%s was called, but has an outdated predecessor map. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);
     return predecessor_map_;
   }
   const DistanceBiMapNodeID getDistanceMap() const
   {
-    if (lalemto_bgl_update_ < lalemto_toponavmap_bgl_affecting_update_)
+    if (last_bgl_update_ < last_toponavmap_bgl_affecting_update_)
       ROS_ERROR("Watch out: nodes_[%d].%s was called,  but has an outdated distance map. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);
     return distance_map_;
   }
   const AdjacentNodes getAdjacentNodeIDs() const
   {
-    if (lalemto_bgl_update_ < lalemto_toponavmap_bgl_affecting_update_)
+    if (last_bgl_update_ < last_toponavmap_bgl_affecting_update_)
       ROS_ERROR("Watch out: nodes_[%d].%s was called, but has an outdated adjacent_nodeids_vector_. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);
     return adjacent_nodeids_vector_;
   }
   const AdjacentEdges getAdjacentEdgeIDs() const
   {
-    if (lalemto_bgl_update_ < lalemto_toponavmap_bgl_affecting_update_)
+    if (last_bgl_update_ < last_toponavmap_bgl_affecting_update_)
       ROS_ERROR("Watch out: nodes_[%d].%s was called, but has an outdated adjacent_edgeids_vector_. Please call updateNodeBGLDetails(node_id) for this node", node_id_, __FUNCTION__);
     return adjacent_edgeids_vector_;
   }
@@ -114,25 +114,25 @@ public:
     distance_map_ = distance_map;
     adjacent_nodeids_vector_ = adjacent_nodeids_vector;
     adjacent_edgeids_vector_ = adjacent_edgeids_vector;
-    lalemto_bgl_update_ = ros::WallTime::now();
+    last_bgl_update_ = ros::WallTime::now();
   }
 
   void setAreaID(int area_id)
   {
     area_id_ = area_id;
-    lalemto_updated_ = ros::Time::now();
+    last_updated_ = ros::Time::now();
   }
   void setPose(tf::Pose pose)
   { //should only be used for small updates to the pose
     pose_ = pose;
-    lalemto_updated_ = ros::Time::now();
-    lalemto_pose_update_ = ros::Time::now();
+    last_updated_ = ros::Time::now();
+    last_pose_update_ = ros::Time::now();
   }
 
   void setIsDoor(bool is_door)
   {
     is_door_ = is_door;
-    lalemto_updated_ = ros::Time::now();
+    last_updated_ = ros::Time::now();
   }
 
 private:
@@ -140,9 +140,9 @@ private:
    * Variables
    */
   NodeID node_id_; //node_ids should never be changed!
-  ros::Time lalemto_updated_;
-  ros::Time lalemto_pose_update_; //used to check if edge costs need to be recalculated
-  ros::WallTime lalemto_bgl_update_; //used to check if a new bgl update is needed. Automatically updated on any BGL update to ros::WallTime::now().
+  ros::Time last_updated_;
+  ros::Time last_pose_update_; //used to check if edge costs need to be recalculated
+  ros::WallTime last_bgl_update_; //used to check if a new bgl update is needed. Automatically updated on any BGL update to ros::WallTime::now().
 
   tf::Pose pose_; //TODO - p3 - It would be better to use a StampedPose, relative frames would become possible (not all will be defined in /map, but e.g. in previous frame). setPose could still be kept, not much would have to change...
 
@@ -152,7 +152,7 @@ private:
 
   int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
   NodeMap &nodes_;
-  ros::WallTime &lalemto_toponavmap_bgl_affecting_update_;
+  ros::WallTime &last_toponavmap_bgl_affecting_update_;
 
   tf::TransformListener tf_listener_;
 

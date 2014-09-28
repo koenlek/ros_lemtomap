@@ -147,7 +147,7 @@ SlamGMappingRolling::SlamGMappingRolling() :
   gsp_laser_angle_increment_ = 0.0;
   gsp_odom_ = NULL;
 
-  got_firlemto_scan_ = false;
+  got_first_scan_ = false;
   got_map_ = false;
 
   ros::NodeHandle private_nh("~");
@@ -562,14 +562,14 @@ SlamGMappingRolling::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   if ((laser_count_ % throttle_scans_) != 0)
     return;
 
-  static ros::Time lalemto_map_update(0, 0);
+  static ros::Time last_map_update(0, 0);
 
   // We can't initialize the mapper until we've got the first scan
-  if (!got_firlemto_scan_)
+  if (!got_first_scan_)
   {
     if (!initMapper(*scan)) //
       return;
-    got_firlemto_scan_ = true;
+    got_first_scan_ = true;
   }
 
   GMapping::OrientedPoint odom_pose;
@@ -589,10 +589,10 @@ SlamGMappingRolling::laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
     map_to_odom_ = (odom_to_laser * laser_to_map).inverse();
     map_to_odom_mutex_.unlock();
 
-    if (!got_map_ || (scan->header.stamp - lalemto_map_update) > map_update_interval_)
+    if (!got_map_ || (scan->header.stamp - last_map_update) > map_update_interval_)
         {
       updateMap(*scan);
-      lalemto_map_update = scan->header.stamp;
+      last_map_update = scan->header.stamp;
       ROS_DEBUG("Updated the map");
     }
   }
@@ -853,7 +853,7 @@ geometry_msgs::Pose SlamGMappingRolling::gMapPoseToGeoPose(const GMapping::Orien
 void SlamGMappingRolling::updateAllPaths()
 {
   geometry_msgs::PoseStamped pose;
-  geometry_msgs::Pose belemto_leaf_pose, cur_leaf_pose;
+  geometry_msgs::Pose best_leaf_pose, cur_leaf_pose;
   pose.header.frame_id = tf_.resolve(map_frame_);
 
   //TODO - p2 - This recreates all the paths every time, which is causing extra system load. Maybe only update it (add latest poses). Make sure that it survives resampling properly though!!!
@@ -865,20 +865,20 @@ void SlamGMappingRolling::updateAllPaths()
     t_node_current_ = gsp_->getParticles().at(i).node;
 
     if (visualize_robot_centric_) {
-      belemto_leaf_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
+      best_leaf_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
       cur_leaf_pose = gMapPoseToGeoPose(gsp_->getParticles()[i].pose);
     }
     while (t_node_current_ != 0) {
       //ROS_INFO("t_node_current->pose (x,y,theta) = (%.4f,%.4f,%.4f)",t_node_current_->pose.x,t_node_current_->pose.y,t_node_current_->pose.theta);
       pose.pose = gMapPoseToGeoPose(t_node_current_->pose);
       if (visualize_robot_centric_) {
-        pose.pose.position.x += belemto_leaf_pose.position.x - cur_leaf_pose.position.x;
-        pose.pose.position.y += belemto_leaf_pose.position.y - cur_leaf_pose.position.y;
-        pose.pose.position.z += belemto_leaf_pose.position.z - cur_leaf_pose.position.z;
-        pose.pose.orientation.w += belemto_leaf_pose.orientation.w - cur_leaf_pose.orientation.w;
-        pose.pose.orientation.x += belemto_leaf_pose.orientation.x - cur_leaf_pose.orientation.x;
-        pose.pose.orientation.y += belemto_leaf_pose.orientation.y - cur_leaf_pose.orientation.y;
-        pose.pose.orientation.z += belemto_leaf_pose.orientation.z - cur_leaf_pose.orientation.z;
+        pose.pose.position.x += best_leaf_pose.position.x - cur_leaf_pose.position.x;
+        pose.pose.position.y += best_leaf_pose.position.y - cur_leaf_pose.position.y;
+        pose.pose.position.z += best_leaf_pose.position.z - cur_leaf_pose.position.z;
+        pose.pose.orientation.w += best_leaf_pose.orientation.w - cur_leaf_pose.orientation.w;
+        pose.pose.orientation.x += best_leaf_pose.orientation.x - cur_leaf_pose.orientation.x;
+        pose.pose.orientation.y += best_leaf_pose.orientation.y - cur_leaf_pose.orientation.y;
+        pose.pose.orientation.z += best_leaf_pose.orientation.z - cur_leaf_pose.orientation.z;
       }
       all_paths_.at(i).poses.push_back(pose);
       t_node_current_ = t_node_current_->parent;
@@ -923,22 +923,22 @@ void SlamGMappingRolling::publishMapPX()
 
   if (visualize_robot_centric_) {
     // update the origin of the published map
-    geometry_msgs::Pose belemto_robot_pose, cur_robot_pose;
+    geometry_msgs::Pose best_robot_pose, cur_robot_pose;
     double x_best, y_best, x_cur_tmp, y_cur_tmp, x_cur_tmp_local, y_cur_tmp_local, x_new, y_new;
     //tf::Pose map_px_origin;
     //tf::Transform map_px_rotate;
     //double yaw_diff;
     //tf::Quaternion yaw_diff_tf_quat;
 
-    belemto_robot_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
+    best_robot_pose = gMapPoseToGeoPose(gsp_->getParticles()[gsp_->getBestParticleIndex()].pose);
     cur_robot_pose = gMapPoseToGeoPose(current_p.pose);
-    /*yaw_diff = tf::getYaw(cur_robot_pose.orientation)-tf::getYaw(belemto_robot_pose.orientation);
+    /*yaw_diff = tf::getYaw(cur_robot_pose.orientation)-tf::getYaw(best_robot_pose.orientation);
      yaw_diff_tf_quat = tf::createQuaternionFromRPY(0,0,yaw_diff);*/
     //ROS_INFO("yaw_diff = %.4f",yaw_diff);
     x_best = current_p.map.map2world(GMapping::IntPoint(0, 0)).x;
     y_best = current_p.map.map2world(GMapping::IntPoint(0, 0)).y;
-    x_cur_tmp = x_best - (cur_robot_pose.position.x - belemto_robot_pose.position.x);
-    y_cur_tmp = y_best - (cur_robot_pose.position.y - belemto_robot_pose.position.y);
+    x_cur_tmp = x_best - (cur_robot_pose.position.x - best_robot_pose.position.x);
+    y_cur_tmp = y_best - (cur_robot_pose.position.y - best_robot_pose.position.y);
     //ROS_INFO("best (x,y)=(%.4f,%.4f), cur new intermediate (x,y)=(%.4f,%.4f)", x_best, y_best, x_cur_tmp, y_cur_tmp);
     x_cur_tmp_local = x_cur_tmp - cur_robot_pose.position.x;
     y_cur_tmp_local = y_cur_tmp - cur_robot_pose.position.y;

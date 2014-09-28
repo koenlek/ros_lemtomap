@@ -8,25 +8,25 @@
 
 TopoNavNode::TopoNavNode(
                          NodeID node_id,
-                         ros::Time lalemto_updated,
-                         ros::Time lalemto_pose_update,
-                         ros::WallTime lalemto_bgl_update,
+                         ros::Time last_updated,
+                         ros::Time last_pose_update,
+                         ros::WallTime last_bgl_update,
                          tf::Pose pose,
                          bool is_door,
                          int area_id,
                          NodeMap &nodes,
-                         ros::WallTime &lalemto_toponavmap_bgl_affecting_update) :
+                         ros::WallTime &last_toponavmap_bgl_affecting_update) :
     node_id_(node_id),
-    lalemto_updated_(lalemto_updated),
-    lalemto_pose_update_(lalemto_pose_update),
-    lalemto_bgl_update_(lalemto_bgl_update),
+    last_updated_(last_updated),
+    last_pose_update_(last_pose_update),
+    last_bgl_update_(last_bgl_update),
     pose_(pose), is_door_(is_door),
     area_id_(area_id), nodes_(nodes),
-    lalemto_toponavmap_bgl_affecting_update_(lalemto_toponavmap_bgl_affecting_update)
+    last_toponavmap_bgl_affecting_update_(last_toponavmap_bgl_affecting_update)
 {
   if (node_id_ >= UIDGenerator_)
     UIDGenerator_ = node_id_ + 1;
-  lalemto_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
   nodes_[node_id_] = this;
 }
 
@@ -35,30 +35,30 @@ TopoNavNode::TopoNavNode(
                          bool is_door,
                          int area_id,
                          NodeMap &nodes,
-                         ros::WallTime &lalemto_toponavmap_bgl_affecting_update) :
+                         ros::WallTime &last_toponavmap_bgl_affecting_update) :
     pose_(pose),
     is_door_(is_door),
     area_id_(area_id),
     nodes_(nodes),
-    lalemto_toponavmap_bgl_affecting_update_(lalemto_toponavmap_bgl_affecting_update)
+    last_toponavmap_bgl_affecting_update_(last_toponavmap_bgl_affecting_update)
 {
   node_id_ = UIDGenerator_++;
-  lalemto_updated_ = ros::Time::now();
-  lalemto_pose_update_ = lalemto_updated_;
-  lalemto_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
+  last_updated_ = ros::Time::now();
+  last_pose_update_ = last_updated_;
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now();  //TODO: actually not needed, no new/removed node without a new/removed edge!
   ROS_DEBUG("TopoNavNode created. id= %d, pose x=%f, y=%f, theta=%f, updated at %f",
             node_id_,
             pose_.getOrigin().x(),
             pose_.getOrigin().y(),
             tf::getYaw(pose_.getRotation()),
-            lalemto_updated_.toSec());
+            last_updated_.toSec());
   nodes_[node_id_] = this;
 }
 
 TopoNavNode::~TopoNavNode()
 {
   nodes_.erase(node_id_);
-  lalemto_toponavmap_bgl_affecting_update_ = ros::WallTime::now(); //TODO: actually not needed, no new/removed node without a new/removed edge!
+  last_toponavmap_bgl_affecting_update_ = ros::WallTime::now(); //TODO: actually not needed, no new/removed node without a new/removed edge!
   ROS_INFO("Node with ID %d is destructed", node_id_); //does not print on node shutdown! therefor: std::cerr is added...
 }
 

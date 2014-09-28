@@ -110,7 +110,7 @@ struct GridSlamProcessorThread : public GridSlamProcessor {
 		std::vector<OrientedPoint> hypotheses;
 		std::vector<unsigned int> indexes;
 		std::vector<double> weightSums;
-		pthread_mutex_t hp_mutex, ind_mutex, hilemto_mutex;
+		pthread_mutex_t hp_mutex, ind_mutex, hist_mutex;
 		pthread_t gfs_thread;
 		bool running;
 		

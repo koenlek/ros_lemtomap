@@ -52,7 +52,7 @@ void updateNodeDetails(
                          TopoNavNode::NodeMap &nodes,
                          const TopoNavEdge::EdgeMap &edges,
                          const int node_id,
-                         ros::WallTime &lalemto_toponavmap_bgl_affecting_update
+                         ros::WallTime &last_toponavmap_bgl_affecting_update
                          );
 } // namespace
 

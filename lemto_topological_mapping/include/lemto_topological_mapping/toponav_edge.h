@@ -24,15 +24,15 @@ public:
               const TopoNavNode &end_node,
               int type,
               EdgeMap &edges,
-              ros::WallTime &lalemto_toponavmap_bgl_affecting_update);
+              ros::WallTime &last_toponavmap_bgl_affecting_update);
   TopoNavEdge(EdgeID edge_id,
-              ros::Time lalemto_updated,
+              ros::Time last_updated,
               double cost,
               const TopoNavNode &start_node,
               const TopoNavNode &end_node,
               int type,
               EdgeMap &edges,
-              ros::WallTime &lalemto_toponavmap_bgl_affecting_update
+              ros::WallTime &last_toponavmap_bgl_affecting_update
               ); // only to be used when loading map from message!
   ~TopoNavEdge();
 
@@ -48,7 +48,7 @@ public:
   } // const after the method means that the method is not allowed to change the variables of the object.
   const ros::Time getLastUpdatedTime() const
   {
-    return lalemto_updated_;
+    return last_updated_;
   }
   const double getCost();
 
@@ -75,14 +75,14 @@ private:
    * Variables
    */
   EdgeID edge_id_; //edge ids are automatically generated and should never be changed!
-  ros::Time lalemto_updated_;
-  double colemto_;
+  ros::Time last_updated_;
+  double cost_;
   int type_; // type 1 is odom, 2 is near_neighbour, 3 is loop_closure //TODO - p3 - turn into some nice enum instead of a plain int...
   const TopoNavNode &start_node_; //A read only reference to the node object is created. It can use this to calculate costs all by itself.
   const TopoNavNode &end_node_;
 
   EdgeMap &edges_;
-  ros::WallTime &lalemto_toponavmap_bgl_affecting_update_;
+  ros::WallTime &last_toponavmap_bgl_affecting_update_;
 
   /**
    * Private Methods

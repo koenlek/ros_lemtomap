@@ -18,7 +18,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
     max_edge_length_(2.5),
     new_node_distance_(1.0),
     associated_node_(-1),
-    lalemto_bgl_affecting_update_(ros::WallTime::now())
+    last_bgl_affecting_update_(ros::WallTime::now())
 {
   ros::NodeHandle private_nh("~");
   std::string scan_topic;
@@ -28,7 +28,7 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   private_nh.param("scan_topic", scan_topic, std::string("scan"));
   private_nh.param("local_costmap_topic", local_costmap_topic_, std::string("move_base/local_costmap/costmap"));
   private_nh.param("global_costmap_topic", global_costmap_topic_, std::string("move_base/global_costmap/costmap"));
-  private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dilemto_, double(100));
+  private_nh.param("loop_closure_max_topo_dist", loop_closure_max_topo_dist_, double(100));
   private_nh.param("odom_frame", odom_frame_, std::string("odom"));
 
   // Set initial transform between map and toponav_map
@@ -132,17 +132,17 @@ void TopoNavMap::updateAssociatedNode() {
   int associated_node_new = associated_node_;
   TopoNavNode::AdjacentNodes candidate_nodes = nodes_[associated_node_]->getAdjacentNodeIDs();
   candidate_nodes.push_back(associated_node_); //all adjacent nodes and current node
-  double dilemto_metric_tmp;
-  double dilemto_metric_min = DBL_MAX;
+  double dist_metric_tmp;
+  double dist_metric_min = DBL_MAX;
   for (int i = 0; i < candidate_nodes.size(); i++) {
-    dilemto_metric_tmp = calcDistance(robot_pose_tf_, nodes_[candidate_nodes.at(i)]->getPoseInMap(tf_toponavmap2map_));
-    if (dilemto_metric_tmp < dilemto_metric_min) {
-      //ROS_INFO("Node %d is %.4f m away from the robot",candidate_nodes.at(i),dilemto_metric_min);
-      dilemto_metric_min = dilemto_metric_tmp;
+    dist_metric_tmp = calcDistance(robot_pose_tf_, nodes_[candidate_nodes.at(i)]->getPoseInMap(tf_toponavmap2map_));
+    if (dist_metric_tmp < dist_metric_min) {
+      //ROS_INFO("Node %d is %.4f m away from the robot",candidate_nodes.at(i),dist_metric_min);
+      dist_metric_min = dist_metric_tmp;
       associated_node_new = candidate_nodes.at(i);
     }
   }
-  //ROS_INFO("Closest Node is %d, which is %.4f m away from the robot",associated_node_new,dilemto_metric_min);
+  //ROS_INFO("Closest Node is %d, which is %.4f m away from the robot",associated_node_new,dist_metric_min);
   associated_node_ = associated_node_new;
 }
 
@@ -355,12 +355,12 @@ void TopoNavMap::checkCreateEdges() {
 
   addEdge(node, *nodes_[associated_node_], 1);  //create at least edge between the new and (previous) associated_node one!
 
-  updateNodeBGLDetails(node.getNodeID()); // this is needed as distance map is needed to check for loop_closure_max_topo_dilemto_
-  TopoNavNode::DistanceBiMapNodeID dilemto_map = node.getDistanceMap();
+  updateNodeBGLDetails(node.getNodeID()); // this is needed as distance map is needed to check for loop_closure_max_topo_dist_
+  TopoNavNode::DistanceBiMapNodeID dist_map = node.getDistanceMap();
 
   if (max_edge_creation_) {
-    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dilemto_map.right.begin(); right_iter != dilemto_map.right.end(); right_iter++) {
-      if (right_iter->first < loop_closure_max_topo_dilemto_) {
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++) {
+      if (right_iter->first < loop_closure_max_topo_dist_) {
         if (right_iter->second == node.getNodeID()) //not compare to self!
           continue;
         else if (!isInCostmap(right_iter->second, true)) //dont check if the node is outside of the area covered by de occupancy grid map
@@ -377,8 +377,8 @@ void TopoNavMap::checkCreateEdges() {
     }
   }
   else {
-    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dilemto_map.right.begin(); right_iter != dilemto_map.right.end(); right_iter++) {
-      if (right_iter->first < loop_closure_max_topo_dilemto_) {
+    for (TopoNavNode::DistanceBiMapNodeID::right_map::const_iterator right_iter = dist_map.right.begin(); right_iter != dist_map.right.end(); right_iter++) {
+      if (right_iter->first < loop_closure_max_topo_dist_) {
         if (right_iter->second == node.getNodeID()) //not compare to self!
           continue;
         else if (calcDistance(node, *nodes_[right_iter->second]) > max_edge_length_) //not check if > max_edge_length_
@@ -412,7 +412,7 @@ const bool TopoNavMap::directNavigable(const tf::Point &point1, const tf::Point 
             line_cost);
   // 100 is LETHAL (obstacle), 99 is INSCRIBED (will hit due to robot footprint), -1 is unknown.
   // See: http://wiki.ros.org/costmap_2d
-  // See the colemto_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
+  // See the cost_translation_table_ here: https://github.com/ros-planning/navigation/blob/hydro-devel/costmap_2d/src/costmap_2d_publisher.cpp
   // max_allowable_cost is set to 90 by default in the prototype definition
   if (line_cost <= max_allowable_cost && line_cost >= 0)
     navigable = true;
@@ -571,7 +571,7 @@ double TopoNavMap::distanceToClosestNode() {
 // TODO - p3 - This method compares to all nodes -> scales poorly eventually!
 // One idea to make it scale slightly better:bool anyNodeCloserThen(max_dist), which return false if there isnt any (full search space needs to be searched) or returns true if there is (usually only first part of search space needs to be searched, if you start at end of nodes_ std::map)
   double dist, minimum_dist;
-  int closelemto_node_id;
+  int closest_node_id;
   int number_of_nodes = getNumberOfNodes();
   if (number_of_nodes == 0)
     minimum_dist = INFINITY; //No nodes means -> dist in inf.
@@ -588,12 +588,12 @@ double TopoNavMap::distanceToClosestNode() {
       if (it == nodes_.begin() || dist < minimum_dist)
           {
         minimum_dist = dist;
-        closelemto_node_id = it->second->getNodeID();
+        closest_node_id = it->second->getNodeID();
       }
     }
   }
   ROS_DEBUG("Minimum distance = [%f], Closest Node ID= [%d]", minimum_dist,
-            closelemto_node_id);
+            closest_node_id);
 
   return minimum_dist;
 
@@ -604,14 +604,14 @@ double TopoNavMap::distanceToClosestNode() {
  */
 void TopoNavMap::addEdge(const TopoNavNode &start_node,
                          const TopoNavNode &end_node, int type) {
-  new TopoNavEdge(start_node, end_node, type, edges_, lalemto_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+  new TopoNavEdge(start_node, end_node, type, edges_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!
  * \brief addNode
  */
 void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
-  new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, lalemto_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
+  new TopoNavNode(tf_toponavmap2map_.inverse() * pose, is_door, area_id, nodes_, last_bgl_affecting_update_); //Using "new", the object will not be destructed after leaving this method!
 }
 
 /*!
@@ -643,7 +643,7 @@ void TopoNavMap::deleteNode(TopoNavNode &node) {
 }
 
 void TopoNavMap::updateNodeBGLDetails(TopoNavNode::NodeID node_id) {
-  lemto_bgl::updateNodeDetails(nodes_, edges_, node_id, lalemto_bgl_affecting_update_);
+  lemto_bgl::updateNodeDetails(nodes_, edges_, node_id, last_bgl_affecting_update_);
 }
 
 void TopoNavMap::nodeFromRosMsg(const lemto_topological_mapping::TopoNavNodeMsg &node_msg) {
@@ -651,33 +651,33 @@ void TopoNavMap::nodeFromRosMsg(const lemto_topological_mapping::TopoNavNodeMsg 
   poseMsgToTF(node_msg.pose, tfpose);
 
   new TopoNavNode(node_msg.node_id, //node_id
-  node_msg.lalemto_updated, //lalemto_updated
-  node_msg.lalemto_pose_updated, //lalemto_pose_updated
-  ros::WallTime(0), //lalemto_bgl_update set to 0, which will make any consulting trigger update!
+  node_msg.last_updated, //last_updated
+  node_msg.last_pose_updated, //last_pose_updated
+  ros::WallTime(0), //last_bgl_update set to 0, which will make any consulting trigger update!
   tfpose, //pose
   node_msg.is_door, //is_door
   node_msg.area_id, //area_id
   nodes_, //nodes map
-  lalemto_bgl_affecting_update_ //lalemto_toponavmap_bgl_affecting_update
+  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
   );
 }
 
 void TopoNavMap::edgeFromRosMsg(const lemto_topological_mapping::TopoNavEdgeMsg &edge_msg) {
   new TopoNavEdge(edge_msg.edge_id, //edge_id
-  edge_msg.lalemto_updated, //lalemto_updated
+  edge_msg.last_updated, //last_updated
   edge_msg.cost, //cost
   *nodes_[edge_msg.start_node_id], //start_node
   *nodes_[edge_msg.end_node_id], //end_node
   edge_msg.type,
                   edges_, //edges std::map
-                  lalemto_bgl_affecting_update_ //lalemto_toponavmap_bgl_affecting_update
+                  last_bgl_affecting_update_ //last_toponavmap_bgl_affecting_update
                   );
 }
 lemto_topological_mapping::TopoNavEdgeMsg
 TopoNavMap::edgeToRosMsg(TopoNavEdge *edge) { //not const, as getCost can cause update of the cost!
   lemto_topological_mapping::TopoNavEdgeMsg msg_edge;
   msg_edge.edge_id = edge->getEdgeID();
-  msg_edge.lalemto_updated = edge->getLastUpdatedTime();
+  msg_edge.last_updated = edge->getLastUpdatedTime();
   msg_edge.start_node_id = edge->getStartNode().getNodeID();
   msg_edge.type = edge->getType();
   msg_edge.end_node_id = edge->getEndNode().getNodeID();
@@ -689,8 +689,8 @@ TopoNavMap::edgeToRosMsg(TopoNavEdge *edge) { //not const, as getCost can cause 
 lemto_topological_mapping::TopoNavNodeMsg TopoNavMap::nodeToRosMsg(const TopoNavNode *node) {
   lemto_topological_mapping::TopoNavNodeMsg msg_node;
   msg_node.node_id = node->getNodeID();
-  msg_node.lalemto_updated = node->getLastUpdatedTime();
-  msg_node.lalemto_pose_updated = node->getLastPoseUpdateTime();
+  msg_node.last_updated = node->getLastUpdatedTime();
+  msg_node.last_pose_updated = node->getLastPoseUpdateTime();
   msg_node.area_id = node->getAreaID();
   poseTFToMsg(node->getPose(), msg_node.pose);
   msg_node.is_door = node->getIsDoor();

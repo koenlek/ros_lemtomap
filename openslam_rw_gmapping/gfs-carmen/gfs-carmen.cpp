@@ -206,7 +206,7 @@ int main(int argc, const char * const * argv){
 			if (processed){
 				cerr << "PROCESSED" << endl;
 				//for searching for the BEST PARTICLE INDEX
-				//				unsigned int belemto_idx=processor->getBestParticleIndex();
+				//				unsigned int best_idx=processor->getBestParticleIndex();
 				
 				//if you want to access to the PARTICLE VECTOR
 				const GridSlamProcessor::ParticleVector& particles = processor->getParticles(); 
@@ -221,11 +221,11 @@ int main(int argc, const char * const * argv){
 /*				
 				//then if you want to access the BEST MAP,
 				//of course by copying it in a plain structure 
-				Map<double, DoubleArray2D, false>* mymap = processor->getParticles()[belemto_idx].map.toDoubleMap();
+				Map<double, DoubleArray2D, false>* mymap = processor->getParticles()[best_idx].map.toDoubleMap();
 				//at this point mymap is yours. Can do what you want.
 												
-				double belemto_weight=particles[belemto_idx].weightSum;
-				cerr << "Best Particle is " << belemto_idx << " with weight " << belemto_weight << endl;
+				double best_weight=particles[best_idx].weightSum;
+				cerr << "Best Particle is " << best_idx << " with weight " << best_weight << endl;
 				
 */				
 				cerr << __PRETTY_FUNCTION__  << "CLONING... " << endl;

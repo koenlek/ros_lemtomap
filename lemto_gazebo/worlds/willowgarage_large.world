@@ -49,7 +49,7 @@
               <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
             </mesh>
           </geometry>
-          <calemto_shadows>0</calemto_shadows>
+          <cast_shadows>0</cast_shadows>
         </visual>
         <velocity_decay>
           <linear>0</linear>
@@ -88,7 +88,7 @@
               <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
             </mesh>
           </geometry>
-          <calemto_shadows>0</calemto_shadows>
+          <cast_shadows>0</cast_shadows>
         </visual>
         <velocity_decay>
           <linear>0</linear>
@@ -127,7 +127,7 @@
               <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
             </mesh>
           </geometry>
-          <calemto_shadows>0</calemto_shadows>
+          <cast_shadows>0</cast_shadows>
         </visual>
         <velocity_decay>
           <linear>0</linear>
@@ -166,7 +166,7 @@
               <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
             </mesh>
           </geometry>
-          <calemto_shadows>0</calemto_shadows>
+          <cast_shadows>0</cast_shadows>
         </visual>
         <velocity_decay>
           <linear>0</linear>
@@ -205,7 +205,7 @@
               <uri>model://willowgarage/meshes/willowgarage_visual.dae</uri>
             </mesh>
           </geometry>
-          <calemto_shadows>0</calemto_shadows>
+          <cast_shadows>0</cast_shadows>
         </visual>
         <velocity_decay>
           <linear>0</linear>

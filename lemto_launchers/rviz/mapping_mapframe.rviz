@@ -525,7 +525,7 @@ Visualization Manager:
       Displays:
         - Class: rviz/MarkerArray
           Enabled: false
-          Marker Topic: /lemto_rw_gmapping/all_paths
+          Marker Topic: /slam_rw_gmapping/all_paths
           Name: AllParticlePaths
           Namespaces:
             {}
@@ -537,7 +537,7 @@ Visualization Manager:
           Color: 25; 255; 0
           Enabled: false
           Name: CurrentParticlePath
-          Topic: /lemto_rw_gmapping/current_path
+          Topic: /slam_rw_gmapping/current_path
           Value: false
         - Alpha: 0.7
           Class: rviz/Map
@@ -545,7 +545,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: false
           Name: MapPX
-          Topic: /lemto_rw_gmapping/map_px
+          Topic: /slam_rw_gmapping/map_px
           Value: false
       Enabled: true
       Name: GMapping

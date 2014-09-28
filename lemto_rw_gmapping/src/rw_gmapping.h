@@ -70,7 +70,7 @@ private:
   unsigned int gsp_laser_beam_count_;
   GMapping::OdometrySensor* gsp_odom_;
 
-  bool got_firlemto_scan_;
+  bool got_first_scan_;
 
   bool got_map_;
   nav_msgs::GetMap::Response map_;

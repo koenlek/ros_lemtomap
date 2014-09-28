@@ -60,7 +60,7 @@ private:
   TopoNavEdge::EdgeMap edges_;
 
   //this var is auto updated by TopoNavNode and TopoNavEdge objects and is used to check if bgl update is needed (lemto_bgl::updateNodeDetails).
-  ros::WallTime lalemto_bgl_affecting_update_; //ros::Time() seems to update at only 100Hz (in simulation), ros::WallTime() is much more accurate
+  ros::WallTime last_bgl_affecting_update_; //ros::Time() seems to update at only 100Hz (in simulation), ros::WallTime() is much more accurate
 
   tf::Pose robot_pose_tf_; //stores robots current pose
   TopoNavNode::NodeID associated_node_; // the node with which the robot is currently associated
@@ -92,7 +92,7 @@ private:
    */
   double max_edge_length_;
   double new_node_distance_; //after how much meter a new node will be created
-  double loop_closure_max_topo_dilemto_; //maximal topological distance for edge creation, this is to make sure that loops aren't always closed -> as the node poses are not globally consistent defined, this could otherwise result in false loop closures!
+  double loop_closure_max_topo_dist_; //maximal topological distance for edge creation, this is to make sure that loops aren't always closed -> as the node poses are not globally consistent defined, this could otherwise result in false loop closures!
 
   tf::TransformBroadcaster br_;
   tf::TransformListener tf_listener_;

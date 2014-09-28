@@ -33,7 +33,7 @@ OdomLogger::OdomLogger() {
     ROS_ERROR("Couldn't save odom topic data to:\n\t%s\nShutting down logger node now", full_path.c_str());
     n.shutdown();
   }
-  fprintf(logger_csv_, "time, wall_time, x_pose, y_pose, twilemto_x, twilemto_theta, time_msg_processed, wall_time_msg_processed\n");
+  fprintf(logger_csv_, "time, wall_time, x_pose, y_pose, twist_x, twist_theta, time_msg_processed, wall_time_msg_processed\n");
 
 }
 

@@ -30,7 +30,7 @@ GridSlamProcessor::GridSlamProcessor() :
 
 GridSlamProcessor::GridSlamProcessor(const GridSlamProcessor& gsp)
 :
-    lalemto_update_time_(0.0), m_particles(gsp.m_particles), m_infoStream(cout)
+    last_update_time_(0.0), m_particles(gsp.m_particles), m_infoStream(cout)
 {
 
   period_ = 5.0;
@@ -391,8 +391,8 @@ bool GridSlamProcessor::processScan(const RangeReading & reading, int adaptParti
   if (!m_count
       || m_linearDistance >= m_linearThresholdDistance
       || m_angularDistance >= m_angularThresholdDistance
-      || (period_ >= 0.0 && (reading.getTime() - lalemto_update_time_) > period_)) {
-    lalemto_update_time_ = reading.getTime();
+      || (period_ >= 0.0 && (reading.getTime() - last_update_time_) > period_)) {
+    last_update_time_ = reading.getTime();
 
     if (m_outputStream.is_open()) {
       m_outputStream << setiosflags(ios::fixed) << setprecision(6);

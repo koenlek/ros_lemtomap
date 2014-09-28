@@ -14,19 +14,19 @@ namespace lemto_bgl //boost graph library
  * \param nodes (input/output) A NodeMap containing all the TopoNavNode objects of the TopoNavMap. It also uses this to update the Node BGL details of the node_id Node.
  * \param edges A NodeMap containing all the TopoNavNode objects of the TopoNavMap
  * \param node_id The Node to be examined
- * \param lalemto_toponavmap_bgl_affecting_update (input/output) It uses this to check if an update is needed, after each update, this is set equal to ros::WallTime::now()
+ * \param last_toponavmap_bgl_affecting_update (input/output) It uses this to check if an update is needed, after each update, this is set equal to ros::WallTime::now()
  */
 
-//TODO - p2 - It would be better to make this part of the TopoNavMap object, would remove the need to pass nodes_, edges_, and lalemto_toponavmap_bgl_affecting_update_ parameters.
+//TODO - p2 - It would be better to make this part of the TopoNavMap object, would remove the need to pass nodes_, edges_, and last_toponavmap_bgl_affecting_update_ parameters.
 
 void updateNodeDetails(
                          TopoNavNode::NodeMap &nodes,
                          const TopoNavEdge::EdgeMap &edges,
                          const int node_id,
-                         ros::WallTime &lalemto_toponavmap_bgl_affecting_update
+                         ros::WallTime &last_toponavmap_bgl_affecting_update
                          )
 {
-  if (nodes[node_id]->getLastBGLUpdateTime() >= lalemto_toponavmap_bgl_affecting_update){
+  if (nodes[node_id]->getLastBGLUpdateTime() >= last_toponavmap_bgl_affecting_update){
     ROS_DEBUG("NodeID %d BGL details are up to date, skipping update",node_id);
     return;
   }
@@ -130,9 +130,9 @@ void updateNodeDetails(
       adjacent_edgeids_vector.push_back(edges_boost.right.at(*ei));
   }
 
-  //setBGLNodeDetails updates the Node its lalemto_bgl_update, so next, make lalemto_toponavmap_bgl_affecting_update equal to this.
+  //setBGLNodeDetails updates the Node its last_bgl_update, so next, make last_toponavmap_bgl_affecting_update equal to this.
   nodes[node_id]->setBGLNodeDetails(predecessor_map, distance_map, adjacent_nodeids_vector, adjacent_edgeids_vector);
-  lalemto_toponavmap_bgl_affecting_update = nodes[node_id]->getLastBGLUpdateTime();
+  last_toponavmap_bgl_affecting_update = nodes[node_id]->getLastBGLUpdateTime();
   return;
 }
 }
