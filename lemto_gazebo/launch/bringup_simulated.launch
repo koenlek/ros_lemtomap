@@ -6,6 +6,7 @@
 	<arg name="x_robot" default="0" />
 	<arg name="y_robot" default="0" />
 	<arg name="z_robot" default="0" />
+	<arg name="enable_fake_kinect_laser" default="false" />
 
 	<include file="$(find lemto_gazebo)/launch/includes/lemto_turtle.launch.xml">
 		<arg name="urdf_file" value="$(arg urdf_file)" />
@@ -20,6 +21,7 @@
 	</node>
 
 	<!-- Fake laser -->
+	<group if="$(arg enable_fake_kinect_laser)">	
 	<node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager"
 		args="manager" />
 	<node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
@@ -30,4 +32,5 @@
 		<remap from="image" to="/camera/depth/image_raw" />
 		<remap from="scan" to="/scan_kinect" />
 	</node>
+	</group>
 </launch>

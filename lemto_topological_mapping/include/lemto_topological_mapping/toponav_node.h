@@ -3,7 +3,6 @@
 
 #include "ros/ros.h"
 #include "tf/transform_datatypes.h"
-#include "tf/transform_listener.h"
 
 #include <map>
 #include <algorithm> //std::find
@@ -153,8 +152,6 @@ private:
   int area_id_; //an area is a collection of nodes, in general areas would be rooms. But in future, large spaces or outdoor spaces could be divided in smaller areas, like the coffee corner, lunch corner and sitting area in the TU Delft Aula building.
   NodeMap &nodes_;
   ros::WallTime &last_toponavmap_bgl_affecting_update_;
-
-  tf::TransformListener tf_listener_;
 
   //BGL variables
   PredecessorMapNodeID predecessor_map_;
