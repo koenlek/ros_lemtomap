@@ -41,7 +41,7 @@ Play a bag file using  - -clock that plays these topics:
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
 
 	<!-- Rolling Window Gmapping (timed) -->
-	<node pkg="lemto_launchers" 
+	<node pkg="lemto_tools" 
               type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
 			scan_topic:=$(arg scan_topic) 
 			rolling:=$(arg rolling) 

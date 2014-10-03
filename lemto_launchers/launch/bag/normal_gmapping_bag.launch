@@ -27,7 +27,7 @@ Play a bag file using  - -clock that plays these topics:
 		args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
 
 	<!-- Gmapping (timed) -->
-	<node pkg="lemto_launchers" 
+	<node pkg="lemto_tools" 
               type="timed_roslaunch.sh" args="5 lemto_rw_gmapping normal_gmapping.launch 
 			scan_topic:=$(arg scan_topic)" 
               name="timed_roslaunch" output="screen">

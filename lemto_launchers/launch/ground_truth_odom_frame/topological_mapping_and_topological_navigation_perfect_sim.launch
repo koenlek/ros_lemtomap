@@ -51,7 +51,7 @@
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 
 	<!-- Rolling Window Gmapping (timed) -->
-	<node pkg="lemto_launchers" type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
+	<node pkg="lemto_tools" type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
 			scan_topic:=$(arg scan_topic) 
 			rolling:=$(arg rolling) 
 			windowsize:=$(arg windowsize) 

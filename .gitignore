@@ -2,10 +2,11 @@
 .svn
 *~
 
-# ignore any folders called "old" or "local".
+# ignore any folders called like the ones below.
 old
 local
 doc
+tmp
 
 # ignore the top level CMakeLists.txt
 /CMakeLists.txt

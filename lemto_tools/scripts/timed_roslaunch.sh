@@ -24,7 +24,7 @@ function showHelp(){
 	echo 
 	echo '<launch>'
 	echo '  <arg name="initial_pose_y" default="17.0" />'
-	echo '  <node pkg="lemto_launchers" type="timed_roslaunch.sh"'
+	echo '  <node pkg="lemto_tools" type="timed_roslaunch.sh"'
 	echo '    args="2 turtlebot_navigation amcl_demo.launch'
 	echo '		initial_pose_x:=17.0'
 	echo '		initial_pose_y:=$(arg initial_pose_y)"'

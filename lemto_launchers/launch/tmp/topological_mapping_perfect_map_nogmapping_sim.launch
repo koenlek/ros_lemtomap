@@ -44,7 +44,7 @@
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
 
 	<!-- Navigation components (timed -> it seems that otherwise it crashes!) -->
-	<node pkg="lemto_launchers" 
+	<node pkg="lemto_tools" 
               type="timed_roslaunch.sh" args="8 lemto_navigation move_base_dwa_local.launch scan_topic:=$(arg scan_topic)" 
               name="timed_roslaunch" output="screen">
 	</node>

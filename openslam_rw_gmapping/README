@@ -1,2 +1,9 @@
+This is a fork of openslam_gmapping: https://github.com/ros-perception/openslam_gmapping
+It contains some patches to support Rolling Window GMapping.
+
+----------------
+Original README
+----------------
+
 This is a fork from gmapping at https://openslam.informatik.uni-freiburg.de/data/svn/gmapping/trunk/
 It includes a few patches that could be pushed upstream if needed

@@ -49,7 +49,7 @@
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" />
 
 	<!-- Rolling Window Gmapping (timed) -->
-	<node pkg="lemto_launchers" 
+	<node pkg="lemto_tools" 
               type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch scan_topic:=$(arg scan_topic) rolling:=$(arg rolling) windowsize:=$(arg windowsize) perfect_odometry:=$(arg perfect_odometry) suppress_console:=$(arg suppress_console) particles:=$(arg particles) minimum_score:=$(arg minimum_score)" 
               name="timed_roslaunch" output="log">
 	</node>
