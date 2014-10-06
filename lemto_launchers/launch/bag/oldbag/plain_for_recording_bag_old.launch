@@ -6,8 +6,6 @@ Use this file to record these topics:
 /tf
 /odom
 /mobile_base/sensors/bumper_pointcloud
-E.g.:
-rosbag record -O expX /scan_hokuyo /tf /odom /mobile_base/sensors/bumper_pointcloud
 -->
 
 <launch>
@@ -33,10 +31,5 @@ rosbag record -O expX /scan_hokuyo /tf /odom /mobile_base/sensors/bumper_pointcl
 
 	<!-- Teleop -->
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
-	
-	<!-- Perfect odom frame broadcaster -->
-	<node pkg="lemto_tools" type="publish_perfect_odom_frame" name="publish_perfect_odom_frame" output="screen">
-		<param name="x_robot" value="$(arg x_robot)" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
-		<param name="y_robot" value="$(arg y_robot)" />
-	</node>
+
 </launch>

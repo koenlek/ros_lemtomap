@@ -62,9 +62,7 @@ private:
   //this var is auto updated by TopoNavNode and TopoNavEdge objects and is used to check if bgl update is needed (lemto_bgl::updateNodeDetails).
   ros::WallTime last_bgl_affecting_update_; //ros::Time() seems to update at only 100Hz (in simulation), ros::WallTime() is much more accurate
 
-  tf::Pose robot_pose_tf_; //stores robots current pose
   TopoNavNode::NodeID associated_node_; // the node with which the robot is currently associated
-  tf::StampedTransform robot_transform_tf_; //stores robots current pose as a stamped transform
 
   ros::Subscriber local_costmap_sub_;
   tf::Transform local_costmap_origin_tf_;
@@ -96,10 +94,14 @@ private:
 
   tf::TransformBroadcaster br_;
   tf::TransformListener tf_listener_;
-  tf::Transform tf_toponavmap2map_;
   bool max_edge_creation_; //if true, global costmap subscription will fire and cause maximum edges being created (which can cause some extra load). if false, the var max_edge_length_ will be used.
 
-  std::string odom_frame_;
+  std::string odom_gt_frame_; //odom ground truth frame
+
+  //for temporary 'local grid map transform' aka 'local tf' implementation...
+  std::map<TopoNavNode::NodeID, tf::Transform> local_tf_per_node_;
+  tf::Transform map2toponav_map_;
+  TopoNavNode::NodeID local_tf_prev_asso_;
 
   /**
    * Private Methods
@@ -114,10 +116,13 @@ private:
   bool isDirectNavigableSrvCB(lemto_topological_mapping::IsDirectNavigable::Request &req,
                            lemto_topological_mapping::IsDirectNavigable::Response &res);
 
-  void updateRobotPose(); // update robot pose to its current pose;
-  void publishTopoNavMap(); //publish the full map to a msg
+  const tf::Pose getRobotPoseInFrame(std::string frame) const; // get robot pose in arbitrary frame;
+  const tf::Pose lookupPoseInFrame(tf::Pose, std::string source_frame, std::string target_frame) const;
+
+  void publishTopoNavMapMsg(); //publish the full map to a msg
 
   void updateToponavMapTransform();
+  void updateToponavMapTransformNew();
   void updateAssociatedNode(); // return the node_id where the robot is currently at.
 
   void updateNodeBGLDetails(TopoNavNode::NodeID node_id); // a handy shorthand for the otherwise long "lemto_bgl::updateNodeDetails" function

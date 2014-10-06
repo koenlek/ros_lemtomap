@@ -71,10 +71,6 @@ public:
   {
     return pose_;
   }
-  const tf::Pose getPoseInMap(tf::Transform toponavmap2map) const //in map fram
-  {
-    return toponavmap2map * pose_;
-  }
 
   const bool getIsDoor() const
   {

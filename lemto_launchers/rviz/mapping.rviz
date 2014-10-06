@@ -7,9 +7,6 @@ Panels:
         - /Global Options1
         - /TF1/Tree1
         - /Sensors1/LaserScan Hokuyo1
-        - /Nav1
-        - /TopoNavMap MarkerArray1
-        - /TopoNavMap MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 579
   - Class: rviz/Selection
@@ -51,14 +48,6 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: false
-    - Alpha: 0.7
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: map
-      Value: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -237,15 +226,6 @@ Visualization Manager:
       Tree:
         {}
       Update Interval: 0
-      Value: false
-    - Class: rviz/InteractiveMarkers
-      Enable Transparency: true
-      Enabled: false
-      Name: InteractiveMarkers
-      Show Axes: false
-      Show Descriptions: true
-      Show Visual Aids: false
-      Update Topic: /turtlebot_marker_server/update
       Value: false
     - Class: rviz/Group
       Displays:
@@ -510,44 +490,54 @@ Visualization Manager:
           Name: Global Costmap
           Topic: /move_base/global_costmap/costmap
           Value: false
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /slam_rw_gmapping/all_paths
+              Name: AllParticlePaths
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz/Path
+              Color: 25; 255; 0
+              Enabled: false
+              Name: CurrentParticlePath
+              Topic: /slam_rw_gmapping/current_path
+              Value: false
+            - Alpha: 0.7
+              Class: rviz/Map
+              Color Scheme: map
+              Draw Behind: false
+              Enabled: false
+              Name: MapPX
+              Topic: /slam_rw_gmapping/map_px
+              Value: false
+          Enabled: true
+          Name: RW-GMapping extras
       Enabled: true
-      Name: Nav
+      Name: Metric Navigation
+    - Alpha: 0.7
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Local Metric Map
+      Topic: map
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /topological_navigation_mapper/toponavmap_markerarray
-      Name: TopoNavMap MarkerArray
+      Name: Global Topological Map
       Namespaces:
+        edges_near_neighbour: true
+        edges_odom: true
         nodes: true
       Queue Size: 100
       Value: true
-    - Class: rviz/Group
-      Displays:
-        - Class: rviz/MarkerArray
-          Enabled: false
-          Marker Topic: /slam_rw_gmapping/all_paths
-          Name: AllParticlePaths
-          Namespaces:
-            {}
-          Queue Size: 100
-          Value: false
-        - Alpha: 1
-          Buffer Length: 1
-          Class: rviz/Path
-          Color: 25; 255; 0
-          Enabled: false
-          Name: CurrentParticlePath
-          Topic: /slam_rw_gmapping/current_path
-          Value: false
-        - Alpha: 0.7
-          Class: rviz/Map
-          Color Scheme: map
-          Draw Behind: false
-          Enabled: false
-          Name: MapPX
-          Topic: /slam_rw_gmapping/map_px
-          Value: false
-      Enabled: true
-      Name: GMapping
   Enabled: true
   Global Options:
     Background Color: 240; 240; 240
@@ -576,11 +566,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 13.4147
+      Scale: 25.7909
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: -3.70347
-      Y: 4.13131
+      X: -1.92492
+      Y: -0.251807
     Saved: ~
 Window Geometry:
   Displays:

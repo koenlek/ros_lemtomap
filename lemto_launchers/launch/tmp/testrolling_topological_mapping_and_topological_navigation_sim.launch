@@ -7,7 +7,7 @@
 	<arg name="windowsize" default="20" /> <!-- double, size in meters for rolling window, will be neglected if rolling is false -->
 	<arg name="perfect_odometry" default="false" /> <!-- true/false: for simulations, perfect odometry can be used -->
 	<arg name="suppress_console" default="1" /> <!-- 1/0, which means true or false. This will suppress stderr output of gmapping -->
-	<arg name="particles" default="80"/>
+	<arg name="particles" default="5"/>
 	<arg name="minimum_score" default="0"/>
 
 	<!-- Set other parameters -->

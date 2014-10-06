@@ -2,11 +2,11 @@
 <!-- rw-gmapping parameters were mostly based on turtlebot_navivation/launch/inludes/gmapping.launch.xml -->
 <launch>
 	<arg name="scan_topic" default="scan" />
-	<arg name="rolling" default="false"/>
+	<arg name="rolling" default="true"/>
 	<arg name="windowsize" default="20"/>
 	<arg name="perfect_odometry" default="false"/> 
 
-	<arg name="particles" default="80"/>
+	<arg name="particles" default="5"/>
 	<arg name="minimum_score" default="0"/>
 	
 	<arg name="publishCurrentPath" default="false" />

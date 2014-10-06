@@ -1,11 +1,11 @@
 <!-- With this script, you can easily start gmapping with out without output (setting output="log" does not fully work for gmapping otherwise) -->
 <launch>
 	<arg name="scan_topic" default="scan" />
-	<arg name="rolling" default="false"/>
+	<arg name="rolling" default="true"/>
 	<arg name="windowsize" default="20"/>
 	<arg name="perfect_odometry" default="false"/>
 	<arg name="suppress_console" default="true" /> <!-- set to false to not suppress! -->
-	<arg name="particles" default="80"/>
+	<arg name="particles" default="5"/>
 	<arg name="minimum_score" default="0"/>
 
 	<arg name="publishCurrentPath" default="false" />
