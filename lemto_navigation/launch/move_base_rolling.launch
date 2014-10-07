@@ -11,7 +11,7 @@
 	<include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml" />
 
 	<arg if="$(arg rolling)" name="lcm_global_frame" value="odom"/>
-	<arg if="$(arg rolling)" name="gcm_global_frame" value="toponav_maps"/> 
+	<arg if="$(arg rolling)" name="gcm_global_frame" value="toponav_map"/> 
 
 	<arg unless="$(arg rolling)" name="lcm_global_frame" value="odom"/>
 	<arg unless="$(arg rolling)" name="gcm_global_frame" value="map"/> 

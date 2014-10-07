@@ -82,7 +82,7 @@ goal:
 ```
 
 
-### Load and Store topological maps (under development) ###
+### Load and Store topological maps ###
 
 save a map (execute for example from ~/catkin_ws/src/lemto_map_server/maps):
 
@@ -98,5 +98,5 @@ OR e.g. (`$(pwd)` expands to current directory, e.g. `./my_toponav_map`):
 
 Troubleshoot
 ------------
-- A GPU related issue can caused simulated runs to fail. If you experience such issues, please change `gpu_ray` to `ray` and `libgazebo_ros_gpu_laser.so` to `libgazebo_ros_laser.so` in `lemto_description/urdf/lemto_turtle_gazebo.urdf.xacro`
+- A GPU related issue can cause simulated runs to fail. If you experience such issues, please change `gpu_ray` to `ray` and `libgazebo_ros_gpu_laser.so` to `libgazebo_ros_laser.so` in `lemto_description/urdf/lemto_turtle_gazebo.urdf.xacro`
 
