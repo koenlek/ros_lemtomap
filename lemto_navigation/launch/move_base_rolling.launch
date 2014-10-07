@@ -11,7 +11,7 @@
 	<include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml" />
 
 	<arg if="$(arg rolling)" name="lcm_global_frame" value="odom"/>
-	<arg if="$(arg rolling)" name="gcm_global_frame" value="toponav_map"/> 
+	<arg if="$(arg rolling)" name="gcm_global_frame" value="map"/> <!-- cannot set to /toponav_map, as 'static layer' will not properly align (which will result in "topological_navigation_mapper: mapPoint2costmapCell: Index out of bounds!" errors). If using /toponav_map goals however, resending goals upon more 'localtf' shifts manually in move_base_topo would not be necessary, as it would be handled automatically by move_base...-->
 
 	<arg unless="$(arg rolling)" name="lcm_global_frame" value="odom"/>
 	<arg unless="$(arg rolling)" name="gcm_global_frame" value="map"/> 

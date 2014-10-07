@@ -25,14 +25,17 @@
 	<arg name="move_base_topo_frequency" default="2" />
 	<arg name="topo_mapper_frequency" default="4" /> <!-- 2 is minimum, 4 is best: otherwise nodes can get too far from each other... -->
 
-	<!-- RVIZ -->
+        <arg name="x_robot" default="6" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+	<arg name="y_robot" default="-16" />	
+
+        <!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
 
 	<!-- Bringup simulated robot -->
 	<include
 		file="$(find lemto_gazebo)/launch/bringup_simulated.launch">
-		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
-		<arg name="y_robot" value="-16" />
+		<arg name="x_robot" value="$(arg x_robot)" />
+		<arg name="y_robot" value="$(arg y_robot)" />
 		<arg name="z_robot" value="0" />
 		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find lemto_description)/robots/lemto_turtle_no_kinect.urdf.xacro'" /> <!--lemto_turtle_no_kinect.urdf.xacro or lemto_turtle.urdf.xacro -->
 	</include>
@@ -48,8 +51,7 @@
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 
 	<!-- Rolling Window Gmapping (timed) -->
-	<node pkg="lemto_tools" 
-              type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
+	<node pkg="lemto_tools" type="timed_roslaunch.sh" args="5 lemto_rw_gmapping gmapping_general_launcher.launch 
 			scan_topic:=$(arg scan_topic) 
 			rolling:=$(arg rolling) 
 			windowsize:=$(arg windowsize) 
@@ -72,10 +74,10 @@
 		name="topological_navigation_mapper" output="screen" clear_params="true">
 		<param name="scan_topic" value="$(arg scan_topic)" />
 		<param name="load_map_directory" value="$(arg load_map_directory)" />
-		<param name="main_loop_frequency" value="$(arg topo_mapper_frequency)" /> <!-- default is 4hz currently -->
 		<param name="max_edge_creation" value="true" /> <!-- default is true -->
 		<param name="disable_visualizations" value="false" /> <!-- default is false -->
-		<param name="loop_closure_max_topo_dist" value="$(arg loop_closure_max_topo_dist)" />                           
+		<param name="loop_closure_max_topo_dist" value="$(arg loop_closure_max_topo_dist)" />
+		<param name="main_loop_frequency" value="$(arg topo_mapper_frequency)" /> <!-- default is 4hz currently -->
 	</node>
 
 	<!-- Metric navigation (rolling) -->
@@ -87,6 +89,12 @@
 	<!-- Topological navigation -->
 	<node pkg="lemto_navigation" type="move_base_topo" name="move_base_topo" output="screen">
 		<param name="main_loop_frequency" value="$(arg move_base_topo_frequency)" /> <!-- default is 1hz currently -->
+	</node>
+
+	<!-- Perfect odom frame broadcaster -->
+	<node pkg="lemto_tools" type="publish_perfect_odom_frame" name="publish_perfect_odom_frame" output="screen">
+		<param name="x_robot" value="$(arg x_robot)" />
+		<param name="y_robot" value="$(arg y_robot)" />
 	</node>
 </launch>
 

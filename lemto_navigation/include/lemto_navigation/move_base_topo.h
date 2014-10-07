@@ -80,6 +80,7 @@ private:
   void toponavmapCB(const lemto_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map);
   std::vector<std::string> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
   bool getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes);
+  geometry_msgs::PoseStamped poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map);
   const bool directNavigable(const tf::Point &point1, const tf::Point &point2, bool global);
   const bool directNavigable(const geometry_msgs::Point &point1, const geometry_msgs::Point &point2, bool global);
   const bool directNavigable(const geometry_msgs::Point &point1, const tf::Point &point2, bool global);

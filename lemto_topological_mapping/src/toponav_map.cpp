@@ -43,8 +43,11 @@ TopoNavMap::TopoNavMap(ros::NodeHandle &n) :
   directnav_servserv_ = private_nh.advertiseService("is_direct_navigable", &TopoNavMap::isDirectNavigableSrvCB, this);
 
   //update the map one time, at construction. This will create the first map node.
-  tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(10));
-  tf_listener_.waitForTransform("map", odom_gt_frame_, ros::Time(0), ros::Duration(10));
+  if (!tf_listener_.waitForTransform("map", "base_link", ros::Time(0), ros::Duration(100)))
+    ROS_ERROR("Did not receive a tf between frames map and base_link in time...");
+  if (!tf_listener_.waitForTransform("map", odom_gt_frame_, ros::Time(0), ros::Duration(100)))
+    ROS_ERROR("Did not receive a tf between frames map and %s in time...",odom_gt_frame_.c_str());
+
   local_tf_prev_asso_=-1;
 
   updateMap();
@@ -170,7 +173,7 @@ void TopoNavMap::updateToponavMapTransformNew() {
 
     try
      {
-      tf_listener_.waitForTransform(odom_gt_frame_, "map", ros::Time(0), ros::Duration(2));
+      tf_listener_.waitForTransform(odom_gt_frame_, "map", ros::Time(0), ros::Duration(10));
       tf_listener_.lookupTransform(odom_gt_frame_, "map", ros::Time(0), map2odom_gt_now_stamped);
     }
     catch (tf::TransformException &ex)
@@ -196,7 +199,7 @@ void TopoNavMap::updateToponavMapTransform() {
 
   try
   {
-    tf_listener_.waitForTransform("map", odom_gt_frame_, ros::Time(0), ros::Duration(2));
+    tf_listener_.waitForTransform("map", odom_gt_frame_, ros::Time(0), ros::Duration(10));
     tf_listener_.lookupTransform("map", odom_gt_frame_, ros::Time(0), tf_toponavmap2map_stamped);
   }
   catch (tf::TransformException &ex)
@@ -259,7 +262,7 @@ const tf::Pose TopoNavMap::getRobotPoseInFrame(std::string frame) const {
 
   try
   {
-    tf_listener_.waitForTransform(frame.c_str(), "base_link", ros::Time(0), ros::Duration(2));
+    tf_listener_.waitForTransform(frame.c_str(), "base_link", ros::Time(0), ros::Duration(10));
     tf_listener_.lookupTransform(frame.c_str(), "base_link", ros::Time(0), robot_transform_tf_stamped);
   }
   catch (tf::TransformException &ex)
@@ -286,7 +289,7 @@ const tf::Pose TopoNavMap::lookupPoseInFrame(tf::Pose input_pose, std::string so
 
   try
   {
-    tf_listener_.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(2));
+    tf_listener_.waitForTransform(target_frame, source_frame, ros::Time(0), ros::Duration(10));
     tf_listener_.transformPose(target_frame, input_pose_stamped, output_pose_stamped);
   }
   catch (tf::TransformException &ex)
@@ -509,7 +512,7 @@ bool TopoNavMap::mapPoint2costmapCell(const tf::Point &map_coordinate, int &cell
   tf::Stamped<tf::Point> map_coordinate_incostmap_origin;
   try
   {
-    tf_listener_.waitForTransform(costmap_origin, "map", ros::Time(0), ros::Duration(2.0)); //not necessary
+    tf_listener_.waitForTransform(costmap_origin, "map", ros::Time(0), ros::Duration(10.0)); //not necessary
     tf_listener_.transformPoint(costmap_origin, map_coordinate_stamped, map_coordinate_incostmap_origin);
   }
   catch (tf::TransformException &ex)
@@ -679,7 +682,7 @@ void TopoNavMap::addNode(const tf::Pose &pose, bool is_door, int area_id) {
   tf::Transform tf_local_tf_per_node;
   try
    {
-    tf_listener_.waitForTransform(odom_gt_frame_, "map", ros::Time(0), ros::Duration(2));
+    tf_listener_.waitForTransform(odom_gt_frame_, "map", ros::Time(0), ros::Duration(10));
     tf_listener_.lookupTransform(odom_gt_frame_, "map", ros::Time(0), tf_local_tf_per_node_stamped);
   }
   catch (tf::TransformException &ex)

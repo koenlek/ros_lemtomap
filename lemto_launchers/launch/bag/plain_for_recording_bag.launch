@@ -15,11 +15,14 @@ rosbag record -O expX /scan_hokuyo /tf /odom /mobile_base/sensors/bumper_pointcl
 	<arg name="use_sim_time" default="true" />
 	<arg name="world_name_short" default="willowgarage_large.world" /> <!-- empty,ball,willowgarage,willowgarage_large -->
 
+        <arg name="x_robot" default="6" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+	<arg name="y_robot" default="-16" />	
+
 	<!-- Bringup simulated robot -->
 	<include
 		file="$(find lemto_gazebo)/launch/bringup_simulated.launch">
-		<arg name="x_robot" value="6" /> <!-- for willow garage, use 6, -16, 0 -->
-		<arg name="y_robot" value="-16" />
+		<arg name="x_robot" value="$(arg x_robot)" />
+		<arg name="y_robot" value="$(arg y_robot)" />
 		<arg name="z_robot" value="0" />
 		<arg name="urdf_file" value="$(find xacro)/xacro.py '$(find lemto_description)/robots/lemto_turtle_no_kinect.urdf.xacro'" /> <!--lemto_turtle_no_kinect.urdf.xacro or lemto_turtle.urdf.xacro -->
 	</include>
@@ -36,7 +39,7 @@ rosbag record -O expX /scan_hokuyo /tf /odom /mobile_base/sensors/bumper_pointcl
 	
 	<!-- Perfect odom frame broadcaster -->
 	<node pkg="lemto_tools" type="publish_perfect_odom_frame" name="publish_perfect_odom_frame" output="screen">
-		<param name="x_robot" value="$(arg x_robot)" /> <!-- for willow garage, use 6, -16, 0 OR 21, 4, 0 -->
+		<param name="x_robot" value="$(arg x_robot)" />
 		<param name="y_robot" value="$(arg y_robot)" />
 	</node>
 </launch>

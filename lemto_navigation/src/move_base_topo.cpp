@@ -79,7 +79,7 @@ void MoveBaseTopo::executeCB(const lemto_navigation::GotoNodeGoalConstPtr& goal)
     // Variables for generating move base goals
     move_base_msgs::MoveBaseGoal move_base_goal;
     tf::Pose robot_pose = getRobotPoseInTopoFrame();
-    geometry_msgs::PoseStamped node_pose;
+    geometry_msgs::PoseStamped node_pose, node_pose_in_map_now, move_base_goal_pose_as_sent;
     node_pose.pose.orientation.w = 1.0; //position x,y,z default to 0 for now...
     node_pose.header.frame_id = toponavmap_.header.frame_id;
 
@@ -114,6 +114,7 @@ void MoveBaseTopo::executeCB(const lemto_navigation::GotoNodeGoalConstPtr& goal)
         node_pose.pose.position = toponavmap_.nodes.at(nodes_id2vecpos_map[path_nodes.at(i)]).pose.position;
         move_base_goal.target_pose = node_pose;
         move_base_client_.sendGoal(move_base_goal); //move_base_client can handle goals sent in different frames, upon receiving, it is once transformed (but not updated if transform between frames changes later).
+        move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
 
         i++; // current i is always +1 compared to the current goal node vector position in path_nodes
         //} //closes directNav if
@@ -127,6 +128,16 @@ void MoveBaseTopo::executeCB(const lemto_navigation::GotoNodeGoalConstPtr& goal)
         ROS_WARN("%s: Aborted", action_name_mbt_.c_str());
         action_server_mbt_.setAborted(result_);
         break;
+      }
+
+      // If the transform between map and toponav_map has changed significantly, resend the goal
+      double update_dist = 0.3;
+      node_pose_in_map_now = poseTopNavMap2Map(node_pose);
+      if (calcDistance(move_base_goal_pose_as_sent.pose, node_pose_in_map_now.pose) > update_dist && move_base_client_.getState() != actionlib::SimpleClientGoalState::PREEMPTED) { // check for preemted: otherwise, there is a change that a normal move_base goal (e.g. 2D Nav Goal RVIZ) is launched, and shortly after that overruled again by this...
+        ROS_INFO("Diff is > %.2fm, resending goal!", update_dist);
+        move_base_goal.target_pose = node_pose_in_map_now;
+        move_base_client_.sendGoal(move_base_goal);
+        move_base_goal_pose_as_sent = poseTopNavMap2Map(move_base_goal.target_pose);
       }
 
       // Print some debugging info and sleep for a while to avoid wasting processing power to executing useless loops
@@ -281,6 +292,22 @@ std::vector<std::string> MoveBaseTopo::nodesPathToEdgesPath(const std::vector<in
   }
   return path_edges;
 }
+
+geometry_msgs::PoseStamped MoveBaseTopo::poseTopNavMap2Map(const geometry_msgs::PoseStamped& pose_in_toponav_map)
+{
+  geometry_msgs::PoseStamped pose_in_map;
+  try
+  {
+    tf_listener_.waitForTransform("toponav_map", "map", ros::Time(0), ros::Duration(10));
+    tf_listener_.transformPose("map", pose_in_toponav_map, pose_in_map);
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_ERROR("Error looking up transformation\n%s", ex.what());
+  }
+  return pose_in_map;
+}
+
 
 const bool MoveBaseTopo::directNavigable(const geometry_msgs::Point &point1, const geometry_msgs::Point &point2, bool global) {
   // request Predecessor map through service
