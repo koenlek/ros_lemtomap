@@ -4,10 +4,17 @@
 	<arg name="odom_topic" default="odom" />
 	<arg name="scan_topic" default="scan" />
 	<arg name="allow_unknown" default="true" />
+        <arg name="rolling" default="true" />
 
 	<!-- Some extra tweaks, based on original turtlebot_navigation/launch/includes/move_base.launch.xml -->
 	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml" />
 	<include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml" />
+
+	<arg if="$(arg rolling)" name="lcm_global_frame" value="odom"/>
+	<arg if="$(arg rolling)" name="gcm_global_frame" value="toponav_maps"/> 
+
+	<arg unless="$(arg rolling)" name="lcm_global_frame" value="odom"/>
+	<arg unless="$(arg rolling)" name="gcm_global_frame" value="map"/> 
 
 	<!-- Navigation components -->
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base"
@@ -22,6 +29,9 @@
 		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" /> <!-- dwa_local_planner is better for us than base_local planner -->
 		<param name="base_global_planner" value="global_planner/GlobalPlanner" /> <!-- global_planner is supposed to be better than navfn -->
 		<param name="GlobalPlanner/allow_unknown" value="$(arg allow_unknown)" />
+
+		<param name="local_costmap/global_frame" value="$(arg lcm_global_frame)" />
+		<param name="global_costmap/global_frame" value="$(arg gcm_global_frame)" />
 
 		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
 		<remap from="odom" to="$(arg odom_topic)" />

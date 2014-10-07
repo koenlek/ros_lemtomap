@@ -47,12 +47,11 @@ Usage
 `roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch`
 
 Tip: You can experiment by setting:
-rolling:=true (default is false)
-windowsize:=20 (default is 20, is neglected if rolling is false)
-perfect_odometry:=true (default is false)
+rolling:=false (default is true)
+windowsize:=20 (default is 20)
 
 For example:
-`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch rolling:=true`
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch rolling:=false`
 
 #### Drive around manually ####
 
@@ -93,6 +92,11 @@ load a map:
 
 `roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:=$(rospack find lemto_map_server)/maps/my_toponav_map`
 
-OR e.g.:
-`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map" //$(pwd) expands to current directory, i.e. "./my_toponav_map"`
+OR e.g. (`$(pwd)` expands to current directory, e.g. `./my_toponav_map`):
+
+`roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map"`
+
+Troubleshoot
+------------
+- A GPU related issue can caused simulated runs to fail. If you experience such issues, please change `gpu_ray` to `ray` and `libgazebo_ros_gpu_laser.so` to `libgazebo_ros_laser.so` in `lemto_description/urdf/lemto_turtle_gazebo.urdf.xacro`
 

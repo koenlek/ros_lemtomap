@@ -35,15 +35,13 @@
 	<include file="$(find kobuki_keyop)/launch/keyop.launch" /> <!-- Sometimes the motors dont power up in time, press 'e' to enable motors! -->
 
 	<!-- Gmapping (timed) -->
-	<node pkg="lemto_tools" 
-              type="timed_roslaunch.sh" args="5 lemto_rw_gmapping normal_gmapping.launch 
-			scan_topic:=$(arg scan_topic)" 
-              name="timed_roslaunch" output="screen">
+	<node pkg="lemto_tools" type="timed_roslaunch.sh" args="5 lemto_rw_gmapping normal_gmapping.launch scan_topic:=$(arg scan_topic)" name="timed_roslaunch" output="screen">
 	</node>
 
 	<!-- Metric navigation (normal) -->
 	<include file="$(find lemto_navigation)/launch/move_base_rolling.launch"> <!-- rolling works fine for normal -->
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
+		<arg name="rolling" value="false" />
 	</include>
 </launch>

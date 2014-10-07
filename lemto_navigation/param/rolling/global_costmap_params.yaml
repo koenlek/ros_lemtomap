@@ -1,6 +1,5 @@
 # Global costmap params optimized for using move_base with rolling window gmapping (lemto_rw_gmapping) + topological mapping/navigation (lemto_topological_mapping & lemto_navigation)
 
-global_frame: /map
 update_frequency: 1.0
 publish_frequency: 0.5 #0.5
 #static_map: true #it seems that the static_map is not a param anymore for the new hydro layer implementation. It is superseeded by the static map layer I think...

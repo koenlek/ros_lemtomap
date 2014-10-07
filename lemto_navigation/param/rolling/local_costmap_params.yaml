@@ -1,6 +1,5 @@
 # Local costmap params optimized for using move_base with rolling window gmapping (lemto_rw_gmapping) + topological mapping/navigation (lemto_topological_mapping & lemto_navigation)
 
-global_frame: odom #some use /odom, others plainly use /map here...
 update_frequency: 5.0
 publish_frequency: 2.0
 rolling_window: true

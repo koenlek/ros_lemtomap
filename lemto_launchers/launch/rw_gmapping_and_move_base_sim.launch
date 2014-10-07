@@ -67,6 +67,7 @@
 	<include file="$(find lemto_navigation)/launch/move_base_rolling.launch">
 		<arg name="allow_unknown" value="$(arg nav_allow_unknown)" />
 		<arg name="scan_topic" value="$(arg scan_topic)" />
+		<arg name="rolling" value="false" />
 	</include>
 	
 </launch>
