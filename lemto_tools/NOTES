@@ -1,0 +1,11 @@
+Other ideas for nice/usefull loggers:
+
+Mapping:
+- Log number of nodes and edges
+- Log map dimensions and map origin (x,y,theta) as expressed in some frame?
+- Log cmd_vel and actual speed
+- Log events of ‘map resizes’
+
+Navigation:
+- Log timer results?
+

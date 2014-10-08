@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>lemto_navigation</name>
-  <version>0.4.1</version>
+  <version>0.5.0</version>
   <description>The lemto_navigation package</description>
   <maintainer email="koenlek@todo.todo">koenlek</maintainer>
   <license>GPL</license>

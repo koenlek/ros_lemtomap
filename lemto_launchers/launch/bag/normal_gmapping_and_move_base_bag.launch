@@ -19,6 +19,8 @@ Play a bag file using  - -clock that plays these topics:
 	
 	<!-- Set other paramters -->
 	<arg name="use_sim_time" default="true" />
+  	<arg name="urdf_file" default="$(find xacro)/xacro.py '$(find lemto_description)/robots/lemto_turtle.urdf.xacro'" />
+  	<param name="robot_description" command="$(arg urdf_file)" />
 
 	<!-- set use_sim_time flag -->
 	<group if="$(arg use_sim_time)">
@@ -27,7 +29,7 @@ Play a bag file using  - -clock that plays these topics:
 
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz"
-		args="-d $(find lemto_launchers)/rviz/mapping.rviz" />
+		args="-d $(find lemto_launchers)/rviz/mapping_recording_screencast_bagmapping.rviz" />
 
 	<!-- Gmapping (timed) -->
 	<node pkg="lemto_tools" 

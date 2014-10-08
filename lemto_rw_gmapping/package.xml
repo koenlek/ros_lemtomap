@@ -1,6 +1,6 @@
 <package>
   <name>lemto_rw_gmapping</name>
-  <version>0.4.1</version>
+  <version>0.5.0</version>
   <description>A rolling version of gmapping, forked from: https://github.com/ros-perception/slam_gmapping/
   </description>
   <author>Koen Lekkerkerker</author>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>lemto_bringup</name>
-  <version>0.4.1</version>
+  <version>0.5.0</version>
   <description>The lemto_bringup package</description>
   <maintainer email="koenlekkerkerker@gmail.com">Koen Lekkerkerker</maintainer>
   <license>GPL</license>

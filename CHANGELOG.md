@@ -3,6 +3,10 @@ Changelog for metapackage lemtomap
 
 -----------------------------------------
 
+0.5.0 (2014-10-08)
+------------------
+* Several improvements
+
 0.4.1 (2014-09-28)
 ------------------
 * Renamed all to LEMTOMap (Large Environment Metric TOpological Mapping system)
