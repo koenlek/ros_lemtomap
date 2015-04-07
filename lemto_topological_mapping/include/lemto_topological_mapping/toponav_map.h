@@ -26,7 +26,6 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
-#include <base_local_planner/line_iterator.h> //Use this to find the cost of a line. Although it is meant to be used in a base_local_planner context, it is also suitable to check if an edge should be created
 #include <nav_msgs/GetPlan.h> //service
 
 // Local includes
@@ -34,6 +33,7 @@
 #include "lemto_topological_mapping/toponav_edge.h"
 #include "lemto_topological_mapping/utils.h"
 #include "lemto_topological_mapping/bgl/bgl_functions.h"
+#include <lemto_topological_mapping/line_iterator.h> //Use this to find the cost of a line. This header is copied form the normal base_local_planner source includes (see ros navigation github).
 
 #include "lemto_topological_mapping/TopologicalNavigationMap.h"  //Message
 #include "lemto_topological_mapping/TopoNavEdgeMsg.h"  //Message

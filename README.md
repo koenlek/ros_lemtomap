@@ -4,7 +4,6 @@ ROS LEMTOMap
 Installation
 ------------
 This was tested on Indigo.
-(as of this writing, Turtlebot packages aren't officially released as .debs for Indigo, if these packages are still not available, follow the instructions in INSTALL-pre-turtlebot-indigo-release.md to build those packages yourself)
 
 - Create a catkin ws (or use your existing catkin ws):
 ```
@@ -38,6 +37,10 @@ rosdep install --from-paths . -i -y
 cd ..
 catkin_make
 ```
+
+Troubleshoot
+------------
+- A GPU related issue can cause simulated runs to fail. If you experience such issues, please change `gpu_ray` to `ray` and `libgazebo_ros_gpu_laser.so` to `libgazebo_ros_laser.so` in `lemto_description/urdf/lemto_turtle_gazebo.urdf.xacro`
 
 Usage
 -----
@@ -95,8 +98,4 @@ load a map:
 OR e.g. (`$(pwd)` expands to current directory, e.g. `./my_toponav_map`):
 
 `roslaunch lemto_launchers topological_mapping_and_topological_navigation_sim.launch load_map_directory:="$(pwd)/my_toponav_map"`
-
-Troubleshoot
-------------
-- A GPU related issue can cause simulated runs to fail. If you experience such issues, please change `gpu_ray` to `ray` and `libgazebo_ros_gpu_laser.so` to `libgazebo_ros_laser.so` in `lemto_description/urdf/lemto_turtle_gazebo.urdf.xacro`
 
