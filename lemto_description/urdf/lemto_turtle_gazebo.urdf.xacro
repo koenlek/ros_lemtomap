@@ -47,7 +47,8 @@
 		<gazebo reference="hokuyo_laser_sensor_link">
 			<!-- some specs are tuned based on: http://www.hokuyo-aut.jp/02sensor/07scanner/urg_04lx_ug01.html
 				-->
-			<sensor type="gpu_ray" name="head_hokuyo_sensor">
+			<!--<sensor type="gpu_ray" name="head_hokuyo_sensor">-->
+			<sensor type="ray" name="head_hokuyo_sensor">
 				<pose>0 0 0 0 0 0</pose>
 				<visualize>true</visualize>
 				<!-- shows a semi translucent visualization of the scan -->
@@ -86,7 +87,8 @@
 						<!-- ? -->
 					</noise>
 				</ray>
-				<plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">
+				<!--<plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">-->
+				<plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
 					<topicName>scan_hokuyo</topicName>
 					<frameName>hokuyo_laser_sensor_link</frameName>
 				</plugin>
