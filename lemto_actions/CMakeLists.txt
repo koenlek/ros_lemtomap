@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lemto_navigation)
+project(lemto_actions)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
@@ -10,22 +10,26 @@ add_definitions(-DROSCONSOLE_MIN_SEVERITY=ROSCONSOLE_SEVERITY_INFO) #compiles ou
 endif()
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  actionlib
-  tf
-  lemto_topological_mapping
-  ecl_time
+  actionlib_msgs
+  message_generation
+)
+
+add_action_files(
+  DIRECTORY
+    action
+  FILES
+    GotoNode.action
+)
+
+generate_messages(
+  DEPENDENCIES 
+    std_msgs 
+    actionlib_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp actionlib
+  CATKIN_DEPENDS 
+   actionlib 
+   actionlib_msgs
+   message_runtime
 )
-
-include_directories(
-  include 
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_executable(move_base_topo src/move_base_topo.cpp)
-target_link_libraries(move_base_topo ${catkin_LIBRARIES})
-add_dependencies(move_base_topo ${catkin_EXPORTED_TARGETS})

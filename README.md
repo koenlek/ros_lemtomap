@@ -69,7 +69,7 @@ Just use the RVIV '2D Nav Goal' tool on any unknown space (should be within the 
 You can send it to any topological node using this command. The RVIZ select tool can be used to choose a proper target_node_id. 
 
 ```
-rostopic pub /move_base_topo/goal lemto_navigation/GotoNodeActionGoal "header:
+rostopic pub /move_base_topo/goal lemto_actions/GotoNodeActionGoal "header:
   seq: 0
   stamp:
     secs: 0

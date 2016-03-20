@@ -29,7 +29,7 @@
 // Local includes
 #include "lemto_topological_mapping/utils.h" //calcDistance
 
-#include <lemto_navigation/GotoNodeAction.h> //Action
+#include "lemto_actions/GotoNodeAction.h" //Action
 #include "lemto_topological_mapping/TopologicalNavigationMap.h"  //Message
 #include "lemto_topological_mapping/TopoNavEdgeMsg.h"  //Message
 #include "lemto_topological_mapping/TopoNavNodeMsg.h"  //Message
@@ -43,11 +43,11 @@ class MoveBaseTopo
 protected:
   ros::NodeHandle nh_;
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
-  actionlib::SimpleActionServer<lemto_navigation::GotoNodeAction> action_server_mbt_; //mbt -> move_base_topo
+  actionlib::SimpleActionServer<lemto_actions::GotoNodeAction> action_server_mbt_; //mbt -> move_base_topo
   std::string action_name_mbt_;
   // create messages that are used to published feedback/result
-  lemto_navigation::GotoNodeFeedback feedback_;
-  lemto_navigation::GotoNodeResult result_;
+  lemto_actions::GotoNodeFeedback feedback_;
+  lemto_actions::GotoNodeResult result_;
 
   double frequency_; //main loop frequency in Hz
 
@@ -76,7 +76,7 @@ public:
 private:
   tf::Pose getRobotPoseInTopoFrame();
   int getAssociatedNode();
-  void executeCB(const lemto_navigation::GotoNodeGoalConstPtr& goal);
+  void executeCB(const lemto_actions::GotoNodeGoalConstPtr& goal);
   void toponavmapCB(const lemto_topological_mapping::TopologicalNavigationMapConstPtr& toponav_map);
   std::vector<std::string> nodesPathToEdgesPath(const std::vector<int>& path_nodes);
   bool getShortestPath(const int start_node_id, const int target_node_id, std::vector<int> &path_nodes);

@@ -179,7 +179,7 @@ void ShowTopoNavMap::visualizeEdges()
   }
 }
 
-void ShowTopoNavMap::moveBaseTopoFeedbackCB (const lemto_navigation::GotoNodeActionFeedback::ConstPtr &feedback)
+void ShowTopoNavMap::moveBaseTopoFeedbackCB (const lemto_actions::GotoNodeActionFeedback::ConstPtr &feedback)
 {
   topo_path_nodes_ = feedback->feedback.route_node_ids;
   topo_path_edges_ = feedback->feedback.route_edge_ids;

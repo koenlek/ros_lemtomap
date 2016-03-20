@@ -42,7 +42,7 @@ void MoveBaseTopo::toponavmapCB(const lemto_topological_mapping::TopologicalNavi
   toponavmap_ = *toponav_map;
 }
 
-void MoveBaseTopo::executeCB(const lemto_navigation::GotoNodeGoalConstPtr& goal) //CB stands for CallBack...
+void MoveBaseTopo::executeCB(const lemto_actions::GotoNodeGoalConstPtr& goal) //CB stands for CallBack...
     {
 #if BENCHMARKING
   benchmark_inprogress_ = true;

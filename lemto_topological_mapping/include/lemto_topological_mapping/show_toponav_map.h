@@ -16,7 +16,7 @@
 #include "lemto_topological_mapping/show_toponav_map.h"
 #include "lemto_topological_mapping/toponav_node.h"
 #include "lemto_topological_mapping/toponav_edge.h"
-#include "lemto_navigation/GotoNodeActionFeedback.h"
+#include "lemto_actions/GotoNodeActionFeedback.h"
 
 /*
  * @file show_toponav_map
@@ -59,7 +59,7 @@ private:
    */
   void visualizeNodes();
   void visualizeEdges();
-  void moveBaseTopoFeedbackCB (const lemto_navigation::GotoNodeActionFeedback::ConstPtr &feedback);
+  void moveBaseTopoFeedbackCB (const lemto_actions::GotoNodeActionFeedback::ConstPtr &feedback);
 };
 
 #endif // SHOW_TOPONAV_MAP_H
